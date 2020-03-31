@@ -11,11 +11,11 @@ import get_data
 
 
 def detrend(y: np.ndarray,
-            degrees: t.Sequence[int] = (1, 2, 3),
+            degrees: t.Union[int, t.Sequence[int]] = (1, 2, 3),
             plot: bool = False) -> np.ndarray:
     """Detrend a time series with a polynomial regression for each ``degree``."""
-    if np.isscalar(degrees):
-        degrees = (degrees,)
+    if isinstance(degrees, int):
+        degrees = [degrees]
 
     t = np.arange(y.size).reshape(-1, 1)
 

@@ -247,7 +247,11 @@ class MFETSGeneral:
     def ft_sc(cls, ts: np.ndarray, ddof: int = 1) -> float:
         """Fraction of step change points in the time-series.
 
-        A point `p_i` is a 
+        Let p_{t_{a}}^{t_{b}} be the subsequence of observations from the
+        timestep t_{a} and t_{b}, both inclusive. A point `p_i` is a
+        turning point if and only if
+
+        abs(p_{i} - mean(p_{1}^{i-1})) > 2 * std(p_{1}^{i-1})
 
         Parameters
         ----------
