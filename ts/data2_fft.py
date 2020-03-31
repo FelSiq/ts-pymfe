@@ -8,21 +8,23 @@ import get_data
 
 class MFETSFreqDomain:
     @classmethod
-    def _calc_power_spec(cls,
-                             ts_detrended: np.ndarray,
-                             ft_sig: t.Optional[np.ndarray] = None,
+    def _calc_power_spec(
+            cls,
+            ts_detrended: np.ndarray,
+            ft_sig: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Calculate the positive side power spectrum of a fourier signal."""
         if ft_sig is None:
             ft_sig = np.fft.rfft(ts_detrended)
-    
+
         return np.square(np.abs(ft_sig))
-    
+
     @classmethod
-    def ft_ps_max(cls,
-                  ts_detrended: np.ndarray,
-                  power_spec: t.Optional[np.ndarray] = None,
-                  ft_sig: t.Optional[np.ndarray] = None,
+    def ft_ps_max(
+            cls,
+            ts_detrended: np.ndarray,
+            power_spec: t.Optional[np.ndarray] = None,
+            ft_sig: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Maximal power spectrum frequency of the given signal.
         
@@ -46,17 +48,18 @@ class MFETSFreqDomain:
             Maximal power spectrum frequency of the given signal.
         """
         if power_spec is None:
-            power_spec = cls._calc_power_spec(
-                ts_detrended=ts_detrended, ft_sig=ft_sig)
+            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended,
+                                              ft_sig=ft_sig)
 
         return np.max(power_spec)
 
     @classmethod
-    def ft_ps_freqs(cls,
-                    ts_detrended: np.ndarray,
-                    freq_num: int = 3,
-                    power_spec: t.Optional[np.ndarray] = None,
-                    ft_sig: t.Optional[np.ndarray] = None,
+    def ft_ps_freqs(
+            cls,
+            ts_detrended: np.ndarray,
+            freq_num: int = 3,
+            power_spec: t.Optional[np.ndarray] = None,
+            ft_sig: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Largest power spectrum frequencies of the given signal.
         
@@ -86,8 +89,8 @@ class MFETSFreqDomain:
             raise ValueError("'freq_num' must be positive.")
 
         if power_spec is None:
-            power_spec = cls._calc_power_spec(
-                ts_detrended=ts_detrended, ft_sig=ft_sig)
+            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended,
+                                              ft_sig=ft_sig)
 
         power_spec = np.sort(power_spec)
 
@@ -136,8 +139,8 @@ class MFETSFreqDomain:
             raise ValueError("'factor' must be in (0, 1) range.")
 
         if power_spec is None:
-            power_spec = cls._calc_power_spec(
-                ts_detrended=ts_detrended, ft_sig=ft_sig)
+            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended,
+                                              ft_sig=ft_sig)
 
         max_ps = cls.ft_ps_max(ts_detrended=ts_detrended,
                                power_spec=power_spec)
