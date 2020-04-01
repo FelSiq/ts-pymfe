@@ -3,10 +3,10 @@ import typing as t
 import numpy as np
 
 
-def embbed_ts(ts: np.ndarray,
-              dim: int,
-              lag: int = 1,
-              include_val: bool = False) -> np.ndarray:
+def embed_ts(ts: np.ndarray,
+             dim: int,
+             lag: int = 1,
+             include_val: bool = False) -> np.ndarray:
     """Embbed a time-series in dimension ``dim``.
 
     Arguments
@@ -52,7 +52,7 @@ def embbed_ts(ts: np.ndarray,
 
 def _test() -> None:
     ts = np.arange(10)
-    print(embbed_ts(ts, dim=2, lag=1))
+    print(embed_ts(ts, dim=2, lag=1))
 
 
 if __name__ == "__main__":

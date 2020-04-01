@@ -3,8 +3,10 @@ import typing as t
 import numpy as np
 import pymfe.statistical
 import statsmodels.stats.stattools
+import scipy.spatial
 
 import data1_detrend
+import data1_embed
 import get_data
 
 
@@ -282,6 +284,33 @@ class MFETSGeneral:
 
         return sc_num / (ts.size - 1)
 
+    @classmethod
+    def ft_pred(cls, ts: np.ndarray,
+            ts_embedded: np.ndarray, param_1: int = 3, param_2: int = 4,
+            metric: str = "minkowski", p: t.Union[int, float] = 2, ddof: int = 1) -> float:
+        """https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4736930/"""
+        dist_mat = scipy.spatial.distance.cdist(
+            ts_embedded, ts_embedded, metric=metric, p=p)
+
+        dist_std = np.mean(dist_mat)
+        dist_mean = np.std(dist_mat, ddof=ddof)
+        ts_var = np.var(ts, ddof=ddof)
+
+        omega_sets = np.zeros(param_2, dtype=float)
+
+        for i in np.arange(param_2):
+            threshold = max(0, dist_mean + param_1 * dist_std * (i * 2 / (param_2 - 1) - 1))
+            neighbors = (dist_mat <= threshold).astype(int)
+            neighbors[np.diag_indices_from(neighbors)] = 0
+
+            for neigh_inds in neighbors:
+                if np.sum(neigh_inds) > ddof:
+                    omega_sets[i] += np.var(ts_embedded[neigh_inds, :], ddof=ddof)
+
+            omega_sets[i] /= ts_embedded.shape[0] * ts_var
+
+        return 1 - omega_sets
+
 
 def _test() -> None:
     ts = get_data.load_data()
@@ -306,6 +335,9 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_sc(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_pred(ts, data1_embed.embed_ts(ts, dim=3))
     print(res)
 
 
