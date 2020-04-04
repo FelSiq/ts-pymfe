@@ -7,6 +7,7 @@ import sklearn.pipeline
 import sklearn.linear_model
 import statsmodels.stats.stattools
 import statsmodels.tsa.stattools
+import pandas as pd
 
 import get_data
 
@@ -20,7 +21,7 @@ def detrend(y: np.ndarray,
 
     t = np.arange(y.size).reshape(-1, 1)
 
-    res = np.zeros((len(degrees), y.size))
+    res = np.zeros((len(degrees), 2 * y.size))
     
     for i, deg in enumerate(degrees):
         pip = sklearn.pipeline.make_pipeline(
@@ -44,7 +45,7 @@ def detrend(y: np.ndarray,
             plt.title(f"Detrended w/ degree {deg}")
             plt.plot(t, residuals)
 
-        res[i, :] = residuals
+        res[i, :] = np.hstack((residuals, y_pred))
 
     if plot:
         plt.subplot(221)
@@ -54,9 +55,15 @@ def detrend(y: np.ndarray,
         plt.show()
 
     if len(degrees) == 1:
-        return res[0, :]
+        return np.split(res[0, :], 2)
 
-    return res
+    return np.split(res, 2, axis=1)
+
+
+def decompose(ts: np.ndarray, period: t.Optional[int] = None) -> np.ndarray:
+    """Decompose a time-series in trend, seasonality and residuals."""
+    res = statsmodels.tsa.seasonal.STL(ts, period=period).fit()
+    return res.trend, res.seasonal, res.resid
 
 
 def _test() -> None:
