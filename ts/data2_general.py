@@ -5,6 +5,7 @@ import pymfe.statistical
 import statsmodels.stats.stattools
 import scipy.spatial
 import nolds
+import arch.unitroot
 
 import data1_detrend
 import data1_embed
@@ -248,6 +249,22 @@ class MFETSGeneral:
         return dw_stat
 
     @classmethod
+    def ft_test_pp(cls, ts: np.ndarray) -> float:
+        """Phillips-Perron test.
+
+        TODO.
+        """
+        return arch.unitroot.PhillipsPerron(ts).stat
+
+    @classmethod
+    def ft_test_kpss(cls, ts: np.ndarray) -> float:
+        """Kwiatkowski-Phillips-Schmidt-Shin test.
+
+        TODO.
+        """
+        return arch.unitroot.KPSS(ts).stat
+
+    @classmethod
     def ft_tp(cls, ts: np.ndarray) -> float:
         """Fraction of turning points in the time-series.
 
@@ -417,6 +434,7 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts)
     ts = ts.to_numpy()
 
+    """
     res = MFETSGeneral.ft_skewness(ts_residuals)
     print(res)
 
@@ -461,6 +479,13 @@ def _test() -> None:
 
     res = MFETSGeneral.ft_spikiness(ts_residuals)
     print(np.var(res))
+    """
+
+    res = MFETSGeneral.ft_test_kpss(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_test_pp(ts)
+    print(res)
 
 
 if __name__ == "__main__":
