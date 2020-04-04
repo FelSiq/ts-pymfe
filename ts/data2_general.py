@@ -3,9 +3,10 @@ import typing as t
 import numpy as np
 import pymfe.statistical
 import statsmodels.stats.stattools
-import scipy.spatial
 import nolds
 import arch.unitroot
+import scipy.spatial
+import scipy.odr
 
 import data1_detrend
 import data1_embed
@@ -400,19 +401,56 @@ class MFETSGeneral:
         vars_ = np.array([
             np.var(np.delete(ts_residuals, i), ddof=ddof)
             for i in np.arange(ts_residuals.size)
-        ], dtype=float)
+        ],
+                         dtype=float)
 
         # Note: on the original reference paper, the spikiness is calculated
         # as the variance of the 'vars_'. However, to enable summarization,
         # here we return the full array.
         return vars_
 
+    @classmethod
+    def ft_tilled_var(cls,
+                      ts: np.ndarray,
+                      num_windows: int = 16,
+                      ddof: int = 1) -> np.ndarray:
+        """TODO."""
+        if num_windows > ts.size:
+            raise ValueError("'num_windows' ({}) larger than the "
+                             "time-series size ({}).".format(
+                                 num_windows, ts.size))
+
+        vars_ = np.array([
+            np.var(split, ddof=ddof)
+            for split in np.array_split(ts, num_windows)
+        ],
+                         dtype=float)
+
+        # Note: this feature, when summarized with 'mean', becomes the
+        # 'Stability' metafeature, and when summarized with 'var' becomes
+        # the 'lumpiness' of the time-series.
+        return vars_
+
+    @classmethod
+    def _fit_ord_quad_model(cls, ts: np.ndarray) -> t.Any:
+        """https://docs.scipy.org/doc/scipy/reference/odr.html"""
+
+    @classmethod
+    def ft_linearity(cls,
+                     ts: np.ndarray,
+                     model_ort_quad: t.Optional[t.Any] = None) -> float:
+        """TODO."""
+        if model_ort_quad is None:
+            model_ort_quad = cls._fit_ord_quad_model(ts=ts)
+
+        return
+
 
 def _test() -> None:
     ts = get_data.load_data(2)
     ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts)
     ts = ts.to_numpy()
-
+    """
     res = MFETSGeneral.ft_skewness(ts_residuals)
     print(res)
 
@@ -460,6 +498,9 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_test_pp(ts)
+    print(res)
+    """
+    res = MFETSGeneral.ft_tilled_var(ts)
     print(res)
 
 
