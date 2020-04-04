@@ -1,0 +1,7 @@
+nolds
+numpy
+pymfe
+statsmodels
+scipy
+scikit-learn
+matplotlib
