@@ -1,6 +1,8 @@
 import typing as t
 
 import numpy as np
+import scipy.signal
+import scipy.stats
 
 import data1_detrend
 import get_data
@@ -8,25 +10,21 @@ import get_data
 
 class MFETSFreqDomain:
     @classmethod
-    def _calc_power_spec(
-            cls,
-            ts_detrended: np.ndarray,
-            ft_sig: t.Optional[np.ndarray] = None,
-    ) -> np.ndarray:
+    def _calc_power_spec(cls, ts_detrended: np.ndarray) -> np.ndarray:
         """Calculate the positive side power spectrum of a fourier signal."""
-        if ft_sig is None:
-            ft_sig = np.fft.rfft(ts_detrended)
-
-        return np.square(np.abs(ft_sig))
+        _, ps = scipy.signal.periodogram(ts_detrended,
+                                         detrend=None,
+                                         scaling="spectrum",
+                                         return_onesided=True)
+        return ps
 
     @classmethod
     def ft_ps_max(
             cls,
             ts_detrended: np.ndarray,
             power_spec: t.Optional[np.ndarray] = None,
-            ft_sig: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
-        """Maximal power spectrum frequency of the given signal.
+        """Maximal power spectrum frequency of the given time-series.
         
         Parameters
         ----------
@@ -37,19 +35,13 @@ class MFETSFreqDomain:
             Power spectrum of ``ts_detrended``. Used to take advantage of
             precomputations.
 
-        ft_sig : :obj:`np.ndarray`, optional
-            One-dimensional discrete fourier transform of ``ts_detrended``.
-            Used only if ``power_spec`` is None. Used to take advantage
-            of precomputations.
-
         Returns
         -------
         float
-            Maximal power spectrum frequency of the given signal.
+            Largest power spectrum frequency of the given time-series.
         """
         if power_spec is None:
-            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended,
-                                              ft_sig=ft_sig)
+            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended)
 
         return np.max(power_spec)
 
@@ -59,9 +51,8 @@ class MFETSFreqDomain:
             ts_detrended: np.ndarray,
             freq_num: int = 3,
             power_spec: t.Optional[np.ndarray] = None,
-            ft_sig: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
-        """Largest power spectrum frequencies of the given signal.
+        """Largest power spectrum frequencies of the given time-series.
         
         Parameters
         ----------
@@ -75,22 +66,16 @@ class MFETSFreqDomain:
             Power spectrum of ``ts_detrended``. Used to take advantage of
             precomputations.
 
-        ft_sig : :obj:`np.ndarray`, optional
-            One-dimensional discrete fourier transform of ``ts_detrended``. Used
-            only if ``power_spec`` is None. Used to take advantage
-            of precomputations.
-
         Returns
         -------
         float
-            Power spectrum frequency of the given signal.
+            Largest power spectrum frequencies of the given time-series.
         """
         if freq_num <= 0:
             raise ValueError("'freq_num' must be positive.")
 
         if power_spec is None:
-            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended,
-                                              ft_sig=ft_sig)
+            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended)
 
         power_spec = np.sort(power_spec)
 
@@ -102,7 +87,6 @@ class MFETSFreqDomain:
             ts_detrended: np.ndarray,
             factor: float = 0.6,
             power_spec: t.Optional[np.ndarray] = None,
-            ft_sig: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Number of significative power spectrum frequencies.
 
@@ -125,31 +109,56 @@ class MFETSFreqDomain:
             Power spectrum of ``ts_detrended``. Used to take advantage of
             precomputations.
 
-        ft_sig : :obj:`np.ndarray`, optional
-            One-dimensional discrete fourier transform of ``ts_detrended``.
-            Used only if ``power_spec`` is None. Used to take advantage
-            of precomputations.
-
         Returns
         -------
         float
-            Maximal power spectrum frequency of the given signal.
+            Maximal power spectrum frequency of the given time-series.
         """
         if not 0 < factor < 1:
             raise ValueError("'factor' must be in (0, 1) range.")
 
         if power_spec is None:
-            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended,
-                                              ft_sig=ft_sig)
+            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended)
 
         max_ps = cls.ft_ps_max(ts_detrended=ts_detrended,
                                power_spec=power_spec)
 
         return np.sum(power_spec >= factor * max_ps)
 
+    @classmethod
+    def ft_ps_entropy(
+            cls,
+            ts_detrended: np.ndarray,
+            normalize: bool = True,
+            power_spec: t.Optional[np.ndarray] = None,
+    ) -> float:
+        """Spectral entropy.
+
+        The spectral entropy is the entropy if the normalized power
+        spectrum of the detrended time-series. Technically, it is the
+        entropy of the spectral density, which is the power spectrum
+        normalized by the length of the time-series. However, this
+        constant factor of normalization does not affect the entropy
+        value.
+
+        TODO.
+        """
+        if power_spec is None:
+            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended)
+
+        # Note: no need to calculate the power spectrum density 'd':
+        # d = power_spec / ts_detrended.size
+        # since a constant factor does not affect the entropy value.
+        ps_ent = scipy.stats.entropy(power_spec / np.sum(power_spec))
+
+        if normalize:
+            ps_ent /= np.log2(ts_detrended.size)
+
+        return ps_ent
+
 
 def _test() -> None:
-    ts = get_data.load_data()
+    ts = get_data.load_data(2)
     ts_detrended = data1_detrend.detrend(ts, degrees=1)
     res = MFETSFreqDomain._calc_power_spec(ts_detrended)
     print(res)
@@ -161,6 +170,9 @@ def _test() -> None:
     print(res)
 
     res = MFETSFreqDomain.ft_ps_peaks(ts_detrended)
+    print(res)
+
+    res = MFETSFreqDomain.ft_ps_entropy(ts_detrended)
     print(res)
 
 
