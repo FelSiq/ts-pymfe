@@ -13,13 +13,13 @@ import get_data
 
 class MFETSGeneral:
     @classmethod
-    def ft_sd(cls, ts_detrended: np.ndarray, ddof: int = 1) -> float:
-        """Compute the standard deviation of the detrended time-series.
+    def ft_sd(cls, ts_residuals: np.ndarray, ddof: int = 1) -> float:
+        """Compute the standard deviation of the time-series residuals.
         
         Parameters
         ----------
-        ts_detrended : :obj:`np.ndarray`
-            One-dimensional detrended time-series values.
+        ts_residuals : :obj:`np.ndarray`
+            Residuals (random noise) of an one-dimensional time-series.
 
         ddof : float, optional
             Degrees of freedom for standard deviation.
@@ -33,19 +33,19 @@ class MFETSGeneral:
         ----------
         TODO.
         """
-        return np.std(ts_detrended, ddof=ddof)
+        return np.std(ts_residuals, ddof=ddof)
 
     @classmethod
     def ft_skewness(cls,
-                    ts_detrended: np.ndarray,
+                    ts_residuals: np.ndarray,
                     method: int = 3,
                     bias: bool = True) -> float:
-        """Compute the skewness of the detrended time-series.
+        """Compute the skewness of the time-series residuals.
 
         Parameters
         ----------
-        ts_detrended : :obj:`np.ndarray`
-            One-dimensional detrended time-series values.
+        ts_residuals : :obj:`np.ndarray`
+            Residuals (random noise) of an one-dimensional time-series.
 
         method : int, optional
             Defines the strategy used for estimate data skewness. This argument
@@ -84,7 +84,7 @@ class MFETSGeneral:
            John Campbell. Machine Learning, Neural and Statistical
            Classification, volume 37. Ellis Horwood Upper Saddle River, 1994.
         """
-        ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_detrended,
+        ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_residuals,
                                                                method=method,
                                                                bias=bias)
 
@@ -92,15 +92,15 @@ class MFETSGeneral:
 
     @classmethod
     def ft_kurtosis(cls,
-                    ts_detrended: np.ndarray,
+                    ts_residuals: np.ndarray,
                     method: int = 3,
                     bias: bool = True) -> float:
-        """Compute the kurtosis of the detrended time-series.
+        """Compute the kurtosis of the time-series residuals.
 
         Parameters
         ----------
-        ts_detrended : :obj:`np.ndarray`
-            One-dimensional detrended time-series values.
+        ts_residuals : :obj:`np.ndarray`
+            Residuals (random noise) of an one-dimensional time-series.
 
         method : int, optional
             Defines the strategy used for estimate data kurtosis. Used for
@@ -141,7 +141,7 @@ class MFETSGeneral:
            John Campbell. Machine Learning, Neural and Statistical
            Classification, volume 37. Ellis Horwood Upper Saddle River, 1994.
         """
-        ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_detrended,
+        ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_residuals,
                                                                method=method,
                                                                bias=bias)
 
@@ -170,7 +170,7 @@ class MFETSGeneral:
     @classmethod
     def ft_trend(cls,
                  ts: np.ndarray,
-                 ts_detrended: np.ndarray,
+                 ts_residuals: np.ndarray,
                  ddof: int = 1) -> float:
         """Ratio of standard deviations of time-series and after detrend.
 
@@ -179,8 +179,8 @@ class MFETSGeneral:
         ts: :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        ts_detrended : :obj:`np.ndarray`
-            One-dimensional detrended time-series values.
+        ts_residuals : :obj:`np.ndarray`
+            Residuals (random noise) of an one-dimensional time-series.
 
         ddof : float, optional
             Degrees of freedom for standard deviation.
@@ -195,29 +195,29 @@ class MFETSGeneral:
         ----------
         TODO.
         """
-        return np.std(ts, ddof=ddof) / np.std(ts_detrended, ddof=ddof)
+        return np.std(ts, ddof=ddof) / np.std(ts_residuals, ddof=ddof)
 
     @classmethod
-    def ft_dw(cls, ts_detrended: np.ndarray) -> float:
+    def ft_dw(cls, ts_residuals: np.ndarray) -> float:
         """Durbin-Watson test statistic value.
 
         This measure is in [0, 4] range.
 
         Parameters
         ----------
-        ts_detrended : :obj:`np.ndarray`
-            One-dimensional detrended time-series values.
+        ts_residuals : :obj:`np.ndarray`
+            Residuals (random noise) of an one-dimensional time-series.
 
         Returns
         -------
         float
-            Durbin-Watson test statistic for the detrended time-series.
+            Durbin-Watson test statistic for the time-series residuals.
 
         References
         ----------
         TODO.
         """
-        return statsmodels.stats.stattools.durbin_watson(ts_detrended)
+        return statsmodels.stats.stattools.durbin_watson(ts_residuals)
 
     @classmethod
     def ft_tp(cls, ts: np.ndarray) -> float:
@@ -368,15 +368,15 @@ class MFETSGeneral:
         """TODO."""
         return nolds.hurst_rs(data=ts)
 
+    @classmethod
     def ft_spikiness(cls,
-                     ts_detrended: np.ndarray,
+                     ts_residuals: np.ndarray,
                      ddof: int = 1) -> np.ndarray:
         """TODO."""
         vars_ = np.array([
-            np.var(np.delete(ts_detrended, i), ddof=ddof)
-            for i in np.arange(ts_detrended.size)
-        ],
-                         dtype=float)
+            np.var(np.delete(ts_residuals, i), ddof=ddof)
+            for i in np.arange(ts_residuals.size)
+        ], dtype=float)
 
         # Note: on the original reference paper, the spikiness is calculated
         # as the variance of the 'vars_'. However, to enable summarization,
@@ -385,23 +385,27 @@ class MFETSGeneral:
 
 
 def _test() -> None:
+    ts = get_data.load_data(2)
+    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts)
+    ts = ts.to_numpy()
+
     """
-    res = MFETSGeneral.ft_skewness(ts_detrended)
+    res = MFETSGeneral.ft_skewness(ts_residuals)
     print(res)
 
     res = MFETSGeneral.ft_length(ts)
     print(res)
 
-    res = MFETSGeneral.ft_kurtosis(ts_detrended)
+    res = MFETSGeneral.ft_kurtosis(ts_residuals)
     print(res)
 
-    res = MFETSGeneral.ft_sd(ts_detrended)
+    res = MFETSGeneral.ft_sd(ts_residuals)
     print(res)
 
-    res = MFETSGeneral.ft_trend(ts, ts_detrended)
+    res = MFETSGeneral.ft_trend(ts, ts_residuals)
     print(res)
 
-    res = MFETSGeneral.ft_dw(ts_detrended)
+    res = MFETSGeneral.ft_dw(ts_residuals)
     print(res)
 
     res = MFETSGeneral.ft_tp(ts)
@@ -425,6 +429,9 @@ def _test() -> None:
     res = MFETSGeneral.ft_hurst_exp(ts)
     print(res)
     """
+
+    res = MFETSGeneral.ft_spikiness(ts_residuals)
+    print(np.var(res))
 
 
 if __name__ == "__main__":

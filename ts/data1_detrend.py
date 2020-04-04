@@ -61,9 +61,13 @@ def detrend(y: np.ndarray,
     return np.split(res, 2, axis=1)
 
 
-def decompose(ts: np.ndarray, period: t.Optional[int] = None) -> np.ndarray:
+def decompose(ts: t.Union[np.ndarray, pd.core.series.Series], period: t.Optional[int] = None) -> np.ndarray:
     """Decompose a time-series in trend, seasonality and residuals."""
     res = statsmodels.tsa.seasonal.STL(ts, period=period).fit()
+
+    if isinstance(ts, pd.core.series.Series):
+        return res.trend.values, res.seasonal.values, res.resid.values
+
     return res.trend, res.seasonal, res.resid
 
 
