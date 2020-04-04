@@ -7,6 +7,7 @@ import sklearn.pipeline
 import sklearn.linear_model
 import statsmodels.stats.stattools
 import statsmodels.tsa.stattools
+import statsmodels.tsa.seasonal
 import pandas as pd
 
 import get_data

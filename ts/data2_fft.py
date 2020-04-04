@@ -10,9 +10,9 @@ import get_data
 
 class MFETSFreqDomain:
     @classmethod
-    def _calc_power_spec(cls, ts_detrended: np.ndarray) -> np.ndarray:
+    def _calc_power_spec(cls, ts_residuals: np.ndarray) -> np.ndarray:
         """Calculate the positive side power spectrum of a fourier signal."""
-        _, ps = scipy.signal.periodogram(ts_detrended,
+        _, ps = scipy.signal.periodogram(ts_residuals,
                                          detrend=None,
                                          scaling="spectrum",
                                          return_onesided=True)
@@ -21,18 +21,18 @@ class MFETSFreqDomain:
     @classmethod
     def ft_ps_max(
             cls,
-            ts_detrended: np.ndarray,
+            ts_residuals: np.ndarray,
             power_spec: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Maximal power spectrum frequency of the given time-series.
         
         Parameters
         ----------
-        ts_detrended : :obj:`np.ndarray`
-            One-dimensional detrended time-series values.
+        ts_residuals : :obj:`np.ndarray`
+            Residuals (random noise) of an one-dimensional time-series.
 
         power_spec : :obj:`np.ndarray`, optional
-            Power spectrum of ``ts_detrended``. Used to take advantage of
+            Power spectrum of ``ts_residuals``. Used to take advantage of
             precomputations.
 
         Returns
@@ -41,14 +41,14 @@ class MFETSFreqDomain:
             Largest power spectrum frequency of the given time-series.
         """
         if power_spec is None:
-            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended)
+            power_spec = cls._calc_power_spec(ts_residuals=ts_residuals)
 
         return np.max(power_spec)
 
     @classmethod
     def ft_ps_freqs(
             cls,
-            ts_detrended: np.ndarray,
+            ts_residuals: np.ndarray,
             freq_num: int = 3,
             power_spec: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
@@ -56,14 +56,14 @@ class MFETSFreqDomain:
         
         Parameters
         ----------
-        ts_detrended : :obj:`np.ndarray`
-            One-dimensional detrended time-series values.
+        ts_residuals : :obj:`np.ndarray`
+            Residuals (random noise) of an one-dimensional time-series.
 
         freq_num : int, optional
             Number of largest frequencies to be returned.
 
         power_spec : :obj:`np.ndarray`, optional
-            Power spectrum of ``ts_detrended``. Used to take advantage of
+            Power spectrum of ``ts_residuals``. Used to take advantage of
             precomputations.
 
         Returns
@@ -75,7 +75,7 @@ class MFETSFreqDomain:
             raise ValueError("'freq_num' must be positive.")
 
         if power_spec is None:
-            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended)
+            power_spec = cls._calc_power_spec(ts_residuals=ts_residuals)
 
         power_spec = np.sort(power_spec)
 
@@ -84,7 +84,7 @@ class MFETSFreqDomain:
     @classmethod
     def ft_ps_peaks(
             cls,
-            ts_detrended: np.ndarray,
+            ts_residuals: np.ndarray,
             factor: float = 0.6,
             power_spec: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
@@ -97,8 +97,8 @@ class MFETSFreqDomain:
         
         Parameters
         ----------
-        ts_detrended : :obj:`np.ndarray`
-            One-dimensional detrended time-series values.
+        ts_residuals : :obj:`np.ndarray`
+            Residuals (random noise) of an one-dimensional time-series.
 
         factor : float, optional
             Multiplicative factor of the power spectrum maximum value to
@@ -106,7 +106,7 @@ class MFETSFreqDomain:
             frequencies are significative.
 
         power_spec : :obj:`np.ndarray`, optional
-            Power spectrum of ``ts_detrended``. Used to take advantage of
+            Power spectrum of ``ts_residuals``. Used to take advantage of
             precomputations.
 
         Returns
@@ -118,9 +118,9 @@ class MFETSFreqDomain:
             raise ValueError("'factor' must be in (0, 1) range.")
 
         if power_spec is None:
-            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended)
+            power_spec = cls._calc_power_spec(ts_residuals=ts_residuals)
 
-        max_ps = cls.ft_ps_max(ts_detrended=ts_detrended,
+        max_ps = cls.ft_ps_max(ts_residuals=ts_residuals,
                                power_spec=power_spec)
 
         return np.sum(power_spec >= factor * max_ps)
@@ -128,7 +128,7 @@ class MFETSFreqDomain:
     @classmethod
     def ft_ps_entropy(
             cls,
-            ts_detrended: np.ndarray,
+            ts_residuals: np.ndarray,
             normalize: bool = True,
             power_spec: t.Optional[np.ndarray] = None,
     ) -> float:
@@ -144,35 +144,36 @@ class MFETSFreqDomain:
         TODO.
         """
         if power_spec is None:
-            power_spec = cls._calc_power_spec(ts_detrended=ts_detrended)
+            power_spec = cls._calc_power_spec(ts_residuals=ts_residuals)
 
         # Note: no need to calculate the power spectrum density 'd':
-        # d = power_spec / ts_detrended.size
+        # d = power_spec / ts_residuals.size
         # since a constant factor does not affect the entropy value.
         ps_ent = scipy.stats.entropy(power_spec / np.sum(power_spec))
 
         if normalize:
-            ps_ent /= np.log2(ts_detrended.size)
+            ps_ent /= np.log2(ts_residuals.size)
 
         return ps_ent
 
 
 def _test() -> None:
     ts = get_data.load_data(2)
-    ts_detrended = data1_detrend.detrend(ts, degrees=1)
-    res = MFETSFreqDomain._calc_power_spec(ts_detrended)
+    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts)
+
+    res = MFETSFreqDomain._calc_power_spec(ts_residuals)
     print(res)
 
-    res = MFETSFreqDomain.ft_ps_max(ts_detrended)
+    res = MFETSFreqDomain.ft_ps_max(ts_residuals)
     print(res)
 
-    res = MFETSFreqDomain.ft_ps_freqs(ts_detrended)
+    res = MFETSFreqDomain.ft_ps_freqs(ts_residuals)
     print(res)
 
-    res = MFETSFreqDomain.ft_ps_peaks(ts_detrended)
+    res = MFETSFreqDomain.ft_ps_peaks(ts_residuals)
     print(res)
 
-    res = MFETSFreqDomain.ft_ps_entropy(ts_detrended)
+    res = MFETSFreqDomain.ft_ps_entropy(ts_residuals)
     print(res)
 
 
