@@ -368,29 +368,6 @@ class MFETSGeneral:
         return 1.0 / (1.0 + var_sets)
 
     @classmethod
-    def ft_acf(cls,
-               ts: np.ndarray,
-               nlags: int = 4,
-               unbiased: bool = True) -> np.ndarray:
-        """TODO."""
-        acf = statsmodels.tsa.stattools.acf(ts,
-                                            nlags=nlags,
-                                            unbiased=unbiased,
-                                            fft=True)
-
-        return acf[1:]
-
-    @classmethod
-    def ft_pacf(cls,
-                ts: np.ndarray,
-                nlags: int = 4,
-                method: str = "ols-unbiased") -> np.ndarray:
-        """TODO."""
-        pacf = statsmodels.tsa.stattools.pacf(ts, nlags=nlags, method=method)
-
-        return pacf[1:]
-
-    @classmethod
     def ft_max_lyap_exp(cls,
                         ts: np.ndarray,
                         embed_dim: int,
@@ -463,12 +440,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_pred(data1_embed.embed_ts(ts, dim=int(np.ceil(np.log10(ts.size)))))
-    print(res)
-
-    res = MFETSGeneral.ft_acf(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_pacf(ts)
     print(res)
 
     res = MFETSGeneral.ft_max_lyap_exp(ts, embed_dim=int(np.ceil(np.log10(ts.size))), lag=1)
