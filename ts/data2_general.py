@@ -4,6 +4,7 @@ import numpy as np
 import pymfe.statistical
 import statsmodels.stats.stattools
 import scipy.spatial
+import nolds
 
 import data1_detrend
 import data1_embed
@@ -240,8 +241,8 @@ class MFETSGeneral:
         ----------
         TODO.
         """
-        diff_sign_arr = np.sign(np.ediff1d(ts))
-        tp_frac = np.mean(np.equal(-1, diff_sign_arr[1:] * diff_sign_arr[:-1]))
+        diff_arr = np.ediff1d(ts)
+        tp_frac = np.mean(diff_arr[1:] * diff_arr[:-1] < 0)
 
         return tp_frac
 
@@ -285,38 +286,110 @@ class MFETSGeneral:
         return sc_num / (ts.size - 1)
 
     @classmethod
-    def ft_pred(cls, ts: np.ndarray,
-            ts_embedded: np.ndarray, param_1: int = 3, param_2: int = 4,
-            metric: str = "minkowski", p: t.Union[int, float] = 2, ddof: int = 1) -> float:
+    def ft_pred(cls,
+                ts_embedded: np.ndarray,
+                param_1: t.Union[int, float] = 3,
+                param_2: t.Union[int, float] = 4,
+                metric: str = "minkowski",
+                p: t.Union[int, float] = 2,
+                ddof: int = 1) -> float:
         """https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4736930/"""
-        dist_mat = scipy.spatial.distance.cdist(
-            ts_embedded, ts_embedded, metric=metric, p=p)
+        dist_mat = scipy.spatial.distance.pdist(ts_embedded,
+                                                metric=metric,
+                                                p=p)
 
-        dist_std = np.mean(dist_mat)
-        dist_mean = np.std(dist_mat, ddof=ddof)
-        ts_var = np.var(ts, ddof=ddof)
+        dist_mean = np.mean(dist_mat)
+        dist_std = np.std(dist_mat, ddof=ddof)
 
-        omega_sets = np.zeros(param_2, dtype=float)
+        dist_mat = scipy.spatial.distance.squareform(dist_mat)
+
+        var_sets = np.zeros(param_2, dtype=float)
 
         for i in np.arange(param_2):
-            threshold = max(0, dist_mean + param_1 * dist_std * (i * 2 / (param_2 - 1) - 1))
+            threshold = max(
+                0.0,
+                dist_mean + param_1 * dist_std * (i * 2 / (param_2 - 1) - 1))
+
             neighbors = (dist_mat <= threshold).astype(int)
-            neighbors[np.diag_indices_from(neighbors)] = 0
+            neighbors[np.diag_indices_from(neighbors)] = 0.0
 
             for neigh_inds in neighbors:
                 if np.sum(neigh_inds) > ddof:
-                    omega_sets[i] += np.var(ts_embedded[neigh_inds, :], ddof=ddof)
+                    var_sets[i] += np.var(ts_embedded[neigh_inds, :],
+                                          ddof=ddof)
 
-            omega_sets[i] /= ts_embedded.shape[0] * ts_var
+        var_sets /= ts_embedded.shape[0] * np.var(ts_embedded, ddof=ddof)
 
-        return 1 - omega_sets
+        return 1.0 / (1.0 + var_sets)
+
+    @classmethod
+    def ft_acf(cls,
+               ts: np.ndarray,
+               nlags: int = 4,
+               unbiased: bool = True) -> np.ndarray:
+        """TODO."""
+        acf = statsmodels.tsa.stattools.acf(ts,
+                                            nlags=nlags,
+                                            unbiased=unbiased,
+                                            fft=True)
+
+        return acf[1:]
+
+    @classmethod
+    def ft_pacf(cls,
+                ts: np.ndarray,
+                nlags: int = 4,
+                method: str = "ols-unbiased") -> np.ndarray:
+        """TODO."""
+        pacf = statsmodels.tsa.stattools.pacf(ts, nlags=nlags, method=method)
+
+        return pacf[1:]
+
+    @classmethod
+    def ft_max_lyap_exp(cls,
+                        ts: np.ndarray,
+                        embed_dim: int,
+                        lag: int,
+                        method: str = "rosenstein") -> float:
+        """TODO."""
+        VALID_METHODS = ("eckmann", "rosenstein")
+
+        if method not in VALID_METHODS:
+            raise ValueError("'method' ({}) not in {}.".format(
+                method, VALID_METHODS))
+
+        if method == "rosenstein":
+            return nolds.lyap_r(data=ts, lag=lag, emb_dim=embed_dim)
+
+        return nolds.lyap_e(data=ts, emb_dim=embed_dim)
+
+    @classmethod
+    def ft_hurst_exp(cls, ts: np.ndarray) -> float:
+        """TODO."""
+        return nolds.hurst_rs(data=ts)
+
+    def ft_spikiness(cls,
+                     ts_detrended: np.ndarray,
+                     ddof: int = 1) -> np.ndarray:
+        """TODO."""
+        vars_ = np.array([
+            np.var(np.delete(ts_detrended, i), ddof=ddof)
+            for i in np.arange(ts_detrended.size)
+        ],
+                         dtype=float)
+
+        # Note: on the original reference paper, the spikiness is calculated
+        # as the variance of the 'vars_'. However, to enable summarization,
+        # here we return the full array.
+        return vars_
 
 
 def _test() -> None:
-    ts = get_data.load_data()
-    ts_detrended = data1_detrend.detrend(ts, degrees=1)
-
+    """
     res = MFETSGeneral.ft_skewness(ts_detrended)
+    print(res)
+
+    res = MFETSGeneral.ft_length(ts)
     print(res)
 
     res = MFETSGeneral.ft_kurtosis(ts_detrended)
@@ -337,8 +410,21 @@ def _test() -> None:
     res = MFETSGeneral.ft_sc(ts)
     print(res)
 
-    res = MFETSGeneral.ft_pred(ts, data1_embed.embed_ts(ts, dim=3))
+    res = MFETSGeneral.ft_pred(data1_embed.embed_ts(ts, dim=int(np.ceil(np.log10(ts.size)))))
     print(res)
+
+    res = MFETSGeneral.ft_acf(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_pacf(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_max_lyap_exp(ts, embed_dim=int(np.ceil(np.log10(ts.size))), lag=1)
+    print(res)
+
+    res = MFETSGeneral.ft_hurst_exp(ts)
+    print(res)
+    """
 
 
 if __name__ == "__main__":
