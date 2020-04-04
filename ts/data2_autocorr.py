@@ -46,6 +46,22 @@ class MFETSAutoCorr:
         return cls._calc_pacf(data=ts_residuals, nlags=nlags, method=method)
 
     @classmethod
+    def ft_pacf_trend(cls,
+                      ts_trend: np.ndarray,
+                      nlags: int = 5,
+                      method: str = "ols-unbiased") -> np.ndarray:
+        """TODO."""
+        return cls._calc_pacf(data=ts_trend, nlags=nlags, method=method)
+
+    @classmethod
+    def ft_pacf_seasonality(cls,
+                            ts_season: np.ndarray,
+                            nlags: int = 5,
+                            method: str = "ols-unbiased") -> np.ndarray:
+        """TODO."""
+        return cls._calc_pacf(data=ts_season, nlags=nlags, method=method)
+
+    @classmethod
     def ft_pacf_detrended(cls,
                           ts_detrended: np.ndarray,
                           nlags: int = 5,
@@ -80,6 +96,23 @@ class MFETSAutoCorr:
         return cls._calc_acf(data=ts_residuals, nlags=nlags, unbiased=unbiased)
 
     @classmethod
+    def ft_acf_trend(cls,
+                         ts_trend: np.ndarray,
+                         nlags: int = 5,
+                         unbiased: bool = True) -> np.ndarray:
+        """TODO."""
+        return cls._calc_acf(data=ts_trend, nlags=nlags, unbiased=unbiased)
+
+
+    @classmethod
+    def ft_acf_seasonality(cls,
+                           ts_season: np.ndarray,
+                           nlags: int = 5,
+                           unbiased: bool = True) -> np.ndarray:
+        """TODO."""
+        return cls._calc_acf(data=ts_season, nlags=nlags, unbiased=unbiased)
+
+    @classmethod
     def ft_acf_detrended(cls,
                          ts_detrended: np.ndarray,
                          nlags: int = 5,
@@ -109,10 +142,22 @@ def _test() -> None:
     res = MFETSAutoCorr.ft_pacf(ts)
     print(res)
 
+    res = MFETSAutoCorr.ft_acf_trend(ts_trend)
+    print(res)
+
+    res = MFETSAutoCorr.ft_pacf_trend(ts_trend)
+    print(res)
+
     res = MFETSAutoCorr.ft_acf_residuals(ts_residuals)
     print(res)
 
     res = MFETSAutoCorr.ft_pacf_residuals(ts_residuals)
+    print(res)
+
+    res = MFETSAutoCorr.ft_acf_seasonality(ts_season)
+    print(res)
+
+    res = MFETSAutoCorr.ft_pacf_seasonality(ts_season)
     print(res)
 
     res = MFETSAutoCorr.ft_acf_detrended(ts - ts_trend)
