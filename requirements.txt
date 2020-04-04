@@ -5,3 +5,4 @@ statsmodels
 scipy
 scikit-learn
 matplotlib
+arch
