@@ -213,12 +213,14 @@ class MFETSGeneral:
         """
 
         seas = 1.0 - (np.var(ts_residuals, ddof=ddof) /
-                      np.var(ts_detrended, ddof=doff))
+                      np.var(ts_detrended, ddof=ddof))
 
         return max(0.0, seas)
 
     @classmethod
-    def ft_dw(cls, ts_residuals: np.ndarray, normalize: bool = True) -> float:
+    def ft_test_dw(cls,
+                   ts_residuals: np.ndarray,
+                   normalize: bool = True) -> float:
         """Durbin-Watson test statistic value.
 
         This measure is in [0, 4] range.
@@ -265,7 +267,7 @@ class MFETSGeneral:
         return arch.unitroot.KPSS(ts).stat
 
     @classmethod
-    def ft_tp(cls, ts: np.ndarray) -> float:
+    def ft_tp_frac(cls, ts: np.ndarray) -> float:
         """Fraction of turning points in the time-series.
 
         A turning point is a time-series point `p_{i}` which both neighbor
@@ -292,7 +294,7 @@ class MFETSGeneral:
         return tp_frac
 
     @classmethod
-    def ft_sc(cls, ts: np.ndarray, ddof: int = 1) -> float:
+    def ft_sc_frac(cls, ts: np.ndarray, ddof: int = 1) -> float:
         """Fraction of step change points in the time-series.
 
         Let p_{t_{a}}^{t_{b}} be the subsequence of observations from the
@@ -368,7 +370,7 @@ class MFETSGeneral:
         return 1.0 / (1.0 + var_sets)
 
     @classmethod
-    def ft_max_lyap_exp(cls,
+    def ft_exp_max_lyap(cls,
                         ts: np.ndarray,
                         embed_dim: int,
                         lag: int,
@@ -386,7 +388,7 @@ class MFETSGeneral:
         return nolds.lyap_e(data=ts, emb_dim=embed_dim)
 
     @classmethod
-    def ft_hurst_exp(cls, ts: np.ndarray) -> float:
+    def ft_exp_hurst(cls, ts: np.ndarray) -> float:
         """TODO."""
         return nolds.hurst_rs(data=ts)
 
@@ -411,7 +413,6 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts)
     ts = ts.to_numpy()
 
-    """
     res = MFETSGeneral.ft_skewness(ts_residuals)
     print(res)
 
@@ -430,27 +431,30 @@ def _test() -> None:
     res = MFETSGeneral.ft_seasonality(ts_residuals, ts_season + ts_residuals)
     print(res)
 
-    res = MFETSGeneral.ft_dw(ts_residuals)
+    res = MFETSGeneral.ft_test_dw(ts_residuals)
     print(res)
 
-    res = MFETSGeneral.ft_tp(ts)
+    res = MFETSGeneral.ft_tp_frac(ts)
     print(res)
 
-    res = MFETSGeneral.ft_sc(ts)
+    res = MFETSGeneral.ft_sc_frac(ts)
     print(res)
 
-    res = MFETSGeneral.ft_pred(data1_embed.embed_ts(ts, dim=int(np.ceil(np.log10(ts.size)))))
+    res = MFETSGeneral.ft_pred(
+        data1_embed.embed_ts(ts, dim=int(np.ceil(np.log10(ts.size)))))
     print(res)
 
-    res = MFETSGeneral.ft_max_lyap_exp(ts, embed_dim=int(np.ceil(np.log10(ts.size))), lag=1)
+    res = MFETSGeneral.ft_exp_max_lyap(ts,
+                                       embed_dim=int(np.ceil(np.log10(
+                                           ts.size))),
+                                       lag=1)
     print(res)
 
-    res = MFETSGeneral.ft_hurst_exp(ts)
+    res = MFETSGeneral.ft_exp_hurst(ts)
     print(res)
 
     res = MFETSGeneral.ft_spikiness(ts_residuals)
     print(np.var(res))
-    """
 
     res = MFETSGeneral.ft_test_kpss(ts)
     print(res)

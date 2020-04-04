@@ -47,21 +47,21 @@ class MFETSAutoCorr:
 
     @classmethod
     def ft_pacf_detrended(cls,
-                          ts: np.ndarray,
-                          ts_trend: np.ndarray,
+                          ts_detrended: np.ndarray,
                           nlags: int = 5,
                           method: str = "ols-unbiased") -> np.ndarray:
         """TODO."""
-        return cls._calc_pacf(data=ts - ts_trend, nlags=nlags, method=method)
+        return cls._calc_pacf(data=ts_detrended, nlags=nlags, method=method)
 
     @classmethod
     def ft_pacf_deseasonalized(cls,
-                               ts: np.ndarray,
-                               ts_season: np.ndarray,
+                               ts_deseasonalized: np.ndarray,
                                nlags: int = 5,
                                method: str = "ols-unbiased") -> np.ndarray:
         """TODO."""
-        return cls._calc_pacf(data=ts - ts_season, nlags=nlags, method=method)
+        return cls._calc_pacf(data=ts_deseasonalized,
+                              nlags=nlags,
+                              method=method)
 
     @classmethod
     def ft_acf(cls,
@@ -81,23 +81,19 @@ class MFETSAutoCorr:
 
     @classmethod
     def ft_acf_detrended(cls,
-                         ts: np.ndarray,
-                         ts_trend: np.ndarray,
+                         ts_detrended: np.ndarray,
                          nlags: int = 5,
                          unbiased: bool = True) -> np.ndarray:
         """TODO."""
-        return cls._calc_acf(data=ts - ts_trend,
-                             nlags=nlags,
-                             unbiased=unbiased)
+        return cls._calc_acf(data=ts_detrended, nlags=nlags, unbiased=unbiased)
 
     @classmethod
     def ft_acf_deseasonalized(cls,
-                              ts: np.ndarray,
-                              ts_season: np.ndarray,
+                              ts_deseasonalized: np.ndarray,
                               nlags: int = 5,
                               unbiased: bool = True) -> np.ndarray:
         """TODO."""
-        return cls._calc_acf(data=ts - ts_season,
+        return cls._calc_acf(data=ts_deseasonalized,
                              nlags=nlags,
                              unbiased=unbiased)
 
@@ -119,16 +115,16 @@ def _test() -> None:
     res = MFETSAutoCorr.ft_pacf_residuals(ts_residuals)
     print(res)
 
-    res = MFETSAutoCorr.ft_acf_detrended(ts, ts_trend)
+    res = MFETSAutoCorr.ft_acf_detrended(ts - ts_trend)
     print(res)
 
-    res = MFETSAutoCorr.ft_pacf_detrended(ts, ts_trend)
+    res = MFETSAutoCorr.ft_pacf_detrended(ts - ts_trend)
     print(res)
 
-    res = MFETSAutoCorr.ft_acf_deseasonalized(ts, ts_season)
+    res = MFETSAutoCorr.ft_acf_deseasonalized(ts - ts_season)
     print(res)
 
-    res = MFETSAutoCorr.ft_pacf_deseasonalized(ts, ts_season)
+    res = MFETSAutoCorr.ft_pacf_deseasonalized(ts - ts_season)
     print(res)
 
 
