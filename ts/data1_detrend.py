@@ -6,6 +6,7 @@ import sklearn.preprocessing
 import sklearn.pipeline
 import sklearn.linear_model
 import statsmodels.stats.stattools
+import statsmodels.tsa.stattools
 
 import get_data
 
@@ -33,7 +34,11 @@ def detrend(y: np.ndarray,
         print(
             f"Durbin-Watson test for degree {deg}:", 
             statsmodels.stats.stattools.durbin_watson(residuals))
-    
+
+        print(
+            f"Augmented Dickey-Fuller test for degree {deg}:",
+            statsmodels.tsa.stattools.adfuller(residuals))
+
         if plot:
             plt.subplot(2, 2, deg + 1)
             plt.title(f"Detrended w/ degree {deg}")
