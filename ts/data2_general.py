@@ -169,18 +169,18 @@ class MFETSGeneral:
 
     @classmethod
     def ft_trend(cls,
-                 ts: np.ndarray,
                  ts_residuals: np.ndarray,
+                 ts_deseasonalized: np.ndarray,
                  ddof: int = 1) -> float:
         """Ratio of standard deviations of time-series and after detrend.
 
         Parameters
         ----------
-        ts: :obj:`np.ndarray`
-            One-dimensional time-series values.
-
         ts_residuals : :obj:`np.ndarray`
             Residuals (random noise) of an one-dimensional time-series.
+
+        ts_deseasonalized: :obj:`np.ndarray`
+            One-dimensional deseasonalized time-series values.
 
         ddof : float, optional
             Degrees of freedom for standard deviation.
@@ -195,10 +195,29 @@ class MFETSGeneral:
         ----------
         TODO.
         """
-        return np.std(ts, ddof=ddof) / np.std(ts_residuals, ddof=ddof)
+        trend = 1.0 - (np.var(ts_residuals, ddof=ddof) /
+                       np.var(ts_deseasonalized, ddof=ddof))
+
+        return max(0.0, trend)
 
     @classmethod
-    def ft_dw(cls, ts_residuals: np.ndarray) -> float:
+    def ft_seasonality(cls,
+                       ts_residuals: np.ndarray,
+                       ts_detrended: np.ndarray,
+                       ddof: int = 1) -> float:
+        """
+        TODO.
+
+        https://pkg.robjhyndman.com/tsfeatures/articles/tsfeatures.html
+        """
+
+        seas = 1.0 - (np.var(ts_residuals, ddof=ddof) /
+                      np.var(ts_detrended, ddof=doff))
+
+        return max(0.0, seas)
+
+    @classmethod
+    def ft_dw(cls, ts_residuals: np.ndarray, normalize: bool = True) -> float:
         """Durbin-Watson test statistic value.
 
         This measure is in [0, 4] range.
@@ -207,6 +226,10 @@ class MFETSGeneral:
         ----------
         ts_residuals : :obj:`np.ndarray`
             Residuals (random noise) of an one-dimensional time-series.
+
+        normalize : :obj:`bool`, optional
+            If True, divide the result by 4 to make the test statistic in
+            the [0, 1] range.
 
         Returns
         -------
@@ -217,7 +240,12 @@ class MFETSGeneral:
         ----------
         TODO.
         """
-        return statsmodels.stats.stattools.durbin_watson(ts_residuals)
+        dw_stat = statsmodels.stats.stattools.durbin_watson(ts_residuals)
+
+        if normalize:
+            dw_stat *= 0.25
+
+        return dw_stat
 
     @classmethod
     def ft_tp(cls, ts: np.ndarray) -> float:
@@ -389,7 +417,6 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts)
     ts = ts.to_numpy()
 
-    """
     res = MFETSGeneral.ft_skewness(ts_residuals)
     print(res)
 
@@ -402,7 +429,10 @@ def _test() -> None:
     res = MFETSGeneral.ft_sd(ts_residuals)
     print(res)
 
-    res = MFETSGeneral.ft_trend(ts, ts_residuals)
+    res = MFETSGeneral.ft_trend(ts_residuals, ts_trend + ts_residuals)
+    print(res)
+
+    res = MFETSGeneral.ft_seasonality(ts_residuals, ts_season + ts_residuals)
     print(res)
 
     res = MFETSGeneral.ft_dw(ts_residuals)
@@ -428,7 +458,6 @@ def _test() -> None:
 
     res = MFETSGeneral.ft_hurst_exp(ts)
     print(res)
-    """
 
     res = MFETSGeneral.ft_spikiness(ts_residuals)
     print(np.var(res))
