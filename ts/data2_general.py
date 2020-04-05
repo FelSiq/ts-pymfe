@@ -224,7 +224,11 @@ class MFETSGeneral:
                    normalize: bool = True) -> float:
         """Durbin-Watson test statistic value.
 
-        This measure is in [0, 4] range.
+        The ADF test works as follows:
+        Null Hypothesis (NH): there is no serial correlation.
+        Alternative Hypothesis (AH): there is serial correlation.
+
+        This test statistic value is in [0, 4] range.
 
         Parameters
         ----------
@@ -239,6 +243,8 @@ class MFETSGeneral:
         -------
         float
             Durbin-Watson test statistic for the time-series residuals.
+            If ``normalize`` is True, this test statistic is normalized
+            in [0, 1] range.
 
         References
         ----------
@@ -252,20 +258,102 @@ class MFETSGeneral:
         return dw_stat
 
     @classmethod
-    def ft_test_pp(cls, ts: np.ndarray) -> float:
-        """Phillips-Perron test.
+    def ft_test_adf(cls,
+                    ts: np.ndarray,
+                    max_lags: t.Optional[int] = None,
+                    return_pval: bool = False) -> float:
+        """Augmented Dickey-Fuller (ADF) test.
+
+        The ADF test works as follows:
+        Null Hypothesis (NH): there is a unit root.
+        Alternative Hypothesis (AH): there is not a unit root.
 
         TODO.
         """
-        return arch.unitroot.PhillipsPerron(ts).stat
+        res = statsmodels.tsa.stattools.adfuller(ts, maxlag=max_lags)
+
+        (stat, pvalue), _ = res[:2], res[2:]
+
+        if return_pval:
+            return pvalue
+
+        return stat
 
     @classmethod
-    def ft_test_kpss(cls, ts: np.ndarray) -> float:
-        """Kwiatkowski-Phillips-Schmidt-Shin test.
+    def ft_test_adf_gls(cls,
+                        ts: np.ndarray,
+                        max_lags: t.Optional[int] = None,
+                        return_pval: bool = False) -> float:
+        """Dickey-Fuller GLS (ADF-GLS) test.
+
+        The ADF-GLS test works as follows:
+        Null Hypothesis (NH): there is a unit root.
+        Alternative Hypothesis (AH): there is not a unit root.
 
         TODO.
         """
-        return arch.unitroot.KPSS(ts).stat
+        res = arch.unitroot.DFGLS(ts)
+
+        if return_pval:
+            return res.pvalue
+
+        return res.stat
+
+    @classmethod
+    def ft_test_pp(cls,
+                   ts: np.ndarray,
+                   lags: t.Optional[int] = None,
+                   return_pval: bool = False) -> float:
+        """Phillips-Perron (PP) test.
+
+        The PP test works as follows:
+        Null Hypothesis (NH): there is a unit root.
+        Alternative Hypothesis (AH): there is not a unit root.
+
+        TODO.
+        """
+        res = arch.unitroot.PhillipsPerron(ts, lags=lags)
+
+        if return_pval:
+            return res.pvalue
+
+        return res.stat
+
+    @classmethod
+    def ft_test_kpss(cls, ts: np.ndarray, return_pval: bool = False) -> float:
+        """Kwiatkowski-Phillips-Schmidt-Shin (KPSS) test.
+
+        The KPSS test works as follows:
+        Null Hypothesis (NH): the series is weakly stationary.
+        Alternative Hypothesis (AH): the series is non-stationary.
+
+        Return
+        """
+        res = arch.unitroot.KPSS(ts)
+
+        if return_pval:
+            return res.pvalue
+
+        return res.stat
+
+    @classmethod
+    def ft_test_za(cls, ts: np.ndarray, return_pval: bool = False) -> float:
+        """Zivot-Andrews (ZA) Test.
+
+        The ZA test works as follows:
+        Null Hypothesis (NH): the process contains a unit root with a
+        single structural break.
+        Alternative Hypothesis (AH): The process is trend and break
+        stationary.
+
+        Return
+        """
+        res = arch.unitroot.ZivotAndrews(ts)
+
+        if return_pval:
+            return res.pvalue
+
+        return res.stat
 
     @classmethod
     def ft_tp_frac(cls, ts: np.ndarray) -> float:
@@ -469,9 +557,6 @@ def _test() -> None:
     res = MFETSGeneral.ft_seasonality(ts_residuals, ts_season + ts_residuals)
     print(res)
 
-    res = MFETSGeneral.ft_test_dw(ts_residuals)
-    print(res)
-
     res = MFETSGeneral.ft_tp_frac(ts)
     print(res)
 
@@ -493,15 +578,28 @@ def _test() -> None:
 
     res = MFETSGeneral.ft_spikiness(ts_residuals)
     print(np.var(res))
-
-    res = MFETSGeneral.ft_test_kpss(ts)
+    """
+    res = MFETSGeneral.ft_test_adf(ts, return_pval=False)
     print(res)
 
-    res = MFETSGeneral.ft_test_pp(ts)
+    res = MFETSGeneral.ft_test_adf_gls(ts, return_pval=False)
+    print(res)
+
+    res = MFETSGeneral.ft_test_kpss(ts, return_pval=False)
+    print(res)
+
+    res = MFETSGeneral.ft_test_pp(ts, return_pval=False)
+    print(res)
+
+    res = MFETSGeneral.ft_test_dw(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_test_za(ts, return_pval=False)
     print(res)
     """
     res = MFETSGeneral.ft_tilled_var(ts)
     print(res)
+    """
 
 
 if __name__ == "__main__":
