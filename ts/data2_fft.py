@@ -158,8 +158,8 @@ class MFETSFreqDomain:
 
 
 def _test() -> None:
-    ts = get_data.load_data(2)
-    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts)
+    ts = get_data.load_data(3)
+    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts, period=12)
 
     res = MFETSFreqDomain._calc_power_spec(ts_residuals)
     print(res)

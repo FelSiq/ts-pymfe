@@ -38,6 +38,17 @@ class MFETSAutoCorr:
         return cls._calc_pacf(data=ts, nlags=nlags, method=method)
 
     @classmethod
+    def ft_pacf_diff(cls,
+                     ts: np.ndarray,
+                     diff_num: int = 1,
+                     nlags: int = 5,
+                     method: str = "ols-unbiased") -> np.ndarray:
+        """TODO."""
+        return cls._calc_pacf(data=np.diff(ts, n=diff_num),
+                              nlags=nlags,
+                              method=method)
+
+    @classmethod
     def ft_pacf_residuals(cls,
                           ts_residuals: np.ndarray,
                           nlags: int = 5,
@@ -88,6 +99,17 @@ class MFETSAutoCorr:
         return cls._calc_acf(data=ts, nlags=nlags, unbiased=unbiased)
 
     @classmethod
+    def ft_acf_diff(cls,
+                    ts: np.ndarray,
+                    diff_num: int = 1,
+                    nlags: int = 5,
+                    unbiased: bool = True) -> np.ndarray:
+        """TODO."""
+        return cls._calc_acf(data=np.diff(ts, n=diff_num),
+                             nlags=nlags,
+                             unbiased=unbiased)
+
+    @classmethod
     def ft_acf_residuals(cls,
                          ts_residuals: np.ndarray,
                          nlags: int = 5,
@@ -97,12 +119,11 @@ class MFETSAutoCorr:
 
     @classmethod
     def ft_acf_trend(cls,
-                         ts_trend: np.ndarray,
-                         nlags: int = 5,
-                         unbiased: bool = True) -> np.ndarray:
+                     ts_trend: np.ndarray,
+                     nlags: int = 5,
+                     unbiased: bool = True) -> np.ndarray:
         """TODO."""
         return cls._calc_acf(data=ts_trend, nlags=nlags, unbiased=unbiased)
-
 
     @classmethod
     def ft_acf_seasonality(cls,
@@ -132,8 +153,8 @@ class MFETSAutoCorr:
 
 
 def _test() -> None:
-    ts = get_data.load_data(2)
-    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts)
+    ts = get_data.load_data(3)
+    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts, period=12)
     ts = ts.to_numpy()
 
     res = MFETSAutoCorr.ft_acf(ts)
@@ -170,6 +191,12 @@ def _test() -> None:
     print(res)
 
     res = MFETSAutoCorr.ft_pacf_deseasonalized(ts - ts_season)
+    print(res)
+
+    res = MFETSAutoCorr.ft_acf_diff(ts)
+    print(res)
+
+    res = MFETSAutoCorr.ft_pacf_diff(ts)
     print(res)
 
 

@@ -200,7 +200,7 @@ class MFETSGeneral:
         trend = 1.0 - (np.var(ts_residuals, ddof=ddof) /
                        np.var(ts_deseasonalized, ddof=ddof))
 
-        return max(0.0, trend)
+        return min(1.0, max(0.0, trend))
 
     @classmethod
     def ft_seasonality(cls,
@@ -216,10 +216,10 @@ class MFETSGeneral:
         seas = 1.0 - (np.var(ts_residuals, ddof=ddof) /
                       np.var(ts_detrended, ddof=ddof))
 
-        return max(0.0, seas)
+        return min(1.0, max(0.0, seas))
 
     @classmethod
-    def ft_tp_frac(cls, ts: np.ndarray) -> float:
+    def ft_frac_tp(cls, ts: np.ndarray) -> float:
         """Fraction of turning points in the time-series.
 
         A turning point is a time-series point `p_{i}` which both neighbor
@@ -241,12 +241,12 @@ class MFETSGeneral:
         TODO.
         """
         diff_arr = np.ediff1d(ts)
-        tp_frac = np.mean(diff_arr[1:] * diff_arr[:-1] < 0)
+        frac_tp = np.mean(diff_arr[1:] * diff_arr[:-1] < 0)
 
-        return tp_frac
+        return frac_tp
 
     @classmethod
-    def ft_sc_frac(cls, ts: np.ndarray, ddof: int = 1) -> float:
+    def ft_frac_sc(cls, ts: np.ndarray, ddof: int = 1) -> float:
         """Fraction of step change points in the time-series.
 
         Let p_{t_{a}}^{t_{b}} be the subsequence of observations from the
@@ -276,13 +276,13 @@ class MFETSGeneral:
 
         ts_mean_abs_div = np.abs(ts[1:] - ts_cmeans[:-1])
 
-        sc_num = 0
+        num_sc = 0
 
         for i in np.arange(1 + ddof, ts.size):
-            sc_num += int(
+            num_sc += int(
                 ts_mean_abs_div[i - 1] > 2 * np.std(ts[:i], ddof=ddof))
 
-        return sc_num / (ts.size - 1)
+        return num_sc / (ts.size - 1)
 
     @classmethod
     def ft_pred(cls,
@@ -360,6 +360,39 @@ class MFETSGeneral:
         # here we return the full array.
         return vars_
 
+    @classmethod
+    def ft_frac_cp(cls,
+                   ts: np.ndarray,
+                   normalize: bool = True) -> t.Union[int, float]:
+        """TODO."""
+        higher_med = ts <= np.median(ts)
+        num_cp = np.sum(np.logical_xor(higher_med[1:], higher_med[:-1]))
+
+        if normalize:
+            num_cp /= ts.size
+
+        return num_cp
+
+    @classmethod
+    def ft_fs_len(cls, ts: np.ndarray, num_bins: int = 10) -> np.ndarray:
+        """TODO."""
+        ts_disc = np.digitize(ts, np.linspace(0, np.max(ts), num_bins))
+        i = 1
+        counter = 1
+        fs_len = []  # type: t.List[int]
+
+        while i < ts.size:
+            if not np.isclose(ts_disc[i], ts_disc[i - 1]):
+                fs_len.append(counter)
+                counter = 1
+
+            else:
+                counter += 1
+
+            i += 1
+
+        return np.asarray(fs_len, dtype=float)
+
     @staticmethod
     def _apply_on_tiles(ts: np.ndarray, num_tiles: int,
                         func: t.Callable[[np.ndarray], t.Any], *args,
@@ -377,17 +410,19 @@ class MFETSGeneral:
     def ft_lumpiness(cls,
                      ts: np.ndarray,
                      num_tiles: int = 16,
-                     ddof: int = 1) -> np.ndarray:
+                     ddof: int = 1,
+                     ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
         if num_tiles > 0.5 * ts.size:
             raise ValueError("'num_tiles' ({}) larger than half the "
                              "time-series size ({}).".format(
                                  num_tiles, 0.5 * ts.size))
 
-        ts = sklearn.preprocessing.StandardScaler().fit_transform(
-            ts.reshape(-1, 1)).ravel()
+        if ts_scaled is None:
+            ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
+                ts.reshape(-1, 1)).ravel()
 
-        tilled_vars = cls._apply_on_tiles(ts=ts,
+        tilled_vars = cls._apply_on_tiles(ts=ts_scaled,
                                           num_tiles=num_tiles,
                                           func=np.var,
                                           **{"ddof": ddof})
@@ -398,17 +433,21 @@ class MFETSGeneral:
         return tilled_vars
 
     @classmethod
-    def ft_stability(cls, ts: np.ndarray, num_tiles: int = 16) -> np.ndarray:
+    def ft_stability(cls,
+                     ts: np.ndarray,
+                     num_tiles: int = 16,
+                     ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
         if num_tiles > 0.5 * ts.size:
             raise ValueError("'num_tiles' ({}) larger than half the "
                              "time-series size ({}).".format(
                                  num_tiles, 0.5 * ts.size))
 
-        ts = sklearn.preprocessing.StandardScaler().fit_transform(
-            ts.reshape(-1, 1)).ravel()
+        if ts_scaled is None:
+            ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
+                ts.reshape(-1, 1)).ravel()
 
-        tilled_means = cls._apply_on_tiles(ts=ts,
+        tilled_means = cls._apply_on_tiles(ts=ts_scaled,
                                            num_tiles=num_tiles,
                                            func=np.mean)
 
@@ -478,12 +517,57 @@ class MFETSGeneral:
 
         return np.abs(ts_rol_win.var(ddof=ddof).diff(window_size))
 
+    @staticmethod
+    def _calc_season_mode_ind(ts_season: np.ndarray, period: int,
+                              indfunc: t.Callable[[np.ndarray], float]) -> int:
+        """TODO."""
+        inds = np.arange(period)
+
+        inds = np.array([
+            indfunc(ts_season[i * period + inds])
+            for i in np.arange(1, ts_season.size // period)
+        ],
+                        dtype=int)
+
+        mode_inds, _ = scipy.stats.mode(inds)
+        return mode_inds[0] + 1
+
+    @classmethod
+    def ft_peak_frac(cls,
+                     ts_season: np.ndarray,
+                     period: int,
+                     normalize: bool = True) -> t.Union[int, float]:
+        """TODO."""
+        ind_peak = cls._calc_season_mode_ind(ts_season=ts_season,
+                                             period=period,
+                                             indfunc=np.argmax)
+
+        if normalize:
+            ind_peak /= period
+
+        return ind_peak
+
+    @classmethod
+    def ft_trough_frac(cls,
+                       ts_season: np.ndarray,
+                       period: int,
+                       normalize: bool = True) -> float:
+        """TODO."""
+        ind_trough = cls._calc_season_mode_ind(ts_season=ts_season,
+                                               period=period,
+                                               indfunc=np.argmin)
+
+        if normalize:
+            ind_trough /= period
+
+        return ind_trough
+
 
 def _test() -> None:
     ts = get_data.load_data(3)
     ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts, period=12)
     ts = ts.to_numpy()
-    """
+
     res = MFETSGeneral.ft_skewness(ts_residuals)
     print(res)
 
@@ -502,10 +586,10 @@ def _test() -> None:
     res = MFETSGeneral.ft_seasonality(ts_residuals, ts_season + ts_residuals)
     print(res)
 
-    res = MFETSGeneral.ft_tp_frac(ts)
+    res = MFETSGeneral.ft_frac_tp(ts)
     print(res)
 
-    res = MFETSGeneral.ft_sc_frac(ts)
+    res = MFETSGeneral.ft_frac_sc(ts)
     print(res)
 
     res = MFETSGeneral.ft_pred(
@@ -529,13 +613,24 @@ def _test() -> None:
 
     res = MFETSGeneral.ft_stability(ts)
     print("stability", np.var(res))
-    """
 
     res = MFETSGeneral.ft_shift_level(ts)
     print(np.nanmax(res))
 
     res = MFETSGeneral.ft_shift_var(ts)
     print(np.nanmax(res))
+
+    res = MFETSGeneral.ft_frac_cp(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_fs_len(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_peak_frac(ts, period=12)
+    print(res)
+
+    res = MFETSGeneral.ft_trough_frac(ts, period=12)
+    print(res)
 
 
 if __name__ == "__main__":

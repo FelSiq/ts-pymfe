@@ -74,8 +74,9 @@ class MFETSStatTests:
         ----------
         TODO.
         """
-        res = statsmodels.stats.diagnostic.acorr_ljungbox(
-            ts_residuals, lags=lags, return_df=False)
+        res = statsmodels.stats.diagnostic.acorr_ljungbox(ts_residuals,
+                                                          lags=lags,
+                                                          return_df=False)
 
         stat, pvalue = res
 
@@ -109,6 +110,7 @@ class MFETSStatTests:
     @classmethod
     def ft_test_adf_gls(cls,
                         ts: np.ndarray,
+                        lag: t.Optional[int] = None,
                         max_lags: t.Optional[int] = None,
                         return_pval: bool = False) -> float:
         """Dickey-Fuller GLS (ADF-GLS) test.
@@ -119,7 +121,7 @@ class MFETSStatTests:
 
         TODO.
         """
-        res = arch.unitroot.DFGLS(ts)
+        res = arch.unitroot.DFGLS(ts, lags=lag, max_lags=max_lags)
 
         if return_pval:
             return res.pvalue
@@ -129,7 +131,7 @@ class MFETSStatTests:
     @classmethod
     def ft_test_pp(cls,
                    ts: np.ndarray,
-                   lags: t.Optional[int] = None,
+                   lag: t.Optional[int] = None,
                    return_pval: bool = False) -> float:
         """Phillips-Perron (PP) test.
 
@@ -139,7 +141,7 @@ class MFETSStatTests:
 
         TODO.
         """
-        res = arch.unitroot.PhillipsPerron(ts, lags=lags)
+        res = arch.unitroot.PhillipsPerron(ts, lags=lag)
 
         if return_pval:
             return res.pvalue
@@ -147,7 +149,10 @@ class MFETSStatTests:
         return res.stat
 
     @classmethod
-    def ft_test_kpss(cls, ts: np.ndarray, return_pval: bool = False) -> float:
+    def ft_test_kpss(cls,
+                     ts: np.ndarray,
+                     lag: t.Optional[int] = None,
+                     return_pval: bool = False) -> float:
         """Kwiatkowski-Phillips-Schmidt-Shin (KPSS) test.
 
         The KPSS test works as follows:
@@ -155,8 +160,10 @@ class MFETSStatTests:
         Alternative Hypothesis (AH): the series is non-stationary.
 
         Return
+        ------
+        TODO.
         """
-        res = arch.unitroot.KPSS(ts)
+        res = arch.unitroot.KPSS(ts, lags=lag)
 
         if return_pval:
             return res.pvalue
@@ -184,9 +191,9 @@ class MFETSStatTests:
 
 
 def _test() -> None:
-    ts = get_data.load_data(2)
-    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts)
-    ts = ts.to_numpy()
+    ts = get_data.load_data(3)
+    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts, period=12)
+    ts = ts.to_numpy().astype(float)
 
     res = MFETSStatTests.ft_test_adf(ts, return_pval=False)
     print(res)
