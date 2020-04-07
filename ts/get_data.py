@@ -5,6 +5,7 @@ filepath = (
     ("data/0/CalIt2.data", 2, 1),
     ("data/1/sales-of-shampoo-over-a-three-ye.csv", 1, 0),
     ("data/2/monthly-sunspots.csv", 1, 0),
+    ("data/3/AirPassengers.csv", 1, 0),
 )
 
 
