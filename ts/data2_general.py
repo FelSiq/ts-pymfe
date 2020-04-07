@@ -562,12 +562,38 @@ class MFETSGeneral:
 
         return ind_trough
 
+    @classmethod
+    def ft_walker_cross_frac(
+            cls,
+            ts: np.ndarray,
+            step_size: float = 0.1,
+            start_point: t.Optional[t.Union[int, float]] = None,
+            normalize: bool = True) -> float:
+        """TODO."""
+        if start_point is None:
+            start_point = np.mean(ts)
+
+        walker_pos = np.zeros(ts.size, dtype=float)
+        walker_pos[0] = start_point
+
+        for i in np.arange(2, ts.size):
+            diff = ts[i - 1] - walker_pos[i - 1]
+            walker_pos[i] = walker_pos[i - 1] + step_size * diff
+
+        cross_num = np.sum(
+            (walker_pos[:-1] - ts[:-1]) * (walker_pos[1:] - ts[1:]) < 0)
+
+        if normalize:
+            cross_num /= (walker_pos.size - 1)
+
+        return cross_num
 
 def _test() -> None:
     ts = get_data.load_data(3)
     ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts, period=12)
     ts = ts.to_numpy()
 
+    """
     res = MFETSGeneral.ft_skewness(ts_residuals)
     print(res)
 
@@ -630,6 +656,10 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_trough_frac(ts, period=12)
+    print(res)
+    """
+
+    res = MFETSGeneral.ft_walker_cross_frac(ts)
     print(res)
 
 
