@@ -1,5 +1,6 @@
 import typing as t
 
+import sklearn.preprocessing
 import numpy as np
 import pymfe.statistical
 import nolds
@@ -358,27 +359,65 @@ class MFETSGeneral:
         # here we return the full array.
         return vars_
 
+    @staticmethod
+    def _apply_on_tiles(ts: np.ndarray,
+                        num_tiles: int,
+                        func: t.Callable[[np.ndarray], t.Any],
+                        *args,
+                        **kwargs) -> np.ndarray:
+        """TODO."""
+        res = np.array([
+            func(split, *args, **kwargs)
+            for split in np.array_split(ts, num_tiles)
+        ], dtype=float)
+
+        return res
+
     @classmethod
-    def ft_tilled_var(cls,
+    def ft_lumpiness(cls,
                       ts: np.ndarray,
-                      num_windows: int = 16,
+                      num_tiles: int = 16,
                       ddof: int = 1) -> np.ndarray:
         """TODO."""
-        if num_windows > ts.size:
-            raise ValueError("'num_windows' ({}) larger than the "
+        if num_tiles > 0.5 * ts.size:
+            raise ValueError("'num_tiles' ({}) larger than half the "
                              "time-series size ({}).".format(
-                                 num_windows, ts.size))
+                                 num_tiles, 0.5 * ts.size))
 
-        vars_ = np.array([
-            np.var(split, ddof=ddof)
-            for split in np.array_split(ts, num_windows)
-        ],
-                         dtype=float)
+        ts = sklearn.preprocessing.StandardScaler().fit_transform(
+            ts.reshape(-1, 1)).ravel()
 
-        # Note: this feature, when summarized with 'mean', becomes the
-        # 'Stability' metafeature, and when summarized with 'var' becomes
-        # the 'lumpiness' of the time-series.
-        return vars_
+        tilled_vars = cls._apply_on_tiles(
+            ts=ts,
+            num_tiles=num_tiles,
+            func=np.var,
+            **{"ddof": ddof})
+
+        # Note: the 'lumpiness' is defined as the variance of the
+        # tilled variances. However, here, to enable other summarization,
+        # we return the full array of tiled variances.
+        return tilled_vars
+
+    @classmethod
+    def ft_stability(cls,
+                     ts: np.ndarray,
+                     num_tiles: int = 16) -> np.ndarray:
+        """TODO."""
+        if num_tiles > 0.5 * ts.size:
+            raise ValueError("'num_tiles' ({}) larger than half the "
+                             "time-series size ({}).".format(
+                                 num_tiles, 0.5 * ts.size))
+
+        ts = sklearn.preprocessing.StandardScaler().fit_transform(
+            ts.reshape(-1, 1)).ravel()
+
+        tilled_means = cls._apply_on_tiles(
+            ts=ts, num_tiles=num_tiles, func=np.mean)
+
+        # Note: the 'stability' is defined as the variance of the
+        # tilled means. However, here, to enable other summarization,
+        # we return the full array of tiled variances.
+        return tilled_means
 
     @classmethod
     def _fit_ord_quad_model(cls, ts: np.ndarray) -> t.Any:
@@ -396,8 +435,8 @@ class MFETSGeneral:
 
 
 def _test() -> None:
-    ts = get_data.load_data(2)
-    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts)
+    ts = get_data.load_data(3)
+    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts, period=12)
     ts = ts.to_numpy()
     """
     res = MFETSGeneral.ft_skewness(ts_residuals)
@@ -439,10 +478,13 @@ def _test() -> None:
 
     res = MFETSGeneral.ft_spikiness(ts_residuals)
     print(np.var(res))
-
-    res = MFETSGeneral.ft_tilled_var(ts)
-    print(res)
     """
+
+    res = MFETSGeneral.ft_lumpiness(ts)
+    print("lumpiness", np.var(res))
+
+    res = MFETSGeneral.ft_stability(ts)
+    print("stability", np.var(res))
 
 
 if __name__ == "__main__":
