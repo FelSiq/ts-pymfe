@@ -6,6 +6,7 @@ import pymfe.statistical
 import nolds
 import scipy.spatial
 import scipy.odr
+import pandas as pd
 
 import data1_detrend
 import data1_embed
@@ -360,24 +361,23 @@ class MFETSGeneral:
         return vars_
 
     @staticmethod
-    def _apply_on_tiles(ts: np.ndarray,
-                        num_tiles: int,
-                        func: t.Callable[[np.ndarray], t.Any],
-                        *args,
+    def _apply_on_tiles(ts: np.ndarray, num_tiles: int,
+                        func: t.Callable[[np.ndarray], t.Any], *args,
                         **kwargs) -> np.ndarray:
         """TODO."""
         res = np.array([
             func(split, *args, **kwargs)
             for split in np.array_split(ts, num_tiles)
-        ], dtype=float)
+        ],
+                       dtype=float)
 
         return res
 
     @classmethod
     def ft_lumpiness(cls,
-                      ts: np.ndarray,
-                      num_tiles: int = 16,
-                      ddof: int = 1) -> np.ndarray:
+                     ts: np.ndarray,
+                     num_tiles: int = 16,
+                     ddof: int = 1) -> np.ndarray:
         """TODO."""
         if num_tiles > 0.5 * ts.size:
             raise ValueError("'num_tiles' ({}) larger than half the "
@@ -387,11 +387,10 @@ class MFETSGeneral:
         ts = sklearn.preprocessing.StandardScaler().fit_transform(
             ts.reshape(-1, 1)).ravel()
 
-        tilled_vars = cls._apply_on_tiles(
-            ts=ts,
-            num_tiles=num_tiles,
-            func=np.var,
-            **{"ddof": ddof})
+        tilled_vars = cls._apply_on_tiles(ts=ts,
+                                          num_tiles=num_tiles,
+                                          func=np.var,
+                                          **{"ddof": ddof})
 
         # Note: the 'lumpiness' is defined as the variance of the
         # tilled variances. However, here, to enable other summarization,
@@ -399,9 +398,7 @@ class MFETSGeneral:
         return tilled_vars
 
     @classmethod
-    def ft_stability(cls,
-                     ts: np.ndarray,
-                     num_tiles: int = 16) -> np.ndarray:
+    def ft_stability(cls, ts: np.ndarray, num_tiles: int = 16) -> np.ndarray:
         """TODO."""
         if num_tiles > 0.5 * ts.size:
             raise ValueError("'num_tiles' ({}) larger than half the "
@@ -411,8 +408,9 @@ class MFETSGeneral:
         ts = sklearn.preprocessing.StandardScaler().fit_transform(
             ts.reshape(-1, 1)).ravel()
 
-        tilled_means = cls._apply_on_tiles(
-            ts=ts, num_tiles=num_tiles, func=np.mean)
+        tilled_means = cls._apply_on_tiles(ts=ts,
+                                           num_tiles=num_tiles,
+                                           func=np.mean)
 
         # Note: the 'stability' is defined as the variance of the
         # tilled means. However, here, to enable other summarization,
@@ -432,6 +430,53 @@ class MFETSGeneral:
             model_ort_quad = cls._fit_ord_quad_model(ts=ts)
 
         return
+
+    @staticmethod
+    def _get_rolling_window(
+        ts: np.ndarray,
+        window_size: int,
+        ts_scaled: t.Optional[np.ndarray] = None
+    ) -> pd.core.window.rolling.Rolling:
+        """TODO."""
+        if ts_scaled is None:
+            ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
+                ts.reshape(-1, 1)).ravel()
+
+        window_size = min(ts.size, window_size)
+        return pd.Series(ts_scaled).rolling(window_size, center=True)
+
+    @classmethod
+    def ft_shift_level(
+        cls,
+        ts: np.ndarray,
+        window_size: int = 12,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        if ts_rol_win is None:
+            ts_rol_win = cls._get_rolling_window(ts=ts,
+                                                 window_size=window_size,
+                                                 ts_scaled=ts_scaled)
+
+        return np.abs(ts_rol_win.mean().diff(window_size))
+
+    @classmethod
+    def ft_shift_var(
+        cls,
+        ts: np.ndarray,
+        window_size: int = 12,
+        ddof: int = 1,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        if ts_rol_win is None:
+            ts_rol_win = cls._get_rolling_window(ts=ts,
+                                                 window_size=window_size,
+                                                 ts_scaled=ts_scaled)
+
+        return np.abs(ts_rol_win.var(ddof=ddof).diff(window_size))
 
 
 def _test() -> None:
@@ -478,13 +523,19 @@ def _test() -> None:
 
     res = MFETSGeneral.ft_spikiness(ts_residuals)
     print(np.var(res))
-    """
 
     res = MFETSGeneral.ft_lumpiness(ts)
     print("lumpiness", np.var(res))
 
     res = MFETSGeneral.ft_stability(ts)
     print("stability", np.var(res))
+    """
+
+    res = MFETSGeneral.ft_shift_level(ts)
+    print(np.nanmax(res))
+
+    res = MFETSGeneral.ft_shift_var(ts)
+    print(np.nanmax(res))
 
 
 if __name__ == "__main__":
