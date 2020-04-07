@@ -428,6 +428,11 @@ class MFETSGeneral:
         return num_cp
 
     @classmethod
+    def ft_binmean(cls, ts: np.ndarray) -> np.ndarray:
+        """TODO."""
+        return (ts >= np.mean(ts)).astype(int)
+
+    @classmethod
     def ft_fs_len(cls, ts: np.ndarray, num_bins: int = 10) -> np.ndarray:
         """TODO."""
         ts_disc = np.digitize(ts, np.linspace(0, np.max(ts), num_bins))
@@ -722,6 +727,9 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_walker_cross_frac(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_binmean(ts)
     print(res)
 
 
