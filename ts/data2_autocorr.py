@@ -40,11 +40,11 @@ class MFETSAutoCorr:
     @classmethod
     def ft_pacf_diff(cls,
                      ts: np.ndarray,
-                     diff_num: int = 1,
+                     num_diff: int = 1,
                      nlags: int = 5,
                      method: str = "ols-unbiased") -> np.ndarray:
         """TODO."""
-        return cls._calc_pacf(data=np.diff(ts, n=diff_num),
+        return cls._calc_pacf(data=np.diff(ts, n=num_diff),
                               nlags=nlags,
                               method=method)
 
@@ -101,11 +101,11 @@ class MFETSAutoCorr:
     @classmethod
     def ft_acf_diff(cls,
                     ts: np.ndarray,
-                    diff_num: int = 1,
+                    num_diff: int = 1,
                     nlags: int = 5,
                     unbiased: bool = True) -> np.ndarray:
         """TODO."""
-        return cls._calc_acf(data=np.diff(ts, n=diff_num),
+        return cls._calc_acf(data=np.diff(ts, n=num_diff),
                              nlags=nlags,
                              unbiased=unbiased)
 

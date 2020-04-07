@@ -38,6 +38,32 @@ class MFETSGeneral:
         return np.std(ts_residuals, ddof=ddof)
 
     @classmethod
+    def ft_sd_diff(cls,
+                   ts: np.ndarray,
+                   num_diff: int = 1,
+                   ddof: int = 1) -> float:
+        """TODO.
+
+        Parameters
+        ----------
+        ts: :obj:`np.ndarray`
+            TODO.
+
+        ddof : float, optional
+            Degrees of freedom for standard deviation.
+
+        Returns
+        -------
+        float
+        TODO.
+
+        References
+        ----------
+        TODO.
+        """
+        return np.std(np.diff(ts, n=num_diff), ddof=ddof)
+
+    @classmethod
     def ft_skewness(cls,
                     ts_residuals: np.ndarray,
                     method: int = 3,
@@ -91,6 +117,34 @@ class MFETSGeneral:
                                                                bias=bias)
 
         return ts_skew
+
+    @classmethod
+    def ft_skewness_diff(cls,
+                         ts: np.ndarray,
+                         num_diff: int = 1,
+                         method: int = 3,
+                         bias: bool = True) -> float:
+        """TODO."""
+        ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=np.diff(
+            ts, n=num_diff),
+                                                               method=method,
+                                                               bias=bias)
+
+        return ts_skew
+
+    @classmethod
+    def ft_kurtosis_diff(cls,
+                         ts: np.ndarray,
+                         num_diff: int = 1,
+                         method: int = 3,
+                         bias: bool = True) -> float:
+        """TODO."""
+        ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=np.diff(
+            ts, n=num_diff),
+                                                               method=method,
+                                                               bias=bias)
+
+        return ts_kurt
 
     @classmethod
     def ft_kurtosis(cls,
@@ -563,12 +617,12 @@ class MFETSGeneral:
         return ind_trough
 
     @classmethod
-    def ft_walker_cross_frac(
-            cls,
-            ts: np.ndarray,
-            step_size: float = 0.1,
-            start_point: t.Optional[t.Union[int, float]] = None,
-            normalize: bool = True) -> float:
+    def ft_walker_cross_frac(cls,
+                             ts: np.ndarray,
+                             step_size: float = 0.1,
+                             start_point: t.Optional[t.Union[int,
+                                                             float]] = None,
+                             normalize: bool = True) -> float:
         """TODO."""
         if start_point is None:
             start_point = np.mean(ts)
@@ -580,19 +634,19 @@ class MFETSGeneral:
             diff = ts[i - 1] - walker_pos[i - 1]
             walker_pos[i] = walker_pos[i - 1] + step_size * diff
 
-        cross_num = np.sum(
-            (walker_pos[:-1] - ts[:-1]) * (walker_pos[1:] - ts[1:]) < 0)
+        cross_num = np.sum((walker_pos[:-1] - ts[:-1]) *
+                           (walker_pos[1:] - ts[1:]) < 0)
 
         if normalize:
             cross_num /= (walker_pos.size - 1)
 
         return cross_num
 
+
 def _test() -> None:
     ts = get_data.load_data(3)
     ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts, period=12)
     ts = ts.to_numpy()
-
     """
     res = MFETSGeneral.ft_skewness(ts_residuals)
     print(res)
@@ -658,6 +712,14 @@ def _test() -> None:
     res = MFETSGeneral.ft_trough_frac(ts, period=12)
     print(res)
     """
+    res = MFETSGeneral.ft_sd_diff(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_skewness_diff(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_kurtosis_diff(ts)
+    print(res)
 
     res = MFETSGeneral.ft_walker_cross_frac(ts)
     print(res)
