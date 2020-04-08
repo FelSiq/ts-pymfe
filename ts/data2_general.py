@@ -10,6 +10,7 @@ import pandas as pd
 
 import data1_detrend
 import data1_embed
+import data1_period
 import get_data
 
 
@@ -222,6 +223,16 @@ class MFETSGeneral:
         TODO.
         """
         return ts.size
+
+    @classmethod
+    def ft_period(cls,
+                  ts: np.ndarray,
+                  ts_period: t.Optional[int] = None) -> int:
+        """TODO."""
+        if ts_period is not None:
+            return ts_period
+
+        return data1_period.ts_period(ts)
 
     @classmethod
     def ft_trend(cls,
@@ -577,14 +588,14 @@ class MFETSGeneral:
         return np.abs(ts_rol_win.var(ddof=ddof).diff(window_size))
 
     @staticmethod
-    def _calc_season_mode_ind(ts_season: np.ndarray, period: int,
+    def _calc_season_mode_ind(ts_season: np.ndarray, ts_period: int,
                               indfunc: t.Callable[[np.ndarray], float]) -> int:
         """TODO."""
-        inds = np.arange(period)
+        inds = np.arange(ts_period)
 
         inds = np.array([
-            indfunc(ts_season[i * period + inds])
-            for i in np.arange(1, ts_season.size // period)
+            indfunc(ts_season[i * ts_period + inds])
+            for i in np.arange(1, ts_season.size // ts_period)
         ],
                         dtype=int)
 
@@ -594,30 +605,30 @@ class MFETSGeneral:
     @classmethod
     def ft_peak_frac(cls,
                      ts_season: np.ndarray,
-                     period: int,
+                     ts_period: int,
                      normalize: bool = True) -> t.Union[int, float]:
         """TODO."""
         ind_peak = cls._calc_season_mode_ind(ts_season=ts_season,
-                                             period=period,
+                                             ts_period=ts_period,
                                              indfunc=np.argmax)
 
         if normalize:
-            ind_peak /= period
+            ind_peak /= ts_period
 
         return ind_peak
 
     @classmethod
     def ft_trough_frac(cls,
                        ts_season: np.ndarray,
-                       period: int,
+                       ts_period: int,
                        normalize: bool = True) -> float:
         """TODO."""
         ind_trough = cls._calc_season_mode_ind(ts_season=ts_season,
-                                               period=period,
+                                               ts_period=ts_period,
                                                indfunc=np.argmin)
 
         if normalize:
-            ind_trough /= period
+            ind_trough /= ts_period
 
         return ind_trough
 
@@ -650,7 +661,10 @@ class MFETSGeneral:
 
 def _test() -> None:
     ts = get_data.load_data(3)
-    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts, period=12)
+
+    ts_period = data1_period.ts_period(ts)
+    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(
+        ts, ts_period=ts_period)
     ts = ts.to_numpy()
     """
     res = MFETSGeneral.ft_skewness(ts_residuals)
@@ -711,10 +725,10 @@ def _test() -> None:
     res = MFETSGeneral.ft_fs_len(ts)
     print(res)
 
-    res = MFETSGeneral.ft_peak_frac(ts, period=12)
+    res = MFETSGeneral.ft_peak_frac(ts, ts_period=12)
     print(res)
 
-    res = MFETSGeneral.ft_trough_frac(ts, period=12)
+    res = MFETSGeneral.ft_trough_frac(ts, ts_period=12)
     print(res)
     """
     res = MFETSGeneral.ft_sd_diff(ts)
@@ -730,6 +744,9 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_binmean(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_period(ts)
     print(res)
 
 

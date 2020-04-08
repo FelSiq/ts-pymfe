@@ -13,47 +13,62 @@ import pandas as pd
 import get_data
 
 
-def detrend(y: np.ndarray,
+def detrend(ts: np.ndarray,
             degrees: t.Union[int, t.Sequence[int]] = (1, 2, 3),
-            plot: bool = False) -> np.ndarray:
+            sig_level: t.Optional[float] = None,
+            plot: bool = False,
+            verbose: bool = False) -> np.ndarray:
     """Detrend a time series with a polynomial regression for each ``degree``."""
+    if plot and sig_level is not None:
+        raise ValueError("Can't 'plot' with 'sig_level' given.")
+
     if isinstance(degrees, int):
         degrees = [degrees]
 
-    t = np.arange(y.size).reshape(-1, 1)
+    t = np.arange(ts.size).reshape(-1, 1)
 
-    res = np.zeros((len(degrees), 2 * y.size))
-    
+    res = np.zeros((len(degrees), 2 * ts.size))
+
     for i, deg in enumerate(degrees):
         pip = sklearn.pipeline.make_pipeline(
             sklearn.preprocessing.PolynomialFeatures(deg),
             sklearn.linear_model.Ridge())
-    
-        pip.fit(t, y)
-        y_pred = pip.predict(t)
-        residuals = y - y_pred
-    
-        print(
-            f"Durbin-Watson test for degree {deg}:", 
-            statsmodels.stats.stattools.durbin_watson(residuals))
 
-        print(
-            f"Augmented Dickey-Fuller test for degree {deg}:",
-            statsmodels.tsa.stattools.adfuller(residuals))
+        pip.fit(t, ts)
+        trend_pred = pip.predict(t)
+        residuals = ts - trend_pred
+
+        if verbose or sig_level is not None:
+            adfuller_res = statsmodels.tsa.stattools.adfuller(residuals)
+            adfuller_pval = adfuller_res[1]
+
+        if verbose:
+            print(f"Durbin-Watson test for degree {deg}:",
+                  statsmodels.stats.stattools.durbin_watson(residuals))
+
+            print(f"Augmented Dickey-Fuller test for degree {deg}:",
+                  adfuller_res)
+
+        if sig_level is not None and adfuller_pval <= sig_level:
+            return residuals, trend_pred
 
         if plot:
             plt.subplot(2, 2, deg + 1)
             plt.title(f"Detrended w/ degree {deg}")
             plt.plot(t, residuals)
 
-        res[i, :] = np.hstack((residuals, y_pred))
+        res[i, :] = np.hstack((residuals, trend_pred))
 
     if plot:
         plt.subplot(221)
         plt.title("With trend")
-        plt.plot(t, y)
+        plt.plot(t, ts)
 
         plt.show()
+
+    if sig_level is not None:
+        raise RuntimeError("Can't detrend series. Please choose "
+                           "more degrees.")
 
     if len(degrees) == 1:
         return np.split(res[0, :], 2)
@@ -61,9 +76,15 @@ def detrend(y: np.ndarray,
     return np.split(res, 2, axis=1)
 
 
-def decompose(ts: t.Union[np.ndarray, pd.core.series.Series], period: t.Optional[int] = None) -> np.ndarray:
+def decompose(ts: t.Union[np.ndarray, pd.core.series.Series],
+              ts_period: t.Optional[int] = None,
+              plot: bool = False) -> np.ndarray:
     """Decompose a time-series in trend, seasonality and residuals."""
-    res = statsmodels.tsa.seasonal.STL(ts, period=period).fit()
+    res = statsmodels.tsa.seasonal.STL(ts, period=ts_period).fit()
+
+    if plot:
+        res.plot()
+        plt.show()
 
     if isinstance(ts, pd.core.series.Series):
         return res.trend.values, res.seasonal.values, res.resid.values
