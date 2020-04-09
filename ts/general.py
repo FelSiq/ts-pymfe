@@ -487,11 +487,12 @@ class MFETSGeneral:
                         func: t.Callable[[np.ndarray], t.Any], *args,
                         **kwargs) -> np.ndarray:
         """TODO."""
-        res = np.array([
-            func(split, *args, **kwargs)  # type: ignore
-            for split in np.array_split(ts, num_tiles)
-        ],
-                       dtype=float)
+        res = np.array(
+            [
+                func(split, *args, **kwargs)  # type: ignore
+                for split in np.array_split(ts, num_tiles)
+            ],
+            dtype=float)
 
         return res
 
@@ -600,6 +601,30 @@ class MFETSGeneral:
 
         return np.abs(ts_rol_win.var(ddof=ddof).diff(window_size))
 
+    @classmethod
+    def ft_shift_kl_div(
+            cls,
+            ts: np.ndarray,
+            window_size: int = 12,
+            ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
+        """TODO."""
+        if ts_scaled is None:
+            ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
+                ts.reshape(-1, 1)).ravel()
+
+        kl_divs = np.zeros(ts.size - window_size, dtype=float)
+
+        next_wind = ts_scaled[:window_size]
+        i = 1
+        while i < ts.size - window_size:
+            cur_wind = next_wind
+            next_wind = ts_scaled[i:i + window_size]
+            kl_divs[i - 1] = scipy.stats.entropy(cur_wind, next_wind)
+            i += 1
+
+        return np.diff(kl_divs[np.isfinite(kl_divs)])
+
     @staticmethod
     def _calc_season_mode_ind(ts_season: np.ndarray, ts_period: int,
                               indfunc: t.Callable[[np.ndarray], float]) -> int:
@@ -694,6 +719,28 @@ class MFETSGeneral:
 
         return trev
 
+    @classmethod
+    def ft_sample_entropy(cls,
+                          ts: np.ndarray,
+                          embed_dim: int = 2,
+                          factor: float = 0.2,
+                          ddof: int = 1,
+                          metric: str = "chebyshev",
+                          p: t.Union[int, float] = 2) -> float:
+        """TODO."""
+        def count_elements(dim: int) -> int:
+            embed = _embed.embed_ts(ts, dim=dim, lag=1)
+            dist_mat = scipy.spatial.distance.pdist(embed, metric=metric, p=p)
+            count = np.sum(dist_mat < threshold)
+            return count
+
+        threshold = factor * np.std(ts, ddof=ddof)
+
+        sample_entropy = -np.log(
+            count_elements(embed_dim + 1) / count_elements(embed_dim))
+
+        return sample_entropy
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -702,7 +749,7 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
-
+    """
     res = MFETSGeneral.ft_skewness(ts_residuals)
     print(res)
 
@@ -754,7 +801,11 @@ def _test() -> None:
 
     res = MFETSGeneral.ft_shift_var(ts)
     print(np.nanmax(res))
+    """
 
+    res = MFETSGeneral.ft_shift_kl_div(ts)
+    print(np.nanmax(res))
+    """
     res = MFETSGeneral.ft_frac_cp(ts)
     print(res)
 
@@ -792,6 +843,9 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_trev(ts, only_numerator=True)
+    print(res)
+    """
+    res = MFETSGeneral.ft_sample_entropy(ts)
     print(res)
 
 
