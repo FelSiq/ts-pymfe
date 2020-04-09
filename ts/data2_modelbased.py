@@ -2,10 +2,11 @@ import typing as t
 
 import sklearn.preprocessing
 import statsmodels.tsa.holtwinters
+import statsmodels.api
 import numpy as np
-import arch
 
 import get_data
+import data1_embed
 import data1_period
 import data1_detrend
 
@@ -28,12 +29,12 @@ class MFETSModelBased:
             ts_scaled = cls._scale_ts(ts=ts)
             precomp_vals["ts_scaled"] = ts_scaled
 
-        if "model_ets_double" not in kwargs:
-            model = cls._fit_model_ets_double(ts=ts_scaled, damped=damped)
-            precomp_vals["model_ets_double"] = model
+        if "res_model_ets_double" not in kwargs:
+            model = cls._fit_res_model_ets_double(ts=ts_scaled, damped=damped)
+            precomp_vals["res_model_ets_double"] = model
 
-            model = cls._fit_model_ets_triple(ts=ts_scaled, damped=damped)
-            precomp_vals["model_ets_triple"] = model
+            model = cls._fit_res_model_ets_triple(ts=ts_scaled, damped=damped)
+            precomp_vals["res_model_ets_triple"] = model
 
         return precomp_vals
 
@@ -46,7 +47,7 @@ class MFETSModelBased:
         return ts_scaled
 
     @staticmethod
-    def _fit_model_ets_double(
+    def _fit_res_model_ets_double(
         ts: np.ndarray,
         damped: bool = False
     ) -> statsmodels.tsa.holtwinters.HoltWintersResultsWrapper:
@@ -57,7 +58,7 @@ class MFETSModelBased:
         return model
 
     @staticmethod
-    def _fit_model_ets_triple(
+    def _fit_res_model_ets_triple(
         ts: np.ndarray,
         ts_period: int,
         damped: bool = False,
@@ -72,29 +73,23 @@ class MFETSModelBased:
 
         return model
 
-    @staticmethod
-    def _fit_model_arch(
-            ts: np.ndarray) -> arch.univariate.base.ARCHModelResult:
-        model = arch.arch_model(ts).fit(disp="off")
-        return model
-
     @classmethod
     def ft_ets_double_alpha(
         cls,
         ts: np.ndarray,
         damped: bool = False,
         ts_scaled: t.Optional[np.ndarray] = None,
-        model_ets_double: t.Optional[
+        res_model_ets_double: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None
     ) -> float:
         if ts_scaled is None:
             ts_scaled = cls._scale_ts(ts=ts)
 
-        if model_ets_double is None:
-            model_ets_double = cls._fit_model_ets_double(ts=ts_scaled,
+        if res_model_ets_double is None:
+            res_model_ets_double = cls._fit_res_model_ets_double(ts=ts_scaled,
                                                          damped=damped)
 
-        alpha = model_ets_double.params_formatted["param"]["smoothing_level"]
+        alpha = res_model_ets_double.params_formatted["param"]["smoothing_level"]
 
         return alpha
 
@@ -104,17 +99,17 @@ class MFETSModelBased:
         ts: np.ndarray,
         damped: bool = False,
         ts_scaled: t.Optional[np.ndarray] = None,
-        model_ets_double: t.Optional[
+        res_model_ets_double: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
         if ts_scaled is None:
             ts_scaled = cls._scale_ts(ts=ts)
 
-        if model_ets_double is None:
-            model_ets_double = cls._fit_model_ets_double(ts=ts_scaled,
+        if res_model_ets_double is None:
+            res_model_ets_double = cls._fit_res_model_ets_double(ts=ts_scaled,
                                                          damped=damped)
 
-        beta = model_ets_double.params_formatted["param"]["smoothing_slope"]
+        beta = res_model_ets_double.params_formatted["param"]["smoothing_slope"]
 
         return beta
 
@@ -125,18 +120,18 @@ class MFETSModelBased:
         ts_period: int,
         damped: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        model_ets_triple: t.Optional[
+        res_model_ets_triple: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
         if ts_scaled is None:
             ts_scaled = cls._scale_ts(ts=ts)
 
-        if model_ets_triple is None:
-            model_ets_triple = cls._fit_model_ets_triple(ts=ts_scaled,
+        if res_model_ets_triple is None:
+            res_model_ets_triple = cls._fit_res_model_ets_triple(ts=ts_scaled,
                                                          ts_period=ts_period,
                                                          damped=damped)
 
-        alpha = model_ets_triple.params_formatted["param"]["smoothing_level"]
+        alpha = res_model_ets_triple.params_formatted["param"]["smoothing_level"]
 
         return alpha
 
@@ -147,18 +142,18 @@ class MFETSModelBased:
         ts_period: int,
         damped: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        model_ets_triple: t.Optional[
+        res_model_ets_triple: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
         if ts_scaled is None:
             ts_scaled = cls._scale_ts(ts=ts)
 
-        if model_ets_triple is None:
-            model_ets_triple = cls._fit_model_ets_triple(ts=ts_scaled,
+        if res_model_ets_triple is None:
+            res_model_ets_triple = cls._fit_res_model_ets_triple(ts=ts_scaled,
                                                          ts_period=ts_period,
                                                          damped=damped)
 
-        beta = model_ets_triple.params_formatted["param"]["smoothing_slope"]
+        beta = res_model_ets_triple.params_formatted["param"]["smoothing_slope"]
 
         return beta
 
@@ -169,18 +164,18 @@ class MFETSModelBased:
         ts_period: int,
         damped: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        model_ets_triple: t.Optional[
+        res_model_ets_triple: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
         if ts_scaled is None:
             ts_scaled = cls._scale_ts(ts=ts)
 
-        if model_ets_triple is None:
-            model_ets_triple = cls._fit_model_ets_triple(ts=ts_scaled,
+        if res_model_ets_triple is None:
+            res_model_ets_triple = cls._fit_res_model_ets_triple(ts=ts_scaled,
                                                          ts_period=ts_period,
                                                          damped=damped)
 
-        gamma = model_ets_triple.params_formatted["param"][
+        gamma = res_model_ets_triple.params_formatted["param"][
             "smoothing_seasonal"]
 
         return gamma
@@ -188,18 +183,21 @@ class MFETSModelBased:
     @classmethod
     def ft_arch_adj_r_sqr(
         cls,
-        ts: np.ndarray,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        model_arch: t.Optional[arch.univariate.base.ARCHModelResult] = None
+        ts_residuals: np.ndarray,
+        embed_dim: int = 12,
     ) -> float:
         """TODO."""
-        if ts_scaled is None:
-            ts_scaled = cls._scale_ts(ts=ts)
+        ts_residuals = sklearn.preprocessing.StandardScaler(
+            ).fit_transform(np.square(ts_residuals).reshape(-1, 1)).ravel()
 
-        if model_arch is None:
-            model_arch = cls._fit_model_arch(ts=ts_scaled)
+        res_embed = data1_embed.embed_ts(
+            ts=ts_residuals, dim=embed_dim, lag=1, include_val=True)
 
-        return model_arch.rsquared_adj
+        X = statsmodels.api.add_constant(res_embed[:, 1:])
+        y = res_embed[:, 0, np.newaxis]
+        model_res_arch = statsmodels.api.OLS(y, X).fit()
+
+        return model_res_arch.rsquared_adj
 
 
 def _test() -> None:
@@ -227,7 +225,7 @@ def _test() -> None:
     print(res)
     """
 
-    res = MFETSModelBased.ft_arch_adj_r_sqr(ts_residuals)
+    res = MFETSModelBased.ft_arch_adj_r_sqr(ts)
     print(res)
 
 
