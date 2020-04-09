@@ -5,10 +5,10 @@ import statsmodels.tsa.holtwinters
 import statsmodels.api
 import numpy as np
 
-import get_data
-import data1_embed
-import data1_period
-import data1_detrend
+import _embed
+import _period
+import _detrend
+import _get_data
 
 
 class MFETSModelBased:
@@ -190,7 +190,7 @@ class MFETSModelBased:
         ts_residuals = sklearn.preprocessing.StandardScaler(
             ).fit_transform(np.square(ts_residuals).reshape(-1, 1)).ravel()
 
-        res_embed = data1_embed.embed_ts(
+        res_embed = _embed.embed_ts(
             ts=ts_residuals, dim=embed_dim, lag=1, include_val=True)
 
         X = statsmodels.api.add_constant(res_embed[:, 1:])
@@ -201,10 +201,10 @@ class MFETSModelBased:
 
 
 def _test() -> None:
-    ts = get_data.load_data(3)
+    ts = _get_data.load_data(3)
 
-    ts_period = data1_period.ts_period(ts)
-    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(
+    ts_period = _period.ts_period(ts)
+    ts_trend, ts_season, ts_residuals = _detrend.decompose(
         ts, ts_period=ts_period)
     ts = ts.to_numpy()
 

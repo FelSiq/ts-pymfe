@@ -10,7 +10,7 @@ import statsmodels.tsa.stattools
 import statsmodels.tsa.seasonal
 import pandas as pd
 
-import get_data
+import _get_data
 
 
 def detrend(ts: np.ndarray,
@@ -93,7 +93,7 @@ def decompose(ts: t.Union[np.ndarray, pd.core.series.Series],
 
 
 def _test() -> None:
-    detrend(get_data.load_data(), plot=True)
+    detrend(_get_data.load_data(), plot=True)
 
 
 if __name__ == "__main__":

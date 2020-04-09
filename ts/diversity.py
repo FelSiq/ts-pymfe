@@ -6,8 +6,8 @@ import sklearn.model_selection
 import scipy.stats
 import numpy as np
 
-import get_data
-import data1_detrend
+import _detrend
+import _get_data
 
 
 class MFETSDiversity:
@@ -28,8 +28,8 @@ class MFETSDiversity:
 
 
 def _test() -> None:
-    ts = get_data.load_data(2)
-    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts)
+    ts = _get_data.load_data(2)
+    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts)
     ts = ts.to_numpy()
 
     res = MFETSDiversity.ft_opt_boxcox_coef(ts)

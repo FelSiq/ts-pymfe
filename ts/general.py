@@ -8,10 +8,10 @@ import scipy.spatial
 import scipy.odr
 import pandas as pd
 
-import data1_detrend
-import data1_embed
-import data1_period
-import get_data
+import _detrend
+import _embed
+import _period
+import _get_data
 
 
 class MFETSGeneral:
@@ -232,7 +232,7 @@ class MFETSGeneral:
         if ts_period is not None:
             return ts_period
 
-        return data1_period.ts_period(ts)
+        return _period.ts_period(ts)
 
     @classmethod
     def ft_trend(cls,
@@ -673,13 +673,13 @@ class MFETSGeneral:
 
 
 def _test() -> None:
-    ts = get_data.load_data(3)
+    ts = _get_data.load_data(3)
 
-    ts_period = data1_period.ts_period(ts)
-    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(
+    ts_period = _period.ts_period(ts)
+    ts_trend, ts_season, ts_residuals = _detrend.decompose(
         ts, ts_period=ts_period)
     ts = ts.to_numpy()
-    """
+
     res = MFETSGeneral.ft_skewness(ts_residuals)
     print(res)
 
@@ -705,7 +705,7 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_pred(
-        data1_embed.embed_ts(ts, dim=int(np.ceil(np.log10(ts.size)))))
+        _embed.embed_ts(ts, dim=int(np.ceil(np.log10(ts.size)))))
     print(res)
 
     res = MFETSGeneral.ft_exp_max_lyap(ts,
@@ -767,7 +767,6 @@ def _test() -> None:
 
     res = MFETSGeneral.ft_linearity(ts_trend)
     print(res)
-    """
 
     res = MFETSGeneral.ft_trev(ts, only_numerator=True)
     print(res)

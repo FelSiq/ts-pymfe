@@ -4,8 +4,9 @@ import numpy as np
 import scipy.signal
 import scipy.stats
 
-import data1_detrend
-import get_data
+import _detrend
+import _period
+import _get_data
 
 
 class MFETSFreqDomain:
@@ -158,8 +159,9 @@ class MFETSFreqDomain:
 
 
 def _test() -> None:
-    ts = get_data.load_data(3)
-    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts, period=12)
+    ts = _get_data.load_data(3)
+    ts_period = _period.ts_period(ts=ts)
+    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts, ts_period=ts_period)
 
     res = MFETSFreqDomain._calc_power_spec(ts_residuals)
     print(res)

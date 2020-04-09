@@ -3,8 +3,9 @@ import typing as t
 import statsmodels.tsa.stattools
 import numpy as np
 
-import get_data
-import data1_detrend
+import _detrend
+import _period
+import _get_data
 
 
 class MFETSAutoCorr:
@@ -153,8 +154,9 @@ class MFETSAutoCorr:
 
 
 def _test() -> None:
-    ts = get_data.load_data(3)
-    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts, period=12)
+    ts = _get_data.load_data(3)
+    ts_period = _period.ts_period(ts)
+    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts, ts_period=ts_period)
     ts = ts.to_numpy()
 
     res = MFETSAutoCorr.ft_acf(ts)
