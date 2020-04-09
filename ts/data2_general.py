@@ -527,18 +527,11 @@ class MFETSGeneral:
         return tilled_means
 
     @classmethod
-    def _fit_ord_quad_model(cls, ts: np.ndarray) -> t.Any:
-        """https://docs.scipy.org/doc/scipy/reference/odr.html"""
-
-    @classmethod
     def ft_linearity(cls,
-                     ts: np.ndarray,
-                     model_ort_quad: t.Optional[t.Any] = None) -> float:
+                     ts_trend: np.ndarray) -> float:
         """TODO."""
-        if model_ort_quad is None:
-            model_ort_quad = cls._fit_ord_quad_model(ts=ts)
-
-        return
+        ts_trend_scaled = sklearn.preprocessing.StandardScaler(
+            ).fit_transform(ts_trend.reshape(-1, 1))
 
     @staticmethod
     def _get_rolling_window(
@@ -658,6 +651,26 @@ class MFETSGeneral:
 
         return cross_num
 
+    @classmethod
+    def ft_trev(cls, ts: np.ndarray, lag: int = 1, only_numerator: bool = False) -> float:
+        """TODO.
+
+        Normalized nonlinear autocorrelation.
+
+        https://github.com/benfulcher/hctsa/blob/master/Operations/CO_trev.m
+        """
+        diff = ts[lag:] - ts[:-lag]
+
+        numen = np.mean(np.power(diff, 3))
+
+        if only_numerator:
+            return numen
+
+        denom = np.power(np.mean(np.square(diff)), 1.5)
+        trev = numen / denom
+
+        return trev
+
 
 def _test() -> None:
     ts = get_data.load_data(3)
@@ -730,7 +743,7 @@ def _test() -> None:
 
     res = MFETSGeneral.ft_trough_frac(ts, ts_period=12)
     print(res)
-    """
+
     res = MFETSGeneral.ft_sd_diff(ts)
     print(res)
 
@@ -747,6 +760,16 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_period(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_sd_diff(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_linearity(ts_trend)
+    print(res)
+    """
+
+    res = MFETSGeneral.ft_trev(ts, only_numerator=True)
     print(res)
 
 
