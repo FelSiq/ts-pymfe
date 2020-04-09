@@ -33,7 +33,7 @@ class MFETSModelBased:
             model = cls._fit_res_model_ets_double(ts=ts_scaled, damped=damped)
             precomp_vals["res_model_ets_double"] = model
 
-            model = cls._fit_res_model_ets_triple(ts=ts_scaled, damped=damped)
+            model = cls._fit_res_model_ets_triple(ts=ts_scaled, ts_period=ts_period, damped=damped)
             precomp_vals["res_model_ets_triple"] = model
 
         return precomp_vals

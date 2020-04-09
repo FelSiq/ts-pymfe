@@ -126,8 +126,8 @@ class MFETSGeneral:
                          method: int = 3,
                          bias: bool = True) -> float:
         """TODO."""
-        ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=np.diff(
-            ts, n=num_diff),
+        ts_diff = np.diff(ts, n=num_diff)
+        ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_diff,
                                                                method=method,
                                                                bias=bias)
 
@@ -140,8 +140,8 @@ class MFETSGeneral:
                          method: int = 3,
                          bias: bool = True) -> float:
         """TODO."""
-        ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=np.diff(
-            ts, n=num_diff),
+        ts_diff = np.diff(ts, n=num_diff)
+        ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_diff,
                                                                method=method,
                                                                bias=bias)
 
@@ -284,7 +284,9 @@ class MFETSGeneral:
         return min(1.0, max(0.0, seas))
 
     @classmethod
-    def ft_frac_tp(cls, ts: np.ndarray) -> float:
+    def ft_frac_tp(cls,
+                   ts: np.ndarray,
+                   normalize: bool = False) -> t.Union[int, float]:
         """Fraction of turning points in the time-series.
 
         A turning point is a time-series point `p_{i}` which both neighbor
@@ -296,22 +298,32 @@ class MFETSGeneral:
         ts: :obj:`np.ndarray`
             One-dimensional time-series values.
 
+        normalize : bool, optional
+            If False, return the number of turning points instead.
+
         Returns
         -------
-        float
-            Fraction of turning points in the time-series.
+        float or int
+            Fraction of turning points in the time-series, if ``normalize``
+            is True. Number of turning points otherwise.
 
         References
         ----------
         TODO.
         """
         diff_arr = np.ediff1d(ts)
-        frac_tp = np.mean(diff_arr[1:] * diff_arr[:-1] < 0)
+        frac_tp = np.sum(diff_arr[1:] * diff_arr[:-1] < 0)
+
+        if normalize:
+            frac_tp /= ts.size - 1
 
         return frac_tp
 
     @classmethod
-    def ft_frac_sc(cls, ts: np.ndarray, ddof: int = 1) -> float:
+    def ft_frac_sc(cls,
+                   ts: np.ndarray,
+                   ddof: int = 1,
+                   normalize: bool = True) -> t.Union[int, float]:
         """Fraction of step change points in the time-series.
 
         Let p_{t_{a}}^{t_{b}} be the subsequence of observations from the
@@ -328,10 +340,14 @@ class MFETSGeneral:
         ddof : float, optional
             Degrees of freedom for standard deviation.
 
+        normalize : bool, optional
+            If False, return the number of step changes instead.
+
         Returns
         -------
-        float
-            Fraction of step change points in the time-series.
+        float or int
+            Fraction of step change points in the time-series, if
+            ``normalize`` is True. Number of step changes otherwise.
 
         References
         ----------
@@ -347,7 +363,10 @@ class MFETSGeneral:
             num_sc += int(
                 ts_mean_abs_div[i - 1] > 2 * np.std(ts[:i], ddof=ddof))
 
-        return num_sc / (ts.size - 1)
+        if normalize:
+            num_sc /= ts.size - 1
+
+        return num_sc
 
     @classmethod
     def ft_pred(cls,
@@ -469,7 +488,7 @@ class MFETSGeneral:
                         **kwargs) -> np.ndarray:
         """TODO."""
         res = np.array([
-            func(split, *args, **kwargs)
+            func(split, *args, **kwargs)  # type: ignore
             for split in np.array_split(ts, num_tiles)
         ],
                        dtype=float)
@@ -527,11 +546,12 @@ class MFETSGeneral:
         return tilled_means
 
     @classmethod
-    def ft_linearity(cls,
-                     ts_trend: np.ndarray) -> float:
+    def ft_linearity(cls, ts_trend: np.ndarray) -> float:
         """TODO."""
-        ts_trend_scaled = sklearn.preprocessing.StandardScaler(
-            ).fit_transform(ts_trend.reshape(-1, 1))
+        ts_trend_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
+            ts_trend.reshape(-1, 1))
+
+        return -1.0
 
     @staticmethod
     def _get_rolling_window(
@@ -606,7 +626,7 @@ class MFETSGeneral:
                                              indfunc=np.argmax)
 
         if normalize:
-            ind_peak /= ts_period
+            ind_peak /= ts_period  # type: ignore
 
         return ind_peak
 
@@ -614,14 +634,14 @@ class MFETSGeneral:
     def ft_trough_frac(cls,
                        ts_season: np.ndarray,
                        ts_period: int,
-                       normalize: bool = True) -> float:
+                       normalize: bool = True) -> t.Union[int, float]:
         """TODO."""
         ind_trough = cls._calc_season_mode_ind(ts_season=ts_season,
                                                ts_period=ts_period,
                                                indfunc=np.argmin)
 
         if normalize:
-            ind_trough /= ts_period
+            ind_trough /= ts_period  # type: ignore
 
         return ind_trough
 
@@ -631,7 +651,7 @@ class MFETSGeneral:
                              step_size: float = 0.1,
                              start_point: t.Optional[t.Union[int,
                                                              float]] = None,
-                             normalize: bool = True) -> float:
+                             normalize: bool = True) -> t.Union[int, float]:
         """TODO."""
         if start_point is None:
             start_point = np.mean(ts)
@@ -652,7 +672,10 @@ class MFETSGeneral:
         return cross_num
 
     @classmethod
-    def ft_trev(cls, ts: np.ndarray, lag: int = 1, only_numerator: bool = False) -> float:
+    def ft_trev(cls,
+                ts: np.ndarray,
+                lag: int = 1,
+                only_numerator: bool = False) -> float:
         """TODO.
 
         Normalized nonlinear autocorrelation.
@@ -676,8 +699,8 @@ def _test() -> None:
     ts = _get_data.load_data(3)
 
     ts_period = _period.ts_period(ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(
-        ts, ts_period=ts_period)
+    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
+                                                           ts_period=ts_period)
     ts = ts.to_numpy()
 
     res = MFETSGeneral.ft_skewness(ts_residuals)
