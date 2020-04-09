@@ -453,7 +453,7 @@ class MFETSGeneral:
         num_cp = np.sum(np.logical_xor(higher_med[1:], higher_med[:-1]))
 
         if normalize:
-            num_cp /= ts.size
+            num_cp /= ts.size - 1
 
         return num_cp
 
@@ -667,7 +667,7 @@ class MFETSGeneral:
                            (walker_pos[1:] - ts[1:]) < 0)
 
         if normalize:
-            cross_num /= (walker_pos.size - 1)
+            cross_num /= walker_pos.size - 1
 
         return cross_num
 
