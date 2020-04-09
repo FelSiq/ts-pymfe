@@ -724,20 +724,20 @@ class MFETSGeneral:
                           ts: np.ndarray,
                           embed_dim: int = 2,
                           factor: float = 0.2,
-                          ddof: int = 1,
                           metric: str = "chebyshev",
-                          p: t.Union[int, float] = 2) -> float:
+                          p: t.Union[int, float] = 2,
+                          lag: int = 1,
+                          ddof: int = 1) -> float:
         """TODO."""
-        def count_elements(dim: int) -> int:
-            embed = _embed.embed_ts(ts, dim=dim, lag=1)
+        def neigh_num(dim: int) -> int:
+            embed = _embed.embed_ts(ts, dim=dim, lag=lag)
             dist_mat = scipy.spatial.distance.pdist(embed, metric=metric, p=p)
-            count = np.sum(dist_mat < threshold)
-            return count
+            return np.sum(dist_mat < threshold)
 
         threshold = factor * np.std(ts, ddof=ddof)
 
         sample_entropy = -np.log(
-            count_elements(embed_dim + 1) / count_elements(embed_dim))
+            neigh_num(embed_dim + 1) / neigh_num(embed_dim))
 
         return sample_entropy
 
@@ -845,7 +845,7 @@ def _test() -> None:
     res = MFETSGeneral.ft_trev(ts, only_numerator=True)
     print(res)
     """
-    res = MFETSGeneral.ft_sample_entropy(ts)
+    res = MFETSGeneral.ft_sample_entropy(ts, lag=1)
     print(res)
 
 
