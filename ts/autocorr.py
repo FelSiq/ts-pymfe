@@ -12,9 +12,12 @@ class MFETSAutoCorr:
     @classmethod
     def _calc_acf(cls,
                   data: np.ndarray,
-                  nlags: int = 5,
+                  nlags: t.Optional[int] = 5,
                   unbiased: bool = True) -> np.ndarray:
         """TODO."""
+        if nlags is None:
+            nlags = data.size // 2
+
         acf = statsmodels.tsa.stattools.acf(data,
                                             nlags=nlags,
                                             unbiased=unbiased,
@@ -24,9 +27,12 @@ class MFETSAutoCorr:
     @classmethod
     def _calc_pacf(cls,
                    data: np.ndarray,
-                   nlags: int = 5,
+                   nlags: t.Optional[int] = 5,
                    method: str = "ols-unbiased") -> np.ndarray:
         """TODO."""
+        if nlags is None:
+            nlags = data.size // 2
+
         pacf = statsmodels.tsa.stattools.pacf(data, nlags=nlags, method=method)
         return pacf[1:]
 
@@ -95,8 +101,12 @@ class MFETSAutoCorr:
     def ft_acf(cls,
                ts: np.ndarray,
                nlags: int = 5,
-               unbiased: bool = True) -> np.ndarray:
+               unbiased: bool = True,
+               ts_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
+        if ts_acfs is None and ts_acfs.size == nlags:
+            return ts_acfs
+
         return cls._calc_acf(data=ts, nlags=nlags, unbiased=unbiased)
 
     @classmethod
@@ -152,12 +162,67 @@ class MFETSAutoCorr:
                              nlags=nlags,
                              unbiased=unbiased)
 
+    @classmethod
+    def ft_first_acf_nonpos(
+            cls,
+            ts: np.ndarray,
+            max_nlags: t.Optional[int] = None,
+            unbiased: bool = True,
+            ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+        """TODO."""
+        if ts_acfs is None:
+            ts_acfs = cls._calc_acf(data=ts,
+                                    nlags=max_nlags,
+                                    unbiased=unbiased)
+
+        nonpos_acfs = np.flatnonzero(ts_acfs <= 0)
+
+        try:
+            return nonpos_acfs[0] + 1
+
+        except IndexError:
+            return np.nan
+
+    @classmethod
+    def ft_first_acf_locmin(
+            cls,
+            ts: np.ndarray,
+            max_nlags: t.Optional[int] = None,
+            unbiased: bool = True,
+            ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+        """TODO."""
+        if ts_acfs is None:
+            ts_acfs = cls._calc_acf(data=ts,
+                                    nlags=max_nlags,
+                                    unbiased=unbiased)
+
+        if ts_acfs.size <= 2:
+            return np.nan
+
+        acfs_diff = np.diff(ts_acfs)
+        acfs_locmin = np.flatnonzero(
+            np.logical_and(0 < acfs_diff[1:], 0 > acfs_diff[:-1]))
+
+        try:
+            return acfs_locmin[0] + 2
+
+        except IndexError:
+            return np.nan
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
     ts_period = _period.ts_period(ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts, ts_period=ts_period)
+    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
+                                                           ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSAutoCorr.ft_first_acf_locmin(ts)
+    print(res)
+
+    res = MFETSAutoCorr.ft_first_acf_nonpos(ts)
+    print(res)
+    exit(1)
 
     res = MFETSAutoCorr.ft_acf(ts)
     print(res)
