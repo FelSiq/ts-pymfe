@@ -5,6 +5,7 @@ import arch.unitroot
 import statsmodels.stats.stattools
 import statsmodels.stats.diagnostic
 
+import data1_period
 import data1_detrend
 import data1_embed
 import get_data
@@ -192,7 +193,8 @@ class MFETSStatTests:
 
 def _test() -> None:
     ts = get_data.load_data(3)
-    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts, period=12)
+    ts_period = data1_period.ts_period(ts)
+    ts_trend, ts_season, ts_residuals = data1_detrend.decompose(ts, ts_period=ts_period)
     ts = ts.to_numpy().astype(float)
 
     res = MFETSStatTests.ft_test_adf(ts, return_pval=False)
