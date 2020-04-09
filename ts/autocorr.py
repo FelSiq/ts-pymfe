@@ -209,6 +209,82 @@ class MFETSAutoCorr:
         except IndexError:
             return np.nan
 
+    @classmethod
+    def _apply_on_ts_samples(
+            cls,
+            ts: np.ndarray,
+            func: t.Callable[[np.ndarray], float],
+            num_samples: int = 128,
+            sample_size_frac: float = 0.2,
+            max_nlags: t.Optional[int] = None,
+            unbiased: bool = True,
+            random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        if not 0 < sample_size_frac < 1:
+            raise ValueError("'sample_size_frac' must be in (0, 1) "
+                             "range (got {}).".format(sample_size_frac))
+
+        if random_state is not None:
+            np.random.seed(random_state)
+
+        sample_size = int(np.ceil(ts.size * sample_size_frac))
+        start_inds = np.random.randint(ts.size - sample_size + 1,
+                                       size=num_samples)
+
+        res = np.array([
+            cls.ft_first_acf_nonpos(ts=ts[s_ind:s_ind + sample_size],
+                                    max_nlags=max_nlags,
+                                    unbiased=unbiased) for s_ind in start_inds
+        ],
+                       dtype=float)
+
+        # Note: the original metafeatures are the mean value of
+        # 'result'. However, to enable summarization,
+        # here we return all the values.
+        return res
+
+    @classmethod
+    def ft_sfirst_acf_nonpos(
+            cls,
+            ts: np.ndarray,
+            num_samples: int = 128,
+            sample_size_frac: float = 0.2,
+            max_nlags: t.Optional[int] = None,
+            unbiased: bool = True,
+            random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        sample_acf_nonpos = cls._apply_on_ts_samples(
+            ts=ts,
+            func=cls.ft_first_acf_nonpos,
+            num_samples=num_samples,
+            sample_size_frac=sample_size_frac,
+            random_state=random_state,
+            max_nlags=max_nlags,
+            unbiased=unbiased)
+
+        return sample_acf_nonpos
+
+    @classmethod
+    def ft_sfirst_acf_locmin(
+            cls,
+            ts: np.ndarray,
+            num_samples: int = 128,
+            sample_size_frac: float = 0.2,
+            max_nlags: t.Optional[int] = None,
+            unbiased: bool = True,
+            random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        sample_acf_locmin = cls._apply_on_ts_samples(
+            ts=ts,
+            func=cls.ft_first_acf_locmin,
+            num_samples=num_samples,
+            sample_size_frac=sample_size_frac,
+            random_state=random_state,
+            max_nlags=max_nlags,
+            unbiased=unbiased)
+
+        return sample_acf_locmin
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -217,12 +293,18 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
+    res = MFETSAutoCorr.ft_sfirst_acf_locmin(ts)
+    print(res)
+
+    res = MFETSAutoCorr.ft_sfirst_acf_nonpos(ts)
+    print(res)
+    exit(1)
+
     res = MFETSAutoCorr.ft_first_acf_locmin(ts)
     print(res)
 
     res = MFETSAutoCorr.ft_first_acf_nonpos(ts)
     print(res)
-    exit(1)
 
     res = MFETSAutoCorr.ft_acf(ts)
     print(res)
