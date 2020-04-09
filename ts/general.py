@@ -8,6 +8,7 @@ import scipy.spatial
 import scipy.odr
 import pandas as pd
 
+import autocorr
 import _detrend
 import _embed
 import _period
@@ -741,6 +742,42 @@ class MFETSGeneral:
 
         return sample_entropy
 
+    @classmethod
+    def ft_embed_in_sphere(cls,
+                           ts: np.ndarray,
+                           radius: t.Union[int, float] = 1,
+                           embed_dim: int = 2,
+                           lag: t.Optional[int] = None,
+                           normalize_ts: bool = True,
+                           normalize: bool = True,
+                           ts_acfs: t.Optional[np.ndarray] = None,
+                           max_nlags: t.Optional[int] = None,
+                           unbiased: bool = True) -> t.Union[int, float]:
+        """TODO."""
+        if radius <= 0:
+            raise ValueError(
+                "'radius' must be positive (got {}).".format(radius))
+
+        if lag is None:
+            lag = autocorr.MFETSAutoCorr.ft_first_acf_nonpos(
+                ts=ts, ts_acfs=ts_acfs, max_nlags=max_nlags, unbiased=unbiased)
+
+        if normalize_ts:
+            ts = sklearn.preprocessing.StandardScaler().fit_transform(
+                ts.reshape(-1, 1)).ravel()
+
+        embed = _embed.embed_ts(ts, dim=embed_dim, lag=lag)
+        embed_radius = np.linalg.norm(embed, ord=2, axis=1)
+
+        # Note: can verify that every embed is in the same
+        # hypersphere because all embeds are centered at 0.
+        in_hypersphere = np.sum(embed_radius <= radius)
+
+        if normalize:
+            in_hypersphere /= embed_radius.size
+
+        return in_hypersphere
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -749,7 +786,11 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
-    """
+
+    res = MFETSGeneral.ft_embed_in_sphere(ts)
+    print(res)
+    exit(1)
+
     res = MFETSGeneral.ft_skewness(ts_residuals)
     print(res)
 
@@ -801,11 +842,10 @@ def _test() -> None:
 
     res = MFETSGeneral.ft_shift_var(ts)
     print(np.nanmax(res))
-    """
 
     res = MFETSGeneral.ft_shift_kl_div(ts)
     print(np.nanmax(res))
-    """
+
     res = MFETSGeneral.ft_frac_cp(ts)
     print(res)
 
@@ -844,7 +884,7 @@ def _test() -> None:
 
     res = MFETSGeneral.ft_trev(ts, only_numerator=True)
     print(res)
-    """
+
     res = MFETSGeneral.ft_sample_entropy(ts, lag=1)
     print(res)
 
