@@ -1,6 +1,11 @@
 import typing as t
 
 import numpy as np
+import sklearn.model_selection
+
+import _period
+import _detrend
+import _get_data
 
 
 class _TSMeanModel:
@@ -33,8 +38,8 @@ class MFETSLandmarking:
             cls,
             ts: np.ndarray,
             lm_sample_frac: float,
-            random_state: t.Optional[int] = tsone,
-            sample_inds: t.Optional[np.ndarray] = tsone,
+            random_state: t.Optional[int] = None,
+            sample_inds: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Select ``lm_sample_frac`` percent of data from ``ts``."""
         if lm_sample_frac >= 1.0 and sample_inds is None:
