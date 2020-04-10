@@ -11,10 +11,6 @@ import _get_data
 
 
 class MFETSDiversity:
-    @staticmethod
-    def calc_smape(arr_a: np.ndarray, arr_b: np.ndarray) -> float:
-        return 200 * np.mean(np.abs(arr_a - arr_b) / (arr_a + arr_b))
-
     @classmethod
     def ft_opt_boxcox_coef(cls,
                            ts: np.ndarray,
