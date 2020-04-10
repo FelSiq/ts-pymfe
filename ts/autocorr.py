@@ -8,7 +8,7 @@ import _period
 import _get_data
 
 
-class MFETSAutoCorr:
+class MFETSAutocorr:
     @classmethod
     def _calc_acf(cls,
                   data: np.ndarray,
@@ -293,59 +293,59 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
-    res = MFETSAutoCorr.ft_sfirst_acf_locmin(ts)
+    res = MFETSAutocorr.ft_sfirst_acf_locmin(ts)
     print(res)
 
-    res = MFETSAutoCorr.ft_sfirst_acf_nonpos(ts)
+    res = MFETSAutocorr.ft_sfirst_acf_nonpos(ts)
     print(res)
     exit(1)
 
-    res = MFETSAutoCorr.ft_first_acf_locmin(ts)
+    res = MFETSAutocorr.ft_first_acf_locmin(ts)
     print(res)
 
-    res = MFETSAutoCorr.ft_first_acf_nonpos(ts)
+    res = MFETSAutocorr.ft_first_acf_nonpos(ts)
     print(res)
 
-    res = MFETSAutoCorr.ft_acf(ts)
+    res = MFETSAutocorr.ft_acf(ts)
     print(res)
 
-    res = MFETSAutoCorr.ft_pacf(ts)
+    res = MFETSAutocorr.ft_pacf(ts)
     print(res)
 
-    res = MFETSAutoCorr.ft_acf_trend(ts_trend)
+    res = MFETSAutocorr.ft_acf_trend(ts_trend)
     print(res)
 
-    res = MFETSAutoCorr.ft_pacf_trend(ts_trend)
+    res = MFETSAutocorr.ft_pacf_trend(ts_trend)
     print(res)
 
-    res = MFETSAutoCorr.ft_acf_residuals(ts_residuals)
+    res = MFETSAutocorr.ft_acf_residuals(ts_residuals)
     print(res)
 
-    res = MFETSAutoCorr.ft_pacf_residuals(ts_residuals)
+    res = MFETSAutocorr.ft_pacf_residuals(ts_residuals)
     print(res)
 
-    res = MFETSAutoCorr.ft_acf_seasonality(ts_season)
+    res = MFETSAutocorr.ft_acf_seasonality(ts_season)
     print(res)
 
-    res = MFETSAutoCorr.ft_pacf_seasonality(ts_season)
+    res = MFETSAutocorr.ft_pacf_seasonality(ts_season)
     print(res)
 
-    res = MFETSAutoCorr.ft_acf_detrended(ts - ts_trend)
+    res = MFETSAutocorr.ft_acf_detrended(ts - ts_trend)
     print(res)
 
-    res = MFETSAutoCorr.ft_pacf_detrended(ts - ts_trend)
+    res = MFETSAutocorr.ft_pacf_detrended(ts - ts_trend)
     print(res)
 
-    res = MFETSAutoCorr.ft_acf_deseasonalized(ts - ts_season)
+    res = MFETSAutocorr.ft_acf_deseasonalized(ts - ts_season)
     print(res)
 
-    res = MFETSAutoCorr.ft_pacf_deseasonalized(ts - ts_season)
+    res = MFETSAutocorr.ft_pacf_deseasonalized(ts - ts_season)
     print(res)
 
-    res = MFETSAutoCorr.ft_acf_diff(ts)
+    res = MFETSAutocorr.ft_acf_diff(ts)
     print(res)
 
-    res = MFETSAutoCorr.ft_pacf_diff(ts)
+    res = MFETSAutocorr.ft_pacf_diff(ts)
     print(res)
 
 
