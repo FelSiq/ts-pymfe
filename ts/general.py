@@ -207,7 +207,8 @@ class MFETSGeneral:
     @classmethod
     def ft_fs_len(cls, ts: np.ndarray, num_bins: int = 10) -> np.ndarray:
         """TODO."""
-        ts_disc = np.digitize(ts, np.linspace(0, np.max(ts), num_bins))
+        ts_disc = np.digitize(ts, np.linspace(np.min(ts), np.max(ts),
+                                              num_bins))
         i = 1
         counter = 1
         fs_len = []  # type: t.List[int]
@@ -351,6 +352,22 @@ class MFETSGeneral:
 
         return in_hypersphere
 
+    @classmethod
+    def ft_hist_entropy(cls,
+                        ts: np.ndarray,
+                        num_bins: int = 10,
+                        normalize: bool = True) -> np.ndarray:
+        """TODO."""
+        ts_disc = np.digitize(ts, np.linspace(np.min(ts), np.max(ts),
+                                              num_bins))
+
+        entropy = scipy.stats.entropy(ts_disc, base=2)
+
+        if normalize:
+            entropy /= np.log2(ts_disc.size)
+
+        return entropy
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -359,6 +376,9 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSGeneral.ft_hist_entropy(ts)
+    print(res)
 
     res = MFETSGeneral.ft_embed_in_sphere(ts)
     print(res)
