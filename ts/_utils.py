@@ -1,6 +1,41 @@
 import typing as t
 
+import sklearn.preprocessing
 import numpy as np
+import pandas as pd
+
+
+def apply_on_tiles(ts: np.ndarray, num_tiles: int,
+                   func: t.Callable[[np.ndarray],
+                                    t.Any], *args, **kwargs) -> np.ndarray:
+    """Apply a function on time-series tiles (non-overlapping windows)."""
+    res = np.array(
+        [
+            func(split, *args, **kwargs)  # type: ignore
+            for split in np.array_split(ts, num_tiles)
+        ],
+        dtype=float)
+
+    return res
+
+
+def get_rolling_window(
+    ts: np.ndarray,
+    window_size: int,
+    center: bool = True,
+    ts_scaled: t.Optional[np.ndarray] = None,
+) -> pd.core.window.rolling.Rolling:
+    """Apply a function on time-series rolling (overlapping) windows.
+
+    If ``center`` is True, then each rolling window is centered at the
+    central instance rather than the initial instance.
+    """
+    if ts_scaled is None:
+        ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
+            ts.reshape(-1, 1)).ravel()
+
+    window_size = min(ts.size, window_size)
+    return pd.Series(ts_scaled).rolling(window_size, center=center)
 
 
 def smape(arr_a: np.ndarray,

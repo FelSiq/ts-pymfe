@@ -104,7 +104,7 @@ class MFETSAutocorr:
                unbiased: bool = True,
                ts_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
-        if ts_acfs is None and ts_acfs.size == nlags:
+        if ts_acfs is not None and ts_acfs.size == nlags:
             return ts_acfs
 
         return cls._calc_acf(data=ts, nlags=nlags, unbiased=unbiased)
@@ -285,6 +285,29 @@ class MFETSAutocorr:
 
         return sample_acf_locmin
 
+    @classmethod
+    def ft_trev(cls,
+                ts: np.ndarray,
+                lag: int = 1,
+                only_numerator: bool = False) -> float:
+        """TODO.
+
+        Normalized nonlinear autocorrelation.
+
+        https://github.com/benfulcher/hctsa/blob/master/Operations/CO_trev.m
+        """
+        diff = ts[lag:] - ts[:-lag]
+
+        numen = np.mean(np.power(diff, 3))
+
+        if only_numerator:
+            return numen
+
+        denom = np.power(np.mean(np.square(diff)), 1.5)
+        trev = numen / denom
+
+        return trev
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -298,7 +321,6 @@ def _test() -> None:
 
     res = MFETSAutocorr.ft_sfirst_acf_nonpos(ts)
     print(res)
-    exit(1)
 
     res = MFETSAutocorr.ft_first_acf_locmin(ts)
     print(res)
@@ -346,6 +368,9 @@ def _test() -> None:
     print(res)
 
     res = MFETSAutocorr.ft_pacf_diff(ts)
+    print(res)
+
+    res = MFETSAutocorr.ft_trev(ts, only_numerator=True)
     print(res)
 
 
