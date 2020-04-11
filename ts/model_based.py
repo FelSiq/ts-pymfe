@@ -4,8 +4,8 @@ import sklearn.preprocessing
 import statsmodels.tsa.holtwinters
 import statsmodels.api
 import numpy as np
+import arch
 
-import _embed
 import _period
 import _detrend
 import _get_data
@@ -180,25 +180,6 @@ class MFETSModelBased:
 
         return gamma
 
-    @classmethod
-    def ft_arch_adj_r_sqr(
-        cls,
-        ts_residuals: np.ndarray,
-        embed_dim: int = 12,
-    ) -> float:
-        """TODO."""
-        ts_residuals = sklearn.preprocessing.StandardScaler(
-            ).fit_transform(np.square(ts_residuals).reshape(-1, 1)).ravel()
-
-        res_embed = _embed.embed_ts(
-            ts=ts_residuals, dim=embed_dim, lag=1, include_val=True)
-
-        X = statsmodels.api.add_constant(res_embed[:, 1:])
-        y = res_embed[:, 0, np.newaxis]
-        model_res_arch = statsmodels.api.OLS(y, X).fit()
-
-        return model_res_arch.rsquared_adj
-
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -208,7 +189,6 @@ def _test() -> None:
         ts, ts_period=ts_period)
     ts = ts.to_numpy()
 
-    """
     res = MFETSModelBased.ft_ets_double_alpha(ts)
     print(res)
 
@@ -222,10 +202,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSModelBased.ft_ets_triple_gamma(ts, ts_period)
-    print(res)
-    """
-
-    res = MFETSModelBased.ft_arch_adj_r_sqr(ts)
     print(res)
 
 

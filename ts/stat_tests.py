@@ -54,7 +54,7 @@ class MFETSStatTests:
     @classmethod
     def ft_test_lb(cls,
                    ts_residuals: np.ndarray,
-                   lags: t.Optional[int] = 5,
+                   ts_period: int,
                    return_pval: bool = False) -> float:
         """Ljung-Box (LB) test of autocorrelation in residuals.
 
@@ -76,10 +76,76 @@ class MFETSStatTests:
         TODO.
         """
         res = statsmodels.stats.diagnostic.acorr_ljungbox(ts_residuals,
-                                                          lags=lags,
+                                                          lags=ts_period,
                                                           return_df=False)
 
         stat, pvalue = res
+
+        if return_pval:
+            return pvalue
+
+        return stat
+
+    @classmethod
+    def ft_test_earch(cls,
+                      ts_residuals: np.ndarray,
+                      ts_period: int,
+                      return_pval: bool = False) -> float:
+        """TODO."""
+        stat, pvalue = statsmodels.stats.diagnostic.het_arch(
+            ts_residuals, nlags=ts_period)[:2]
+
+        if return_pval:
+            return pvalue
+
+        return stat
+
+    @classmethod
+    def ft_test_lb_garch(
+        cls,
+        ts_residuals: np.ndarray,
+        ts_period: int,
+        arch_order: t.Tuple[int, int] = (1, 1),
+        return_pval: bool = False,
+    ) -> float:
+        """TODO."""
+        p, q = arch_order
+        model_arch = arch.arch_model(ts_residuals,
+                                     mean="zero",
+                                     vol="GARCH",
+                                     p=p,
+                                     q=q,
+                                     rescale=True)
+        model_res_arch = model_arch.fit(disp="off")
+
+        stat, pvalue = statsmodels.stats.diagnostic.acorr_ljungbox(
+            ts_residuals, lags=ts_period, return_df=False)
+
+        if return_pval:
+            return pvalue
+
+        return stat
+
+    @classmethod
+    def ft_test_earch_garch(
+        cls,
+        ts_residuals: np.ndarray,
+        ts_period: int,
+        arch_order: t.Tuple[int, int] = (1, 1),
+        return_pval: bool = False,
+    ) -> float:
+        """TODO."""
+        p, q = arch_order
+        model_arch = arch.arch_model(ts_residuals,
+                                     mean="zero",
+                                     vol="GARCH",
+                                     p=p,
+                                     q=q,
+                                     rescale=True)
+        model_res_arch = model_arch.fit(disp="off")
+
+        stat, pvalue = statsmodels.stats.diagnostic.het_arch(
+            model_res_arch.resid, nlags=ts_period)[:2]
 
         if return_pval:
             return pvalue
@@ -99,9 +165,8 @@ class MFETSStatTests:
 
         TODO.
         """
-        res = statsmodels.tsa.stattools.adfuller(ts, maxlag=max_lags)
-
-        (stat, pvalue), _ = res[:2], res[2:]
+        stat, pvalue = statsmodels.tsa.stattools.adfuller(ts,
+                                                          maxlag=max_lags)[:2]
 
         if return_pval:
             return pvalue
@@ -194,8 +259,23 @@ class MFETSStatTests:
 def _test() -> None:
     ts = _get_data.load_data(3)
     ts_period = _period.ts_period(ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts, ts_period=ts_period)
+    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
+                                                           ts_period=ts_period)
     ts = ts.to_numpy().astype(float)
+
+    res = MFETSStatTests.ft_test_lb(ts_residuals, ts_period)
+    print(res)
+
+    res = MFETSStatTests.ft_test_earch(ts_residuals, ts_period)
+    print(res)
+
+    res = MFETSStatTests.ft_test_earch_garch(ts_residuals, ts_period)
+    print(res)
+
+    res = MFETSStatTests.ft_test_lb_garch(ts_residuals, ts_period)
+    print(res)
+
+    exit(1)
 
     res = MFETSStatTests.ft_test_adf(ts, return_pval=False)
     print(res)
@@ -210,9 +290,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSStatTests.ft_test_dw(ts_residuals)
-    print(res)
-
-    res = MFETSStatTests.ft_test_lb(ts_residuals)
     print(res)
 
     res = MFETSStatTests.ft_test_za(ts, return_pval=False)
