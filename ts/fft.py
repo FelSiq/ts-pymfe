@@ -132,6 +132,7 @@ class MFETSFreqDomain:
             ts_residuals: np.ndarray,
             normalize: bool = True,
             power_spec: t.Optional[np.ndarray] = None,
+            base: int = 2,
     ) -> float:
         """Spectral entropy.
 
@@ -150,10 +151,10 @@ class MFETSFreqDomain:
         # Note: no need to calculate the power spectrum density 'd':
         # d = power_spec / ts_residuals.size
         # since a constant factor does not affect the entropy value.
-        ps_ent = scipy.stats.entropy(power_spec / np.sum(power_spec))
+        ps_ent = scipy.stats.entropy(power_spec / np.sum(power_spec), base=base)
 
         if normalize:
-            ps_ent /= np.log2(ts_residuals.size)
+            ps_ent /= np.log(ts_residuals.size) / np.log(base)
 
         return ps_ent
 
