@@ -1,4 +1,5 @@
 import typing as t
+import collections
 
 import sklearn.preprocessing
 import numpy as np
@@ -15,6 +16,84 @@ import _get_data
 
 
 class MFETSStatistical:
+    @classmethod
+    def precompute_time_delta_stats_it(
+            cls,
+            ts: np.ndarray,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            step_size: float = 0.05,
+            **kwargs) -> t.Dict[str, t.Union[float, np.ndarray]]:
+        """TODO."""
+        precomp_vals = {}  # type: t.Dict[str, t.Union[float, np.ndarray]]
+
+        funcs = collections.OrderedDict((
+            ("median", lambda arr: np.median(arr) / ts.size),
+            ("mean", lambda arr: np.mean(arr) / ts.size),
+            ("std", lambda arr: np.std(arr, ddof=1) / np.sqrt(arr.size + 1)),
+        ))
+
+        _formatted_keys = list(map("tdelta_it_{}".format, funcs.keys()))
+
+        if not frozenset(_formatted_keys).issubset(kwargs):
+            res = cls._calc_time_deltas_stats_it(ts=ts,
+                                                 funcs=funcs.values(),
+                                                 ts_scaled=ts_scaled,
+                                                 step_size=step_size)
+
+            precomp_vals.update(zip(_formatted_keys, res.T))
+
+        return precomp_vals
+
+    @classmethod
+    def _calc_time_deltas_stats_it(cls,
+                                   ts: np.ndarray,
+                                   funcs: t.Union[t.Callable[[np.ndarray],
+                                                             float],
+                                                  t.Iterable[t.Callable[
+                                                      [np.ndarray], float]]],
+                                   ts_scaled: t.Optional[np.ndarray] = None,
+                                   step_size: float = 0.05) -> np.ndarray:
+        """TODO.
+
+        https://github.com/benfulcher/hctsa/blob/master/Operations/DN_OutlierInclude.m
+        """
+        try:
+            if len(funcs) == 0:
+                raise ValueError("'funcs' is empty.")
+
+        except:
+            funcs = [funcs]
+
+        if ts_scaled is None:
+            ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
+                ts.reshape(-1, 1)).ravel()
+
+        # Note: originally, the step size of the threshold is calculated
+        # as step_size * std(ts). However, we are considering just the
+        # normalized time-series and, therefore, std(ts_scaled) = 1.
+        # This means that the step size is actually just the step_size.
+        ts_abs = np.abs(ts_scaled)
+        max_abs_ts = np.max(ts_abs)
+
+        res = []  # type: t.List[float]
+        threshold = 0.0
+
+        while threshold < max_abs_ts:
+            threshold += step_size
+            outlier_tsteps = np.flatnonzero(ts_abs >= threshold)
+
+            if (outlier_tsteps.size < 0.02 * ts_scaled.size
+                    or outlier_tsteps.size <= 1):
+                break
+
+            diff_tsteps = np.diff(outlier_tsteps)
+
+            res.append([func(diff_tsteps) for func in funcs])
+
+        res = np.asarray(res, dtype=float)
+
+        return res
+
     @classmethod
     def ft_trend(cls,
                  ts_residuals: np.ndarray,
@@ -401,44 +480,17 @@ class MFETSStatistical:
         return nolds.hurst_rs(data=ts)
 
     @classmethod
-    def ft_auxaux(cls,
-                  ts: np.ndarray,
-                  ts_scaled: t.Optional[np.ndarray] = None,
-                  step_size: float = 0.01,
-                  normalize: bool = True) -> np.ndarray:
-        """TODO.
+    def ft_dfa(cls,
+               ts: np.ndarray,
+               order: int = 1,
+               return_coeff: bool = True) -> t.Union[np.ndarray, float]:
+        """TODO."""
+        if return_coeff:
+            hurst_coeff = nolds.dfa(ts, order=order)
+            return hurst_coeff
 
-        https://github.com/benfulcher/hctsa/blob/master/Operations/DN_OutlierInclude.m
-        """
-        if ts_scaled is None:
-            ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
-                ts.reshape(-1, 1)).ravel()
-
-        # Note: originally, the step size of the threshold is calculated
-        # as step_size * std(ts). However, we are considering just the
-        # normalized time-series and, therefore, std(ts_scaled) = 1.
-        # This means that the step size is actually just the step_size.
-        ts_abs = np.abs(ts_scaled)
-        max_abs_ts = np.max(ts_abs)
-
-        res = []  # type: t.List[float]
-        threshold = 0.0
-
-        while threshold < max_abs_ts:
-            threshold += step_size
-            outlier_tsteps = np.flatnonzero(ts_abs >= threshold)
-
-            if outlier_tsteps.size < 0.02 * ts_scaled.size:
-                break
-
-            res.append(np.median(outlier_tsteps))
-
-        res = np.asarray(res, dtype=float)
-
-        if normalize:
-            res /= ts.size
-
-        return res
+        _, (_, fluct, _) = nolds.dfa(ts, order=order, debug_data=True)
+        return fluct
 
 
 def _test() -> None:
@@ -462,9 +514,9 @@ def _test() -> None:
     print(res)
 
     res = MFETSStatistical.ft_exp_max_lyap(ts,
-                                       embed_dim=int(np.ceil(np.log10(
-                                           ts.size))),
-                                       lag=1)
+                                           embed_dim=int(
+                                               np.ceil(np.log10(ts.size))),
+                                           lag=1)
     print(res)
 
     res = MFETSStatistical.ft_exp_hurst(ts)
@@ -500,10 +552,15 @@ def _test() -> None:
     res = MFETSStatistical.ft_trend(ts_residuals, ts_trend + ts_residuals)
     print(res)
 
-    res = MFETSStatistical.ft_seasonality(ts_residuals, ts_season + ts_residuals)
+    res = MFETSStatistical.ft_seasonality(ts_residuals,
+                                          ts_season + ts_residuals)
     print(res)
 
-    res = MFETSStatistical.ft_auxaux(ts)
+    res = MFETSStatistical.ft_dfa(ts)
+    print(res)
+
+    exit(1)
+    res = MFETSStatistical.precompute_time_delta_stats_it(ts)
     print(res)
 
 
