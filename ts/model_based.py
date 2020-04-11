@@ -2,10 +2,12 @@ import typing as t
 
 import sklearn.preprocessing
 import statsmodels.tsa.holtwinters
+import statsmodels.regression
 import statsmodels.api
 import numpy as np
 import arch
 
+import _orthopoly
 import _period
 import _detrend
 import _get_data
@@ -33,7 +35,9 @@ class MFETSModelBased:
             model = cls._fit_res_model_ets_double(ts=ts_scaled, damped=damped)
             precomp_vals["res_model_ets_double"] = model
 
-            model = cls._fit_res_model_ets_triple(ts=ts_scaled, ts_period=ts_period, damped=damped)
+            model = cls._fit_res_model_ets_triple(ts=ts_scaled,
+                                                  ts_period=ts_period,
+                                                  damped=damped)
             precomp_vals["res_model_ets_triple"] = model
 
         return precomp_vals
@@ -73,6 +77,17 @@ class MFETSModelBased:
 
         return model
 
+    @staticmethod
+    def _fit_ortho_pol_reg(
+        ts_trend: np.ndarray,
+        degree: int = 2
+    ) -> statsmodels.regression.linear_model.RegressionResults:
+        """TODO."""
+        X = _orthopoly.ortho_poly(ts=np.arange(ts_trend.size),
+                                  degree=degree,
+                                  return_coeffs=False)
+        return statsmodels.regression.linear_model.OLS(ts_trend, X).fit()
+
     @classmethod
     def ft_ets_double_alpha(
         cls,
@@ -87,9 +102,10 @@ class MFETSModelBased:
 
         if res_model_ets_double is None:
             res_model_ets_double = cls._fit_res_model_ets_double(ts=ts_scaled,
-                                                         damped=damped)
+                                                                 damped=damped)
 
-        alpha = res_model_ets_double.params_formatted["param"]["smoothing_level"]
+        alpha = res_model_ets_double.params_formatted["param"][
+            "smoothing_level"]
 
         return alpha
 
@@ -107,9 +123,10 @@ class MFETSModelBased:
 
         if res_model_ets_double is None:
             res_model_ets_double = cls._fit_res_model_ets_double(ts=ts_scaled,
-                                                         damped=damped)
+                                                                 damped=damped)
 
-        beta = res_model_ets_double.params_formatted["param"]["smoothing_slope"]
+        beta = res_model_ets_double.params_formatted["param"][
+            "smoothing_slope"]
 
         return beta
 
@@ -127,11 +144,11 @@ class MFETSModelBased:
             ts_scaled = cls._scale_ts(ts=ts)
 
         if res_model_ets_triple is None:
-            res_model_ets_triple = cls._fit_res_model_ets_triple(ts=ts_scaled,
-                                                         ts_period=ts_period,
-                                                         damped=damped)
+            res_model_ets_triple = cls._fit_res_model_ets_triple(
+                ts=ts_scaled, ts_period=ts_period, damped=damped)
 
-        alpha = res_model_ets_triple.params_formatted["param"]["smoothing_level"]
+        alpha = res_model_ets_triple.params_formatted["param"][
+            "smoothing_level"]
 
         return alpha
 
@@ -149,11 +166,11 @@ class MFETSModelBased:
             ts_scaled = cls._scale_ts(ts=ts)
 
         if res_model_ets_triple is None:
-            res_model_ets_triple = cls._fit_res_model_ets_triple(ts=ts_scaled,
-                                                         ts_period=ts_period,
-                                                         damped=damped)
+            res_model_ets_triple = cls._fit_res_model_ets_triple(
+                ts=ts_scaled, ts_period=ts_period, damped=damped)
 
-        beta = res_model_ets_triple.params_formatted["param"]["smoothing_slope"]
+        beta = res_model_ets_triple.params_formatted["param"][
+            "smoothing_slope"]
 
         return beta
 
@@ -171,23 +188,58 @@ class MFETSModelBased:
             ts_scaled = cls._scale_ts(ts=ts)
 
         if res_model_ets_triple is None:
-            res_model_ets_triple = cls._fit_res_model_ets_triple(ts=ts_scaled,
-                                                         ts_period=ts_period,
-                                                         damped=damped)
+            res_model_ets_triple = cls._fit_res_model_ets_triple(
+                ts=ts_scaled, ts_period=ts_period, damped=damped)
 
         gamma = res_model_ets_triple.params_formatted["param"][
             "smoothing_seasonal"]
 
         return gamma
 
+    @classmethod
+    def ft_linearity(
+        cls,
+        ts_trend: np.ndarray,
+        res_model_orthop_reg: t.Optional[
+            statsmodels.regression.linear_model.RegressionResults] = None
+    ) -> float:
+        """TODO."""
+        if res_model_orthop_reg is None:
+            res_model_orthop_reg = cls._fit_ortho_pol_reg(ts_trend=ts_trend)
+
+        linearity, _ = res_model_orthop_reg.params
+
+        return linearity
+
+    @classmethod
+    def ft_curvature(
+        cls,
+        ts_trend: np.ndarray,
+        res_model_orthop_reg: t.Optional[
+            statsmodels.regression.linear_model.RegressionResults] = None
+    ) -> float:
+        """TODO."""
+        if res_model_orthop_reg is None:
+            res_model_orthop_reg = cls._fit_ortho_pol_reg(ts_trend=ts_trend)
+
+        _, curvature = res_model_orthop_reg.params
+
+        return curvature
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
 
     ts_period = _period.ts_period(ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(
-        ts, ts_period=ts_period)
+    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
+                                                           ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSModelBased.ft_linearity(ts_trend)
+    print(res)
+
+    res = MFETSModelBased.ft_curvature(ts_trend)
+    print(res)
 
     res = MFETSModelBased.ft_ets_double_alpha(ts)
     print(res)
