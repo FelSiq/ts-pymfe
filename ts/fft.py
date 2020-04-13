@@ -151,7 +151,8 @@ class MFETSFreqDomain:
         # Note: no need to calculate the power spectrum density 'd':
         # d = power_spec / ts_residuals.size
         # since a constant factor does not affect the entropy value.
-        ps_ent = scipy.stats.entropy(power_spec / np.sum(power_spec), base=base)
+        ps_ent = scipy.stats.entropy(power_spec / np.sum(power_spec),
+                                     base=base)
 
         if normalize:
             ps_ent /= np.log(ts_residuals.size) / np.log(base)
@@ -162,7 +163,8 @@ class MFETSFreqDomain:
 def _test() -> None:
     ts = _get_data.load_data(3)
     ts_period = _period.ts_period(ts=ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts, ts_period=ts_period)
+    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
+                                                           ts_period=ts_period)
 
     res = MFETSFreqDomain._calc_power_spec(ts_residuals)
     print(res)

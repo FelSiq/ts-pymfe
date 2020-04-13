@@ -37,10 +37,10 @@ def embed_ts(ts: np.ndarray,
     if dim * lag >= ts.size:
         raise ValueError("'dim * lag' ({}) must be smaller than "
                          "the time-series length ({}).".format(
-                            dim * lag, ts.size))
+                             dim * lag, ts.size))
 
-    ts_emb = np.zeros((
-        ts.size - dim * lag, dim + int(include_val)), dtype=ts.dtype)
+    ts_emb = np.zeros((ts.size - dim * lag, dim + int(include_val)),
+                      dtype=ts.dtype)
 
     shift_inds = lag * (dim - 1 - np.arange(-int(include_val), dim))
 
