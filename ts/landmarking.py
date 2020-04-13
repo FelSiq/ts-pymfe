@@ -37,7 +37,7 @@ class MFETSLandmarking:
             score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
             args_fit: t.Optional[t.Dict[str, t.Any]] = None,
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 10,
+            num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
             sample_inds: t.Optional[np.ndarray] = None,
             random_state: t.Optional[int] = None) -> np.ndarray:
@@ -59,13 +59,17 @@ class MFETSLandmarking:
         # Note: x are the unitless timesteps of the timeseries
         X = np.arange(y.size).reshape(-1, 1)
 
-        for ind_fold, (inds_train, inds_test) in enumerate(tskf.split(X)):
-            X_train, X_test = X[inds_train, :], X[inds_test, :]
-            y_train, y_test = y[inds_train], y[inds_test]
+        try:
+            for ind_fold, (inds_train, inds_test) in enumerate(tskf.split(X)):
+                X_train, X_test = X[inds_train, :], X[inds_test, :]
+                y_train, y_test = y[inds_train], y[inds_test]
 
-            model.fit(X_train, y_train, **args_fit)
-            y_pred = model.predict(X_test).ravel()
-            res[ind_fold] = score(y_pred, y_test)
+                model.fit(X_train, y_train, **args_fit)
+                y_pred = model.predict(X_test).ravel()
+                res[ind_fold] = score(y_pred, y_test)
+
+        except ValueError:
+            res[:] = np.nan
 
         return res
 
@@ -78,7 +82,7 @@ class MFETSLandmarking:
             args_inst: t.Optional[t.Dict[str, t.Any]] = None,
             args_fit: t.Optional[t.Dict[str, t.Any]] = None,
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 10,
+            num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
             sample_inds: t.Optional[np.ndarray] = None,
             random_state: t.Optional[int] = None) -> np.ndarray:
@@ -118,14 +122,21 @@ class MFETSLandmarking:
                                     category=statsmodels.tools.sm_exceptions.
                                     HessianInversionWarning)
 
-            for ind_fold, (inds_train, inds_test) in enumerate(tskf.split(ts)):
-                ts_train, ts_test = ts[inds_train], ts[inds_test]
+            try:
+                for ind_fold, (inds_train,
+                               inds_test) in enumerate(tskf.split(ts)):
+                    ts_train, ts_test = ts[inds_train], ts[inds_test]
 
-                model = model_callable(ts_train, **args_inst).fit(**args_fit)
-                ts_pred = model.predict(start=ts_train.size,
-                                        end=ts_train.size + ts_test.size - 1,
-                                        typ="levels")
-                res[ind_fold] = score(ts_pred, ts_test)
+                    model = model_callable(ts_train,
+                                           **args_inst).fit(**args_fit)
+                    ts_pred = model.predict(start=ts_train.size,
+                                            end=ts_train.size + ts_test.size -
+                                            1,
+                                            typ="levels")
+                    res[ind_fold] = score(ts_pred, ts_test)
+
+            except ValueError:
+                res[:] = np.nan
 
         return res
 
@@ -135,7 +146,7 @@ class MFETSLandmarking:
             ts: np.ndarray,
             perf_ft_method: t.Callable[..., np.ndarray],
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 10,
+            num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
             unbiased: bool = True,
             max_nlags: t.Optional[int] = None,
@@ -162,7 +173,7 @@ class MFETSLandmarking:
                       score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
                       tskf: t.Optional[
                           sklearn.model_selection.TimeSeriesSplit] = None,
-                      num_cv_folds: int = 10,
+                      num_cv_folds: int = 5,
                       lm_sample_frac: float = 1.0,
                       sample_inds: t.Optional[np.ndarray] = None,
                       random_state: t.Optional[int] = None) -> np.ndarray:
@@ -185,7 +196,7 @@ class MFETSLandmarking:
                                           np.ndarray],
                         tskf: t.Optional[
                             sklearn.model_selection.TimeSeriesSplit] = None,
-                        num_cv_folds: int = 10,
+                        num_cv_folds: int = 5,
                         lm_sample_frac: float = 1.0,
                         sample_inds: t.Optional[np.ndarray] = None,
                         random_state: t.Optional[int] = None) -> np.ndarray:
@@ -204,18 +215,17 @@ class MFETSLandmarking:
         return res
 
     @classmethod
-    def ft_model_arima_100(cls,
-                           ts: np.ndarray,
-                           score: t.Callable[[np.ndarray, np.ndarray],
-                                             np.ndarray],
-                           tskf: t.Optional[
-                               sklearn.model_selection.TimeSeriesSplit] = None,
-                           num_cv_folds: int = 10,
-                           lm_sample_frac: float = 1.0,
-                           solver: str = "lbfgs",
-                           maxiter: int = 512,
-                           sample_inds: t.Optional[np.ndarray] = None,
-                           random_state: t.Optional[int] = None) -> np.ndarray:
+    def ft_model_arima_100_c(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
+            sample_inds: t.Optional[np.ndarray] = None,
+            random_state: t.Optional[int] = None) -> np.ndarray:
         """TODO."""
         model = statsmodels.tsa.arima_model.ARIMA
         args_inst = {"order": (1, 0, 0)}
@@ -241,18 +251,17 @@ class MFETSLandmarking:
         return res
 
     @classmethod
-    def ft_model_arima_010(cls,
-                           ts: np.ndarray,
-                           score: t.Callable[[np.ndarray, np.ndarray],
-                                             np.ndarray],
-                           tskf: t.Optional[
-                               sklearn.model_selection.TimeSeriesSplit] = None,
-                           num_cv_folds: int = 10,
-                           lm_sample_frac: float = 1.0,
-                           solver: str = "lbfgs",
-                           maxiter: int = 512,
-                           sample_inds: t.Optional[np.ndarray] = None,
-                           random_state: t.Optional[int] = None) -> np.ndarray:
+    def ft_model_arima_010_c(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
+            sample_inds: t.Optional[np.ndarray] = None,
+            random_state: t.Optional[int] = None) -> np.ndarray:
         """TODO."""
         model = statsmodels.tsa.arima_model.ARIMA
         args_inst = {"order": (0, 1, 0)}
@@ -278,21 +287,164 @@ class MFETSLandmarking:
         return res
 
     @classmethod
-    def ft_model_arima_110(cls,
-                           ts: np.ndarray,
-                           score: t.Callable[[np.ndarray, np.ndarray],
-                                             np.ndarray],
-                           tskf: t.Optional[
-                               sklearn.model_selection.TimeSeriesSplit] = None,
-                           num_cv_folds: int = 10,
-                           lm_sample_frac: float = 1.0,
-                           solver: str = "lbfgs",
-                           maxiter: int = 512,
-                           sample_inds: t.Optional[np.ndarray] = None,
-                           random_state: t.Optional[int] = None) -> np.ndarray:
+    def ft_model_arima_110_c(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
+            sample_inds: t.Optional[np.ndarray] = None,
+            random_state: t.Optional[int] = None) -> np.ndarray:
         """TODO."""
         model = statsmodels.tsa.arima_model.ARIMA
         args_inst = {"order": (1, 1, 0)}
+        args_fit = {
+            "disp": False,
+            "trend": "c",
+            "transparams": False,
+            "maxiter": maxiter,
+            "solver": solver
+        }
+
+        res = cls._standard_pipeline_statsmodels(ts=ts,
+                                                 model_callable=model,
+                                                 args_inst=args_inst,
+                                                 args_fit=args_fit,
+                                                 score=score,
+                                                 tskf=tskf,
+                                                 num_cv_folds=num_cv_folds,
+                                                 lm_sample_frac=lm_sample_frac,
+                                                 sample_inds=sample_inds,
+                                                 random_state=random_state)
+
+        return res
+
+    @classmethod
+    def ft_model_arima_011_nc(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
+            sample_inds: t.Optional[np.ndarray] = None,
+            random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        model = statsmodels.tsa.arima_model.ARIMA
+        args_inst = {"order": (0, 1, 1)}
+        args_fit = {
+            "disp": False,
+            "trend": "nc",
+            "transparams": False,
+            "maxiter": maxiter,
+            "solver": solver
+        }
+
+        res = cls._standard_pipeline_statsmodels(ts=ts,
+                                                 model_callable=model,
+                                                 args_inst=args_inst,
+                                                 args_fit=args_fit,
+                                                 score=score,
+                                                 tskf=tskf,
+                                                 num_cv_folds=num_cv_folds,
+                                                 lm_sample_frac=lm_sample_frac,
+                                                 sample_inds=sample_inds,
+                                                 random_state=random_state)
+
+        return res
+
+    @classmethod
+    def ft_model_arima_011_c(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
+            sample_inds: t.Optional[np.ndarray] = None,
+            random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        model = statsmodels.tsa.arima_model.ARIMA
+        args_inst = {"order": (0, 1, 1)}
+        args_fit = {
+            "disp": False,
+            "trend": "c",
+            "transparams": False,
+            "maxiter": maxiter,
+            "solver": solver
+        }
+
+        res = cls._standard_pipeline_statsmodels(ts=ts,
+                                                 model_callable=model,
+                                                 args_inst=args_inst,
+                                                 args_fit=args_fit,
+                                                 score=score,
+                                                 tskf=tskf,
+                                                 num_cv_folds=num_cv_folds,
+                                                 lm_sample_frac=lm_sample_frac,
+                                                 sample_inds=sample_inds,
+                                                 random_state=random_state)
+
+        return res
+
+    @classmethod
+    def ft_model_arima_022_nc(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
+            sample_inds: t.Optional[np.ndarray] = None,
+            random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        model = statsmodels.tsa.arima_model.ARIMA
+        args_inst = {"order": (0, 2, 2)}
+        args_fit = {
+            "disp": False,
+            "trend": "nc",
+            "transparams": False,
+            "maxiter": maxiter,
+            "solver": solver
+        }
+
+        res = cls._standard_pipeline_statsmodels(ts=ts,
+                                                 model_callable=model,
+                                                 args_inst=args_inst,
+                                                 args_fit=args_fit,
+                                                 score=score,
+                                                 tskf=tskf,
+                                                 num_cv_folds=num_cv_folds,
+                                                 lm_sample_frac=lm_sample_frac,
+                                                 sample_inds=sample_inds,
+                                                 random_state=random_state)
+
+        return res
+
+    @classmethod
+    def ft_model_arima_112_c(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
+            sample_inds: t.Optional[np.ndarray] = None,
+            random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        model = statsmodels.tsa.arima_model.ARIMA
+        args_inst = {"order": (1, 1, 2)}
         args_fit = {
             "disp": False,
             "trend": "c",
@@ -319,7 +471,7 @@ class MFETSLandmarking:
             cls,
             ts: np.ndarray,
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 10,
+            num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
             unbiased: bool = True,
             max_nlags: t.Optional[int] = None,
@@ -333,7 +485,9 @@ class MFETSLandmarking:
             num_cv_folds=num_cv_folds,
             lm_sample_frac=lm_sample_frac,
             sample_inds=sample_inds,
-            random_state=random_state)
+            random_state=random_state,
+            unbiased=unbiased,
+            max_nlags=max_nlags)
 
         return acf_first_nonpos_mean
 
@@ -342,7 +496,7 @@ class MFETSLandmarking:
             cls,
             ts: np.ndarray,
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 10,
+            num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
             unbiased: bool = True,
             max_nlags: t.Optional[int] = None,
@@ -356,7 +510,9 @@ class MFETSLandmarking:
             num_cv_folds=num_cv_folds,
             lm_sample_frac=lm_sample_frac,
             sample_inds=sample_inds,
-            random_state=random_state)
+            random_state=random_state,
+            unbiased=unbiased,
+            max_nlags=max_nlags)
 
         return acf_first_nonpos_linear
 
@@ -369,15 +525,30 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy().astype(float)
 
-    res = MFETSLandmarking.ft_model_arima_100(ts, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_arima_100_c(ts, score=_utils.smape)
     print(res)
 
-    res = MFETSLandmarking.ft_model_arima_010(ts, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_arima_010_c(ts, score=_utils.smape)
     print(res)
 
-    res = MFETSLandmarking.ft_model_arima_110(ts, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_arima_110_c(ts, score=_utils.smape)
     print(res)
-    exit(1)
+
+    res = MFETSLandmarking.ft_model_arima_011_nc(ts, score=_utils.smape)
+    print(res)
+
+    res = MFETSLandmarking.ft_model_arima_011_c(ts, score=_utils.smape)
+    print(res)
+
+    res = MFETSLandmarking.ft_model_arima_022_nc(ts,
+                                                 score=_utils.smape,
+                                                 num_cv_folds=5)
+    print(res)
+
+    res = MFETSLandmarking.ft_model_arima_112_c(ts,
+                                                score=_utils.smape,
+                                                num_cv_folds=5)
+    print(res)
 
     res = MFETSLandmarking.ft_model_mean(ts, score=_utils.smape)
     print(res)
