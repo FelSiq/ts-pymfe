@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 import sklearn.model_selection
 import statsmodels.tsa.arima_model
+import statsmodels.tsa.holtwinters
 import statsmodels.tools.sm_exceptions
 
 import autocorr
@@ -40,6 +41,7 @@ class MFETSLandmarking:
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
             num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
+            scale_range: t.Tuple[int, int] = (0, 1),
             sample_inds: t.Optional[np.ndarray] = None,
             random_state: t.Optional[int] = None) -> np.ndarray:
         """TODO."""
@@ -59,11 +61,15 @@ class MFETSLandmarking:
 
         # Note: x are the unitless timesteps of the timeseries
         X = np.arange(y.size).reshape(-1, 1)
+        scaler = sklearn.preprocessing.MinMaxScaler(feature_range=scale_range)
 
         try:
             for ind_fold, (inds_train, inds_test) in enumerate(tskf.split(X)):
                 X_train, X_test = X[inds_train, :], X[inds_test, :]
                 y_train, y_test = y[inds_train], y[inds_test]
+
+                y_train = scaler.fit_transform(y_train)
+                y_test = scaler.transform(y_test)
 
                 model.fit(X_train, y_train, **args_fit)
                 y_pred = model.predict(X_test).ravel()
@@ -85,6 +91,7 @@ class MFETSLandmarking:
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
             num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
+            scale_range: t.Tuple[int, int] = (0, 1),
             sample_inds: t.Optional[np.ndarray] = None,
             random_state: t.Optional[int] = None) -> np.ndarray:
         """TODO."""
@@ -103,7 +110,9 @@ class MFETSLandmarking:
             tskf = sklearn.model_selection.TimeSeriesSplit(
                 n_splits=num_cv_folds)
 
+        ts = ts.reshape(-1, 1)
         res = np.zeros(tskf.n_splits, dtype=float)
+        scaler = sklearn.preprocessing.MinMaxScaler(feature_range=scale_range)
 
         with warnings.catch_warnings():
             # Note: We are ignoring these warnings because they are related to poor
@@ -128,15 +137,18 @@ class MFETSLandmarking:
                                inds_test) in enumerate(tskf.split(ts)):
                     ts_train, ts_test = ts[inds_train], ts[inds_test]
 
+                    ts_train = scaler.fit_transform(ts_train)
+                    ts_test = scaler.transform(ts_test)
+
                     model = model_callable(ts_train,
                                            **args_inst).fit(**args_fit)
                     ts_pred = model.predict(start=ts_train.size,
                                             end=ts_train.size + ts_test.size -
-                                            1,
-                                            typ="levels")
+                                            1).ravel()
                     res[ind_fold] = score(ts_pred, ts_test)
 
-            except ValueError:
+            except ValueError as err:
+                print(err)
                 res[:] = np.nan
 
         return res
@@ -468,6 +480,95 @@ class MFETSLandmarking:
         return res
 
     @classmethod
+    def ft_model_ses(cls,
+                     ts: np.ndarray,
+                     score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+                     tskf: t.Optional[
+                         sklearn.model_selection.TimeSeriesSplit] = None,
+                     num_cv_folds: int = 5,
+                     lm_sample_frac: float = 1.0,
+                     sample_inds: t.Optional[np.ndarray] = None,
+                     random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        model = statsmodels.tsa.holtwinters.SimpleExpSmoothing
+
+        res = cls._standard_pipeline_statsmodels(ts=ts,
+                                                 model_callable=model,
+                                                 score=score,
+                                                 tskf=tskf,
+                                                 num_cv_folds=num_cv_folds,
+                                                 lm_sample_frac=lm_sample_frac,
+                                                 sample_inds=sample_inds,
+                                                 random_state=random_state)
+
+        return res
+
+    @classmethod
+    def ft_model_hwes_add(cls,
+                          ts: np.ndarray,
+                          ts_period: int,
+                          score: t.Callable[[np.ndarray, np.ndarray],
+                                            np.ndarray],
+                          tskf: t.Optional[
+                              sklearn.model_selection.TimeSeriesSplit] = None,
+                          num_cv_folds: int = 5,
+                          lm_sample_frac: float = 1.0,
+                          sample_inds: t.Optional[np.ndarray] = None,
+                          random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        model = statsmodels.tsa.holtwinters.ExponentialSmoothing
+        args_inst = {
+            "seasonal_periods": ts_period,
+            "trend": "add",
+            "seasonal": "add"
+        }
+
+        res = cls._standard_pipeline_statsmodels(ts=ts,
+                                                 model_callable=model,
+                                                 score=score,
+                                                 args_inst=args_inst,
+                                                 tskf=tskf,
+                                                 num_cv_folds=num_cv_folds,
+                                                 lm_sample_frac=lm_sample_frac,
+                                                 sample_inds=sample_inds,
+                                                 random_state=random_state)
+
+        return res
+
+    @classmethod
+    def ft_model_hwes_mul(cls,
+                          ts: np.ndarray,
+                          ts_period: int,
+                          score: t.Callable[[np.ndarray, np.ndarray],
+                                            np.ndarray],
+                          tskf: t.Optional[
+                              sklearn.model_selection.TimeSeriesSplit] = None,
+                          num_cv_folds: int = 5,
+                          lm_sample_frac: float = 1.0,
+                          sample_inds: t.Optional[np.ndarray] = None,
+                          random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        model = statsmodels.tsa.holtwinters.ExponentialSmoothing
+        args_inst = {
+            "seasonal_periods": ts_period,
+            "trend": "mul",
+            "seasonal": "mul"
+        }
+
+        res = cls._standard_pipeline_statsmodels(ts=ts,
+                                                 model_callable=model,
+                                                 score=score,
+                                                 args_inst=args_inst,
+                                                 tskf=tskf,
+                                                 num_cv_folds=num_cv_folds,
+                                                 lm_sample_frac=lm_sample_frac,
+                                                 scale_range=(1, 2),
+                                                 sample_inds=sample_inds,
+                                                 random_state=random_state)
+
+        return res
+
+    @classmethod
     def ft_model_mean_first_acf_nonpos(
             cls,
             ts: np.ndarray,
@@ -525,6 +626,16 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy().astype(float)
+
+    res = MFETSLandmarking.ft_model_ses(ts, score=_utils.smape)
+    print(res)
+
+    res = MFETSLandmarking.ft_model_hwes_add(ts, ts_period, score=_utils.smape)
+    print(res)
+
+    res = MFETSLandmarking.ft_model_hwes_mul(ts, ts_period, score=_utils.smape)
+    print(res)
+    exit(1)
 
     res = MFETSLandmarking.ft_model_arima_100_c(ts, score=_utils.smape)
     print(res)
