@@ -41,7 +41,7 @@ class MFETSLandmarking:
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
             num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
-            scale_range: t.Tuple[int, int] = (0, 1),
+            scale_range: t.Optional[t.Tuple[int, int]] = (0, 1),
             sample_inds: t.Optional[np.ndarray] = None,
             random_state: t.Optional[int] = None) -> np.ndarray:
         """TODO."""
@@ -57,25 +57,30 @@ class MFETSLandmarking:
             tskf = sklearn.model_selection.TimeSeriesSplit(
                 n_splits=num_cv_folds)
 
+        y = y.reshape(-1, 1)
         res = np.zeros(tskf.n_splits, dtype=float)
 
         # Note: x are the unitless timesteps of the timeseries
         X = np.arange(y.size).reshape(-1, 1)
-        scaler = sklearn.preprocessing.MinMaxScaler(feature_range=scale_range)
+
+        if scale_range is not None:
+            scaler = sklearn.preprocessing.MinMaxScaler(
+                feature_range=scale_range)
 
         try:
             for ind_fold, (inds_train, inds_test) in enumerate(tskf.split(X)):
                 X_train, X_test = X[inds_train, :], X[inds_test, :]
                 y_train, y_test = y[inds_train], y[inds_test]
 
-                y_train = scaler.fit_transform(y_train)
-                y_test = scaler.transform(y_test)
+                if scale_range is not None:
+                    y_train = scaler.fit_transform(y_train).ravel()
+                    y_test = scaler.transform(y_test).ravel()
 
                 model.fit(X_train, y_train, **args_fit)
                 y_pred = model.predict(X_test).ravel()
                 res[ind_fold] = score(y_pred, y_test)
 
-        except ValueError:
+        except TypeError as err:
             res[:] = np.nan
 
         return res
@@ -91,7 +96,7 @@ class MFETSLandmarking:
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
             num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
-            scale_range: t.Tuple[int, int] = (0, 1),
+            scale_range: t.Optional[t.Tuple[int, int]] = (0, 1),
             sample_inds: t.Optional[np.ndarray] = None,
             random_state: t.Optional[int] = None) -> np.ndarray:
         """TODO."""
@@ -112,7 +117,10 @@ class MFETSLandmarking:
 
         ts = ts.reshape(-1, 1)
         res = np.zeros(tskf.n_splits, dtype=float)
-        scaler = sklearn.preprocessing.MinMaxScaler(feature_range=scale_range)
+
+        if scale_range is not None:
+            scaler = sklearn.preprocessing.MinMaxScaler(
+                feature_range=scale_range)
 
         with warnings.catch_warnings():
             # Note: We are ignoring these warnings because they are related to poor
@@ -137,8 +145,9 @@ class MFETSLandmarking:
                                inds_test) in enumerate(tskf.split(ts)):
                     ts_train, ts_test = ts[inds_train], ts[inds_test]
 
-                    ts_train = scaler.fit_transform(ts_train)
-                    ts_test = scaler.transform(ts_test)
+                    if scale_range is not None:
+                        ts_train = scaler.fit_transform(ts_train)
+                        ts_test = scaler.transform(ts_test)
 
                     model = model_callable(ts_train,
                                            **args_inst).fit(**args_fit)
@@ -148,7 +157,6 @@ class MFETSLandmarking:
                     res[ind_fold] = score(ts_pred, ts_test)
 
             except ValueError as err:
-                print(err)
                 res[:] = np.nan
 
         return res
@@ -247,7 +255,7 @@ class MFETSLandmarking:
             "disp": False,
             "transparams": False,
             "maxiter": maxiter,
-            "solver": solver
+            "solver": solver,
         }
 
         res = cls._standard_pipeline_statsmodels(ts=ts,
@@ -283,7 +291,7 @@ class MFETSLandmarking:
             "trend": "c",
             "transparams": False,
             "maxiter": maxiter,
-            "solver": solver
+            "solver": solver,
         }
 
         res = cls._standard_pipeline_statsmodels(ts=ts,
@@ -319,7 +327,7 @@ class MFETSLandmarking:
             "trend": "c",
             "transparams": False,
             "maxiter": maxiter,
-            "solver": solver
+            "solver": solver,
         }
 
         res = cls._standard_pipeline_statsmodels(ts=ts,
@@ -355,7 +363,7 @@ class MFETSLandmarking:
             "trend": "nc",
             "transparams": False,
             "maxiter": maxiter,
-            "solver": solver
+            "solver": solver,
         }
 
         res = cls._standard_pipeline_statsmodels(ts=ts,
@@ -391,7 +399,7 @@ class MFETSLandmarking:
             "trend": "c",
             "transparams": False,
             "maxiter": maxiter,
-            "solver": solver
+            "solver": solver,
         }
 
         res = cls._standard_pipeline_statsmodels(ts=ts,
@@ -427,7 +435,7 @@ class MFETSLandmarking:
             "trend": "nc",
             "transparams": False,
             "maxiter": maxiter,
-            "solver": solver
+            "solver": solver,
         }
 
         res = cls._standard_pipeline_statsmodels(ts=ts,
@@ -463,7 +471,7 @@ class MFETSLandmarking:
             "trend": "c",
             "transparams": False,
             "maxiter": maxiter,
-            "solver": solver
+            "solver": solver,
         }
 
         res = cls._standard_pipeline_statsmodels(ts=ts,
@@ -520,7 +528,7 @@ class MFETSLandmarking:
         args_inst = {
             "seasonal_periods": ts_period,
             "trend": "add",
-            "seasonal": "add"
+            "seasonal": "add",
         }
 
         res = cls._standard_pipeline_statsmodels(ts=ts,
@@ -552,9 +560,12 @@ class MFETSLandmarking:
         args_inst = {
             "seasonal_periods": ts_period,
             "trend": "mul",
-            "seasonal": "mul"
+            "seasonal": "mul",
         }
 
+        # Note: scaling time-series in [1, 2] interval rather than
+        # [0, 1] because for Multiplicative Exponential Models,
+        # the time-series values must be strictly positive.
         res = cls._standard_pipeline_statsmodels(ts=ts,
                                                  model_callable=model,
                                                  score=score,
@@ -635,7 +646,6 @@ def _test() -> None:
 
     res = MFETSLandmarking.ft_model_hwes_mul(ts, ts_period, score=_utils.smape)
     print(res)
-    exit(1)
 
     res = MFETSLandmarking.ft_model_arima_100_c(ts, score=_utils.smape)
     print(res)
