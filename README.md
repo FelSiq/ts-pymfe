@@ -3,6 +3,14 @@ A backup for the pymfe expansion for time-series data.
 
 # Current references
 ## Papers
-1. [Meta-learning how to forecast time series (Thiyanga S Talagala, Rob J Hyndman and George Athanasopoulos)](https://www.monash.edu/business/econometrics-and-business-statistics/research/publications/ebs/wp06-2018.pdf).
-2. [Visualising forecasting algorithm performance using time series instance spaces (Yanfei Kang, Rob J. Hyndman, Kate Smith-Miles)](https://www.monash.edu/business/econometrics-and-business-statistics/research/publications/ebs/wp10-16.pdf)
-3. [Meta-learning for time series forecasting and forecast combination (Christiane Lemke, Bogdan Gabrys)](https://www.sciencedirect.com/science/article/abs/pii/S0925231210001074)
+1. [T.S. Talagala, R.J. Hyndman and G. Athanasopoulos. Meta-learning how to forecast time series (2018).](https://www.monash.edu/business/econometrics-and-business-statistics/research/publications/ebs/wp06-2018.pdf).
+2. [Kang, Yanfei., Hyndman, R.J., & Smith-Miles, Kate. (2016). Visualising Forecasting Algorithm Performance using Time Series Instance Spaces (Department of Econometrics and Business Statistics Working Paper Series 10/16).](https://www.monash.edu/business/ebs/research/publications/ebs/wp10-16.pdf)
+3. [C. Lemke, and B. Gabrys. Meta-learning for time series forecasting and forecast combination (Neurocomputing
+Volume 73, Issues 10–12, June 2010, Pages 2006-2016)](https://www.sciencedirect.com/science/article/abs/pii/S0925231210001074)
+4. [B.D. Fulcher and N.S. Jones. hctsa: A computational framework for automated time-series phenotyping using massive feature extraction. Cell Systems 5, 527 (2017).][https://www.cell.com/cell-systems/fulltext/S2405-4712(17)30438-6]
+5. [B.D. Fulcher, M.A. Little, N.S. Jones. Highly comparative time-series analysis: the empirical structure of time series and their methods. J. Roy. Soc. Interface 10, 83 (2013).](https://royalsocietypublishing.org/doi/full/10.1098/rsif.2013.0048)
+
+
+## Packages
+1. [tsfeatures (R language)](https://github.com/robjhyndman/tsfeatures)
+2. [hctsa (Matlab language)](https://github.com/benfulcher/hctsa)
