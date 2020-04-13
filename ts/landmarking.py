@@ -1,3 +1,4 @@
+"""TODO. https://people.duke.edu/~rnau/411arim.htm#mixed"""
 import typing as t
 import warnings
 
