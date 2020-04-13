@@ -66,7 +66,7 @@ def smape(arr_a: np.ndarray,
         the percentage form (in [0, 100] range). Return the
         error in fraction form (in [0, 1] range) otherwise.
     """
-    res = np.mean(np.abs(arr_a - arr_b) / (np.abs(arr_a) + np.abs(arr_b)))
+    res = np.mean(np.abs(arr_a - arr_b) / (1e-9 + np.abs(arr_a) + np.abs(arr_b)))
 
     if percentage:
         res *= 100
