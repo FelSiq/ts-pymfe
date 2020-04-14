@@ -185,21 +185,27 @@ class MFETSLandmarking:
         ts_residuals = ts_residuals.reshape(-1, 1)
         res = np.zeros(tskf.n_splits, dtype=float)
 
-        for ind_fold, (inds_train,
-                       inds_test) in enumerate(tskf.split(ts_residuals)):
-            ts_train, ts_test = ts_residuals[inds_train], ts_residuals[
-                inds_test]
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore",
+                                    module="arch",
+                                    category=RuntimeWarning)
 
-            try:
-                model = model_callable(ts_train, **args_inst).fit(**args_fit)
+            for ind_fold, (inds_train,
+                           inds_test) in enumerate(tskf.split(ts_residuals)):
+                ts_train, ts_test = ts_residuals[inds_train], ts_residuals[
+                    inds_test]
 
-                ts_var_pred = model.forecast(
-                    horizon=ts_test.size).variance.values[-1, :]
+                try:
+                    model = model_callable(ts_train,
+                                           **args_inst).fit(**args_fit)
 
-                res[ind_fold] = score(ts_var_pred, np.var(ts_test))
+                    ts_var_pred = model.forecast(
+                        horizon=ts_test.size).variance.values[-1, :]
 
-            except ValueError:
-                res[ind_fold] = np.nan
+                    res[ind_fold] = score(ts_var_pred, np.var(ts_test))
+
+                except ValueError as rr:
+                    res[ind_fold] = np.nan
 
         return res
 
@@ -609,6 +615,10 @@ class MFETSLandmarking:
         args_fit = {
             "update_freq": 0,
             "disp": "off",
+            "options": {
+                "disp": False
+            },
+            "show_warning": False,
         }
 
         res = cls._standard_pipeline_arch(ts_residuals=ts_residuals,
@@ -644,6 +654,10 @@ class MFETSLandmarking:
         args_fit = {
             "update_freq": 0,
             "disp": "off",
+            "options": {
+                "disp": False
+            },
+            "show_warning": False,
         }
 
         res = cls._standard_pipeline_arch(ts_residuals=ts_residuals,
@@ -716,6 +730,7 @@ def _test() -> None:
     res = MFETSLandmarking.ft_model_garch_11_c(ts_residuals,
                                                score=_utils.smape)
     print(2, res)
+    exit(1)
 
     res = MFETSLandmarking.ft_model_ses(ts, score=_utils.smape)
     print(3, res)
