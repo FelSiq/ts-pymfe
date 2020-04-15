@@ -11,7 +11,7 @@ import _get_data
 
 class MFETSFreqDomain:
     @classmethod
-    def _calc_power_spec(cls, ts_residuals: np.ndarray) -> np.ndarray:
+    def _calc_ps_residuals(cls, ts_residuals: np.ndarray) -> np.ndarray:
         """Calculate the positive side power spectrum of a fourier signal."""
         _, ps = scipy.signal.periodogram(ts_residuals,
                                          detrend=None,
@@ -20,38 +20,41 @@ class MFETSFreqDomain:
         return ps
 
     @classmethod
-    def ft_ps_max(
+    def ft_ps_residuals(
             cls,
             ts_residuals: np.ndarray,
-            power_spec: t.Optional[np.ndarray] = None,
+            ps_residuals: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
-        """Maximal power spectrum frequency of the given time-series.
+        """Power spectrum frequency of the given time-series residuals.
         
         Parameters
         ----------
         ts_residuals : :obj:`np.ndarray`
             Residuals (random noise) of an one-dimensional time-series.
 
-        power_spec : :obj:`np.ndarray`, optional
+        ps_residuals : :obj:`np.ndarray`, optional
             Power spectrum of ``ts_residuals``. Used to take advantage of
             precomputations.
 
         Returns
         -------
-        float
-            Largest power spectrum frequency of the given time-series.
+        :obj:`np.ndarray`
+            Power spectrum frequency of the given time-series.
         """
-        if power_spec is None:
-            power_spec = cls._calc_power_spec(ts_residuals=ts_residuals)
+        if ps_residuals is None:
+            ps_residuals = cls._calc_ps_residuals(ts_residuals=ts_residuals)
 
-        return np.max(power_spec)
+        # Note: in the reference paper, it is used just the maximal value
+        # of the power spectrum. However, to enable summarization, here
+        # we return the whole power spectrum.
+        return ps_residuals
 
     @classmethod
     def ft_ps_freqs(
             cls,
             ts_residuals: np.ndarray,
-            freq_num: int = 3,
-            power_spec: t.Optional[np.ndarray] = None,
+            freq_num: t.Union[int, float] = 0.05,
+            ps_residuals: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Largest power spectrum frequencies of the given time-series.
         
@@ -60,34 +63,40 @@ class MFETSFreqDomain:
         ts_residuals : :obj:`np.ndarray`
             Residuals (random noise) of an one-dimensional time-series.
 
-        freq_num : int, optional
-            Number of largest frequencies to be returned.
+        freq_num : int or float, optional
+            If int >= 1, number of largest frequencies to be returned.
+            If float in (0, 1), fraction of largest frequencies to be returned.
 
-        power_spec : :obj:`np.ndarray`, optional
+        ps_residuals : :obj:`np.ndarray`, optional
             Power spectrum of ``ts_residuals``. Used to take advantage of
             precomputations.
 
         Returns
         -------
-        float
+        :obj:`np.ndarray`
             Largest power spectrum frequencies of the given time-series.
         """
         if freq_num <= 0:
             raise ValueError("'freq_num' must be positive.")
 
-        if power_spec is None:
-            power_spec = cls._calc_power_spec(ts_residuals=ts_residuals)
+        if freq_num < 1:
+            freq_num = np.ceil(freq_num * ts_residuals.size)
 
-        power_spec = np.sort(power_spec)
+        freq_num = int(freq_num)
 
-        return power_spec[-freq_num:]
+        if ps_residuals is None:
+            ps_residuals = cls._calc_ps_residuals(ts_residuals=ts_residuals)
+
+        ps_highest = np.sort(ps_residuals)[-freq_num:]
+
+        return ps_highest
 
     @classmethod
     def ft_ps_peaks(
             cls,
             ts_residuals: np.ndarray,
             factor: float = 0.6,
-            power_spec: t.Optional[np.ndarray] = None,
+            ps_residuals: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Number of significative power spectrum frequencies.
 
@@ -106,32 +115,39 @@ class MFETSFreqDomain:
             used to create the threshold to define which power spectrum
             frequencies are significative.
 
-        power_spec : :obj:`np.ndarray`, optional
+        ps_residuals : :obj:`np.ndarray`, optional
             Power spectrum of ``ts_residuals``. Used to take advantage of
             precomputations.
 
         Returns
         -------
-        float
-            Maximal power spectrum frequency of the given time-series.
+        :obj:`np.ndarray`
+            Binary array marking which time-series residuals power spectrum
+            frequencies are larger than `factor * max(ps_residuals)`.
         """
         if not 0 < factor < 1:
             raise ValueError("'factor' must be in (0, 1) range.")
 
-        if power_spec is None:
-            power_spec = cls._calc_power_spec(ts_residuals=ts_residuals)
+        if ps_residuals is None:
+            ps_residuals = cls._calc_ps_residuals(ts_residuals=ts_residuals)
 
-        max_ps = cls.ft_ps_max(ts_residuals=ts_residuals,
-                               power_spec=power_spec)
+        max_ps = np.max(
+            cls.ft_ps_residuals(ts_residuals=ts_residuals,
+                                ps_residuals=ps_residuals))
 
-        return np.sum(power_spec >= factor * max_ps)
+        ps_peaks = (ps_residuals >= factor * max_ps).astype(int)
+
+        # Note: in the reference paper, only the 'ps_peaks' sum is
+        # returned. However, to enable summarization, here we return
+        # the whole array.
+        return ps_peaks
 
     @classmethod
     def ft_ps_entropy(
             cls,
             ts_residuals: np.ndarray,
             normalize: bool = True,
-            power_spec: t.Optional[np.ndarray] = None,
+            ps_residuals: t.Optional[np.ndarray] = None,
             base: int = 2,
     ) -> float:
         """Spectral entropy.
@@ -145,13 +161,13 @@ class MFETSFreqDomain:
 
         TODO.
         """
-        if power_spec is None:
-            power_spec = cls._calc_power_spec(ts_residuals=ts_residuals)
+        if ps_residuals is None:
+            ps_residuals = cls._calc_ps_residuals(ts_residuals=ts_residuals)
 
         # Note: no need to calculate the power spectrum density 'd':
-        # d = power_spec / ts_residuals.size
+        # d = ps_residuals / ts_residuals.size
         # since a constant factor does not affect the entropy value.
-        ps_ent = scipy.stats.entropy(power_spec / np.sum(power_spec),
+        ps_ent = scipy.stats.entropy(ps_residuals / np.sum(ps_residuals),
                                      base=base)
 
         if normalize:
@@ -166,10 +182,7 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
 
-    res = MFETSFreqDomain._calc_power_spec(ts_residuals)
-    print(res)
-
-    res = MFETSFreqDomain.ft_ps_max(ts_residuals)
+    res = MFETSFreqDomain.ft_ps_residuals(ts_residuals)
     print(res)
 
     res = MFETSFreqDomain.ft_ps_freqs(ts_residuals)
