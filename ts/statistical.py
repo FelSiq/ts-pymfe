@@ -433,6 +433,24 @@ class MFETSStatistical:
         return res
 
     @classmethod
+    def ft_rolling_gmean_diff(
+        cls,
+        ts: np.ndarray,
+        ts_period: int,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        if ts_rol_win is None:
+            ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                                   window_size=ts_period,
+                                                   ts_scaled=ts_scaled)
+
+        res = np.abs(ts_rol_win.apply(scipy.stats.gmean).diff(ts_period))
+
+        return res
+
+    @classmethod
     def ft_rolling_kldiv_diff(
             cls,
             ts: np.ndarray,
@@ -476,7 +494,7 @@ class MFETSStatistical:
         tilled_vars = _utils.apply_on_tiles(ts=ts_scaled,
                                             num_tiles=num_tiles,
                                             func=np.var,
-                                            **{"ddof": ddof})
+                                            ddof=ddof)
 
         # Note: the 'lumpiness' is defined as the variance of the
         # tilled variances. However, here, to enable other summarization,
@@ -559,6 +577,15 @@ class MFETSStatistical:
         _, (_, fluct, _) = nolds.dfa(ts, order=order, debug_data=True)
         return fluct
 
+    @classmethod
+    def ft_opt_boxcox_coef(cls,
+                           ts: np.ndarray,
+                           epsilon: float = 1.0e-4,
+                           num_lambdas: int = 16) -> float:
+        """TODO."""
+        ts = ts - ts.min() + epsilon
+        return scipy.stats.boxcox_normmax(ts, method="mle")
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -568,26 +595,26 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
-    res = MFETSStatistical.ft_sd_diff(ts)
+    res = MFETSStatistical.ft_opt_boxcox_coef(ts)
     print(res)
+
+    res = MFETSStatistical.ft_sd_diff(ts)
+    print("sd diff", res)
 
     res = MFETSStatistical.ft_skewness_diff(ts)
-    print(res)
+    print("skewness diff", res)
 
     res = MFETSStatistical.ft_kurtosis_diff(ts)
-    print(res)
+    print("kurtosis diff", res)
 
     res = MFETSStatistical.ft_sd_diff(ts)
-    print(res)
+    print("sd diff", res)
 
-    res = MFETSStatistical.ft_exp_max_lyap(ts,
-                                           embed_dim=int(
-                                               np.ceil(np.log10(ts.size))),
-                                           lag=1)
-    print(res)
+    res = MFETSStatistical.ft_exp_max_lyap(ts, embed_dim=ts_period, lag=1)
+    print("exp max lyap", res)
 
     res = MFETSStatistical.ft_exp_hurst(ts)
-    print(res)
+    print("exp hurst", res)
 
     res = MFETSStatistical.ft_spikiness(ts_residuals)
     print(np.var(res))
@@ -609,6 +636,9 @@ def _test() -> None:
 
     res = MFETSStatistical.ft_rolling_kurtosis_diff(ts, ts_period)
     print("kurtosis diff", np.nanmax(res))
+
+    res = MFETSStatistical.ft_rolling_gmean_diff(ts, ts_period)
+    print("gmean diff", np.nanmax(res))
 
     res = MFETSStatistical.ft_rolling_sd_diff(ts, ts_period)
     print(np.nanmax(res))
