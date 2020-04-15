@@ -131,9 +131,7 @@ class MFETSFreqDomain:
         if ps_residuals is None:
             ps_residuals = cls._calc_ps_residuals(ts_residuals=ts_residuals)
 
-        max_ps = np.max(
-            cls.ft_ps_residuals(ts_residuals=ts_residuals,
-                                ps_residuals=ps_residuals))
+        max_ps = np.max(ps_residuals)
 
         ps_peaks = (ps_residuals >= factor * max_ps).astype(int)
 
