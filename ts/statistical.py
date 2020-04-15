@@ -333,26 +333,26 @@ class MFETSStatistical:
         return ts_kurt
 
     @classmethod
-    def ft_shift_level(
+    def ft_rolling_mean_diff(
         cls,
         ts: np.ndarray,
-        window_size: int = 12,
+        ts_period: int,
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
     ) -> np.ndarray:
         """TODO."""
         if ts_rol_win is None:
             ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=window_size,
+                                                   window_size=ts_period,
                                                    ts_scaled=ts_scaled)
 
-        return np.abs(ts_rol_win.mean().diff(window_size))
+        return np.abs(ts_rol_win.mean().diff(ts_period))
 
     @classmethod
-    def ft_shift_var(
+    def ft_rolling_var_diff(
         cls,
         ts: np.ndarray,
-        window_size: int = 12,
+        ts_period: int,
         ddof: int = 1,
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
@@ -360,16 +360,83 @@ class MFETSStatistical:
         """TODO."""
         if ts_rol_win is None:
             ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=window_size,
+                                                   window_size=ts_period,
                                                    ts_scaled=ts_scaled)
 
-        return np.abs(ts_rol_win.var(ddof=ddof).diff(window_size))
+        return np.abs(ts_rol_win.var(ddof=ddof).diff(ts_period))
 
     @classmethod
-    def ft_shift_kl_div(
+    def ft_rolling_sd_diff(
+        cls,
+        ts: np.ndarray,
+        ts_period: int,
+        ddof: int = 1,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        if ts_rol_win is None:
+            ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                                   window_size=ts_period,
+                                                   ts_scaled=ts_scaled)
+
+        return np.abs(ts_rol_win.std(ddof=ddof).diff(ts_period))
+
+    @classmethod
+    def ft_rolling_skewness_diff(
+        cls,
+        ts: np.ndarray,
+        ts_period: int,
+        method: int = 3,
+        bias: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        if ts_rol_win is None:
+            ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                                   window_size=ts_period,
+                                                   ts_scaled=ts_scaled)
+
+        res = np.abs(
+            ts_rol_win.apply(pymfe.statistical.MFEStatistical.ft_skewness,
+                             kwargs={
+                                 "method": method,
+                                 "bias": bias
+                             }).diff(ts_period))
+
+        return res
+
+    @classmethod
+    def ft_rolling_kurtosis_diff(
+        cls,
+        ts: np.ndarray,
+        ts_period: int,
+        method: int = 3,
+        bias: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        if ts_rol_win is None:
+            ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                                   window_size=ts_period,
+                                                   ts_scaled=ts_scaled)
+
+        res = np.abs(
+            ts_rol_win.apply(pymfe.statistical.MFEStatistical.ft_kurtosis,
+                             kwargs={
+                                 "method": method,
+                                 "bias": bias
+                             }).diff(ts_period))
+
+        return res
+
+    @classmethod
+    def ft_rolling_kldiv_diff(
             cls,
             ts: np.ndarray,
-            window_size: int = 12,
+            ts_period: int,
             ts_scaled: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """TODO."""
@@ -377,14 +444,14 @@ class MFETSStatistical:
             ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
                 ts.reshape(-1, 1)).ravel()
 
-        kl_divs = np.zeros(ts.size - window_size, dtype=float)
+        kl_divs = np.zeros(ts.size - ts_period, dtype=float)
 
-        next_wind = ts_scaled[:window_size]
+        next_wind = ts_scaled[:ts_period]
         i = 1
 
-        while i < ts.size - window_size:
+        while i < ts.size - ts_period:
             cur_wind = next_wind
-            next_wind = ts_scaled[i:i + window_size]
+            next_wind = ts_scaled[i:i + ts_period]
             kl_divs[i - 1] = scipy.stats.entropy(cur_wind, next_wind)
             i += 1
 
@@ -531,13 +598,22 @@ def _test() -> None:
     res = MFETSStatistical.ft_stability(ts)
     print("stability", np.var(res))
 
-    res = MFETSStatistical.ft_shift_level(ts)
+    res = MFETSStatistical.ft_rolling_mean_diff(ts, ts_period)
     print(np.nanmax(res))
 
-    res = MFETSStatistical.ft_shift_var(ts)
+    res = MFETSStatistical.ft_rolling_var_diff(ts, ts_period)
     print(np.nanmax(res))
 
-    res = MFETSStatistical.ft_shift_kl_div(ts)
+    res = MFETSStatistical.ft_rolling_skewness_diff(ts, ts_period)
+    print("skewness diff", np.nanmax(res))
+
+    res = MFETSStatistical.ft_rolling_kurtosis_diff(ts, ts_period)
+    print("kurtosis diff", np.nanmax(res))
+
+    res = MFETSStatistical.ft_rolling_sd_diff(ts, ts_period)
+    print(np.nanmax(res))
+
+    res = MFETSStatistical.ft_rolling_kldiv_diff(ts, ts_period)
     print(np.nanmax(res))
 
     res = MFETSStatistical.ft_skewness_residuals(ts_residuals)
