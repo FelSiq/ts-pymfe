@@ -86,7 +86,12 @@ class MFETSModelBased:
         X = _orthopoly.ortho_poly(ts=np.arange(ts_trend.size),
                                   degree=degree,
                                   return_coeffs=False)
-        return statsmodels.regression.linear_model.OLS(ts_trend, X).fit()
+
+        ts_trend_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
+            ts_trend.reshape(-1, 1)).ravel()
+
+        return statsmodels.regression.linear_model.OLS(ts_trend_scaled,
+                                                       X).fit()
 
     @classmethod
     def ft_ets_double_alpha(
