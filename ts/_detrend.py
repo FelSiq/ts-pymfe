@@ -9,6 +9,7 @@ import statsmodels.stats.stattools
 import statsmodels.tsa.stattools
 import statsmodels.tsa.seasonal
 import pandas as pd
+import supersmoother
 
 import _get_data
 
@@ -76,9 +77,21 @@ def detrend(ts: np.ndarray,
     return np.split(res, 2, axis=1)
 
 
-def decompose(ts: t.Union[np.ndarray, pd.core.series.Series],
-              ts_period: t.Optional[int] = None,
-              plot: bool = False) -> np.ndarray:
+def _decompose_ssmoother(
+        ts: t.Union[np.ndarray, pd.core.series.Series],
+        plot: bool = False) -> t.Tuple[t.Optional[np.ndarray], ...]:
+    """TODO."""
+    timestamp = np.arange(ts.size)
+    model = supersmoother.SuperSmoother().fit(timestamp, ts)
+    trend = model.predict(timestamp)
+    residual = ts - trend
+
+    return trend, None, residual
+
+
+def _decompose_stl(ts: t.Union[np.ndarray, pd.core.series.Series],
+                   ts_period: t.Optional[int] = None,
+                   plot: bool = False) -> t.Tuple[np.ndarray, ...]:
     """Decompose a time-series in trend, seasonality and residuals."""
     res = statsmodels.tsa.seasonal.STL(ts, period=ts_period).fit()
 
@@ -90,6 +103,16 @@ def decompose(ts: t.Union[np.ndarray, pd.core.series.Series],
         return res.trend.values, res.seasonal.values, res.resid.values
 
     return res.trend, res.seasonal, res.resid
+
+
+def decompose(ts: t.Union[np.ndarray, pd.core.series.Series],
+              ts_period: t.Optional[int] = None,
+              plot: bool = False) -> t.Tuple[t.Optional[np.ndarray], ...]:
+    """TODO."""
+    if ts_period <= 1:
+        return _decompose_ssmoother(ts=ts, plot=plot)
+
+    return _decompose_stl(ts=ts, ts_period=ts_period, plot=plot)
 
 
 def _test() -> None:
