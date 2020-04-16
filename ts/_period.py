@@ -1,19 +1,23 @@
 import typing as t
 
 import numpy as np
+import statsmodels.tsa.stattools
+
+import _detrend
 
 
 def ts_period(ts: np.ndarray,
-              ts_residuals: t.Optional[np.ndarray] = None) -> int:
+              ts_detrended: t.Optional[np.ndarray] = None) -> int:
     """TODO."""
-    max_corr = -np.inf
-    period = -1
+    if ts_detrended is None:
+        ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
 
-    for cur_period in np.arange(1, 1 + ts.size // 2):
-        cf = np.corrcoef(ts[cur_period:], ts[:-cur_period])[0, 1]
-        if cf > max_corr:
-            max_corr = cf
-            period = cur_period
+    autocorr = statsmodels.tsa.stattools.acf(ts_detrended,
+                                             nlags=1 + ts_detrended.size // 2,
+                                             fft=True,
+                                             unbiased=True)[1:]
+
+    period = np.argmax(autocorr) + 1
 
     return period
 
