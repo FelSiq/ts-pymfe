@@ -14,25 +14,7 @@ import _utils
 import _period
 import _detrend
 import _get_data
-
-
-class _TSNaiveDrift:
-    """TODO."""
-    def __init__(self):
-        """TODO."""
-        self.slope = None
-        self.last_obs = None
-
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "_TSNaiveDrift":
-        """TODO."""
-        self.last_obs = y[-1]
-        self.last_obs_ind = len(X)
-        self.slope = (y[-1] - y[0]) / (len(X) - 1)
-        return self
-
-    def predict(self, X: np.ndarray) -> np.ndarray:
-        """TODO."""
-        return self.last_obs + (X - self.last_obs_ind) * self.slope
+import _models
 
 
 class MFETSLandmarking:
@@ -294,6 +276,27 @@ class MFETSLandmarking:
         return res
 
     @classmethod
+    def ft_model_naive(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+    ) -> np.ndarray:
+        """TODO."""
+        model = _models.TSNaive()
+
+        res = cls._standard_pipeline_sklearn(y=ts,
+                                             model=model,
+                                             score=score,
+                                             tskf=tskf,
+                                             num_cv_folds=num_cv_folds,
+                                             lm_sample_frac=lm_sample_frac)
+
+        return res
+
+    @classmethod
     def ft_model_naive_drift(
             cls,
             ts: np.ndarray,
@@ -303,7 +306,29 @@ class MFETSLandmarking:
             lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
-        model = _TSNaiveDrift()
+        model = _models.TSNaiveDrift()
+
+        res = cls._standard_pipeline_sklearn(y=ts,
+                                             model=model,
+                                             score=score,
+                                             tskf=tskf,
+                                             num_cv_folds=num_cv_folds,
+                                             lm_sample_frac=lm_sample_frac)
+
+        return res
+
+    @classmethod
+    def ft_model_naive_seasonal(
+            cls,
+            ts: np.ndarray,
+            ts_period: int,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+    ) -> np.ndarray:
+        """TODO."""
+        model = _models.TSNaiveSeasonal(ts_period=ts_period)
 
         res = cls._standard_pipeline_sklearn(y=ts,
                                              model=model,
@@ -767,6 +792,16 @@ def _test() -> None:
 
     res = MFETSLandmarking.ft_model_naive_drift(ts, score=_utils.smape)
     print(14, res)
+
+    res = MFETSLandmarking.ft_model_naive_seasonal(ts,
+                                                   ts_period,
+                                                   score=_utils.smape)
+    print(15, res)
+
+    res = MFETSLandmarking.ft_model_naive(ts, score=_utils.smape)
+    print(16, res)
+
+    exit(1)
 
     res = MFETSLandmarking.ft_model_mean(ts, score=_utils.smape)
     print(13, res)
