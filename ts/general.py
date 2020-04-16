@@ -362,12 +362,13 @@ class MFETSGeneral:
 
 
 def _test() -> None:
-    ts = _get_data.load_data(3)
+    ts = _get_data.load_data(2)
 
     ts_period = _period.ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+    print("TS period:", ts_period)
 
     res = MFETSGeneral.ft_hist_entropy(ts)
     print(res)
@@ -394,11 +395,12 @@ def _test() -> None:
     res = MFETSGeneral.ft_fs_len(ts)
     print(res)
 
-    res = MFETSGeneral.ft_peak_frac(ts, ts_period=12)
-    print(res)
+    if ts_season is not None:
+        res = MFETSGeneral.ft_peak_frac(ts_season, ts_period=12)
+        print(res)
 
-    res = MFETSGeneral.ft_trough_frac(ts, ts_period=12)
-    print(res)
+        res = MFETSGeneral.ft_trough_frac(ts_season, ts_period=12)
+        print(res)
 
     res = MFETSGeneral.ft_walker_cross_frac(ts)
     print(res)
