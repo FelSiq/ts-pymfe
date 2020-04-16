@@ -226,14 +226,6 @@ class MFETSGeneral:
         return np.asarray(fs_len, dtype=float)
 
     @classmethod
-    def ft_linearity(cls, ts_trend: np.ndarray) -> float:
-        """TODO."""
-        ts_trend_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
-            ts_trend.reshape(-1, 1))
-
-        return -1.0
-
-    @classmethod
     def ft_peak_frac(cls,
                      ts_season: np.ndarray,
                      ts_period: int,
@@ -415,9 +407,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_period(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_linearity(ts_trend)
     print(res)
 
     res = MFETSGeneral.ft_sample_entropy(ts, lag=1)
