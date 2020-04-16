@@ -16,21 +16,6 @@ import _detrend
 import _get_data
 
 
-class _TSMeanModel:
-    """TODO."""
-    def __init__(self):
-        self.avg = np.nan
-
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "_TSMeanModel":
-        """TODO."""
-        self.avg = np.mean(y)
-        return self
-
-    def predict(self, X: np.ndarray) -> np.ndarray:
-        """TODO."""
-        return np.full(X.shape, fill_value=self.avg)
-
-
 class MFETSLandmarking:
     """TODO."""
     @classmethod
@@ -131,6 +116,10 @@ class MFETSLandmarking:
 
             warnings.filterwarnings("ignore",
                                     module="statsmodels",
+                                    category=RuntimeWarning)
+
+            warnings.filterwarnings("ignore",
+                                    module="statsmodels",
                                     category=statsmodels.tools.sm_exceptions.
                                     HessianInversionWarning)
 
@@ -138,8 +127,8 @@ class MFETSLandmarking:
                 ts_train, ts_test = ts[inds_train], ts[inds_test]
 
                 if scale_range is not None:
-                    ts_train = scaler.fit_transform(ts_train)
-                    ts_test = scaler.transform(ts_test)
+                    ts_train = scaler.fit_transform(ts_train).ravel()
+                    ts_test = scaler.transform(ts_test).ravel()
 
                 try:
                     model = model_callable(ts_train,
@@ -204,7 +193,7 @@ class MFETSLandmarking:
 
                     res[ind_fold] = score(ts_var_pred, np.var(ts_test))
 
-                except ValueError as rr:
+                except ValueError:
                     res[ind_fold] = np.nan
 
         return res
@@ -243,12 +232,24 @@ class MFETSLandmarking:
             lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
-        res = cls._standard_pipeline_sklearn(y=ts,
-                                             model=_TSMeanModel(),
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
+        model_callable = statsmodels.tsa.arima_model.ARIMA
+
+        args_inst = {"order": (0, 0, 0)}
+        args_fit = {
+            "trend": "c",
+            "disp": False,
+            "transparams": False,
+            "maxiter": 1,
+        }
+
+        res = cls._standard_pipeline_statsmodels(ts=ts,
+                                                 model_callable=model_callable,
+                                                 args_inst=args_inst,
+                                                 args_fit=args_fit,
+                                                 score=score,
+                                                 tskf=tskf,
+                                                 num_cv_folds=num_cv_folds,
+                                                 lm_sample_frac=lm_sample_frac)
 
         return res
 
@@ -724,13 +725,18 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy().astype(float)
 
+    res = MFETSLandmarking.ft_model_mean(ts, score=_utils.smape)
+    print(13, res)
+
+    res = MFETSLandmarking.ft_model_mean_first_acf_nonpos(ts)
+    print(14, res)
+
     res = MFETSLandmarking.ft_model_arch_1_c(ts_residuals, score=_utils.smape)
     print(1, res)
 
     res = MFETSLandmarking.ft_model_garch_11_c(ts_residuals,
                                                score=_utils.smape)
     print(2, res)
-    exit(1)
 
     res = MFETSLandmarking.ft_model_ses(ts, score=_utils.smape)
     print(3, res)
@@ -765,12 +771,6 @@ def _test() -> None:
                                                 score=_utils.smape,
                                                 num_cv_folds=5)
     print(12, res)
-
-    res = MFETSLandmarking.ft_model_mean(ts, score=_utils.smape)
-    print(13, res)
-
-    res = MFETSLandmarking.ft_model_mean_first_acf_nonpos(ts)
-    print(14, res)
 
     res = MFETSLandmarking.ft_model_linear(ts, score=_utils.smape)
     print(15, res)
