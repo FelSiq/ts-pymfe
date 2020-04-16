@@ -86,7 +86,7 @@ def _decompose_ssmoother(
     trend = model.predict(timestamp)
     residual = ts - trend
 
-    return trend, None, residual
+    return trend, np.zeros(ts.size, dtype=float), residual
 
 
 def _decompose_stl(ts: t.Union[np.ndarray, pd.core.series.Series],
