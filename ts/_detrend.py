@@ -82,7 +82,7 @@ def _decompose_ssmoother(
         plot: bool = False) -> t.Tuple[t.Optional[np.ndarray], ...]:
     """TODO."""
     timestamp = np.arange(ts.size)
-    model = supersmoother.SuperSmoother().fit(timestamp, ts)
+    model = supersmoother.SuperSmoother().fit(timestamp, ts, presorted=True)
     trend = model.predict(timestamp)
     residual = ts - trend
 
