@@ -16,6 +16,25 @@ import _detrend
 import _get_data
 
 
+class _TSNaiveDrift:
+    """TODO."""
+    def __init__(self):
+        """TODO."""
+        self.slope = None
+        self.last_obs = None
+
+    def fit(self, X: np.ndarray, y: np.ndarray) -> "_TSNaiveDrift":
+        """TODO."""
+        self.last_obs = y[-1]
+        self.last_obs_ind = len(X)
+        self.slope = (y[-1] - y[0]) / (len(X) - 1)
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """TODO."""
+        return self.last_obs + (X - self.last_obs_ind) * self.slope
+
+
 class MFETSLandmarking:
     """TODO."""
     @classmethod
@@ -264,6 +283,27 @@ class MFETSLandmarking:
     ) -> np.ndarray:
         """TODO."""
         model = sklearn.linear_model.LinearRegression()
+
+        res = cls._standard_pipeline_sklearn(y=ts,
+                                             model=model,
+                                             score=score,
+                                             tskf=tskf,
+                                             num_cv_folds=num_cv_folds,
+                                             lm_sample_frac=lm_sample_frac)
+
+        return res
+
+    @classmethod
+    def ft_model_naive_drift(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+    ) -> np.ndarray:
+        """TODO."""
+        model = _TSNaiveDrift()
 
         res = cls._standard_pipeline_sklearn(y=ts,
                                              model=model,
@@ -724,6 +764,9 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy().astype(float)
+
+    res = MFETSLandmarking.ft_model_naive_drift(ts, score=_utils.smape)
+    print(14, res)
 
     res = MFETSLandmarking.ft_model_mean(ts, score=_utils.smape)
     print(13, res)
