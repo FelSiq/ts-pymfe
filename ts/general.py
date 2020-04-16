@@ -231,6 +231,9 @@ class MFETSGeneral:
                      ts_period: int,
                      normalize: bool = True) -> t.Union[int, float]:
         """TODO."""
+        if ts_period <= 1:
+            return np.nan
+
         ind_peak = cls._calc_season_mode_ind(ts_season=ts_season,
                                              ts_period=ts_period,
                                              indfunc=np.argmax)
@@ -246,6 +249,9 @@ class MFETSGeneral:
                        ts_period: int,
                        normalize: bool = True) -> t.Union[int, float]:
         """TODO."""
+        if ts_period <= 1:
+            return np.nan
+
         ind_trough = cls._calc_season_mode_ind(ts_season=ts_season,
                                                ts_period=ts_period,
                                                indfunc=np.argmin)
@@ -395,13 +401,6 @@ def _test() -> None:
     res = MFETSGeneral.ft_fs_len(ts)
     print(res)
 
-    if ts_season is not None:
-        res = MFETSGeneral.ft_peak_frac(ts_season, ts_period=12)
-        print(res)
-
-        res = MFETSGeneral.ft_trough_frac(ts_season, ts_period=12)
-        print(res)
-
     res = MFETSGeneral.ft_walker_cross_frac(ts)
     print(res)
 
@@ -412,6 +411,12 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_sample_entropy(ts, lag=1)
+    print(res)
+
+    res = MFETSGeneral.ft_peak_frac(ts_season, ts_period=ts_period)
+    print(res)
+
+    res = MFETSGeneral.ft_trough_frac(ts_season, ts_period=ts_period)
     print(res)
 
 
