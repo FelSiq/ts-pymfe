@@ -660,6 +660,7 @@ class MFETSLandmarking:
 
         return res
 
+    """
     @classmethod
     def ft_model_arch_1_c(
             cls,
@@ -669,7 +670,6 @@ class MFETSLandmarking:
             num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
-        """TODO."""
         model_callable = arch.arch_model
 
         args_inst = {
@@ -707,7 +707,6 @@ class MFETSLandmarking:
             num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
-        """TODO."""
         model_callable = arch.arch_model
 
         args_inst = {
@@ -736,6 +735,7 @@ class MFETSLandmarking:
                                           lm_sample_frac=lm_sample_frac)
 
         return res
+    """
 
     @classmethod
     def ft_model_mean_first_acf_nonpos(
@@ -801,20 +801,20 @@ def _test() -> None:
     res = MFETSLandmarking.ft_model_naive(ts, score=_utils.smape)
     print(16, res)
 
-    exit(1)
-
     res = MFETSLandmarking.ft_model_mean(ts, score=_utils.smape)
     print(13, res)
 
     res = MFETSLandmarking.ft_model_mean_first_acf_nonpos(ts)
     print(14, res)
 
+    """
     res = MFETSLandmarking.ft_model_arch_1_c(ts_residuals, score=_utils.smape)
     print(1, res)
 
     res = MFETSLandmarking.ft_model_garch_11_c(ts_residuals,
                                                score=_utils.smape)
     print(2, res)
+    """
 
     res = MFETSLandmarking.ft_model_ses(ts, score=_utils.smape)
     print(3, res)
