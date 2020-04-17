@@ -783,6 +783,11 @@ class MFETSLandmarking:
 
 
 def _test() -> None:
+    """Ref for not using SMAPE:
+
+    1. https://otexts.com/fpp2/accuracy.html#fnref2
+    2. Hyndman, R. J., & Koehler, A. B. (2006). Another look at measures of forecast accuracy. International Journal of Forecasting, 22, 679–688. https://robjhyndman.com/publications/another-look-at-measures-of-forecast-accuracy/
+    """
     ts = _get_data.load_data(3)
 
     ts_period = _period.ts_period(ts)
@@ -790,67 +795,69 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy().astype(float)
 
-    res = MFETSLandmarking.ft_model_naive_drift(ts, score=_utils.smape)
+    score = lambda *args: sklearn.metrics.mean_squared_error(*args, squared=False)
+
+    res = MFETSLandmarking.ft_model_naive_drift(ts, score=score)
     print(14, res)
 
     res = MFETSLandmarking.ft_model_naive_seasonal(ts,
                                                    ts_period,
-                                                   score=_utils.smape)
+                                                   score=score)
     print(15, res)
 
-    res = MFETSLandmarking.ft_model_naive(ts, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_naive(ts, score=score)
     print(16, res)
 
-    res = MFETSLandmarking.ft_model_mean(ts, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_mean(ts, score=score)
     print(13, res)
 
     res = MFETSLandmarking.ft_model_mean_first_acf_nonpos(ts)
     print(14, res)
 
     """
-    res = MFETSLandmarking.ft_model_arch_1_c(ts_residuals, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_arch_1_c(ts_residuals, score=score)
     print(1, res)
 
     res = MFETSLandmarking.ft_model_garch_11_c(ts_residuals,
-                                               score=_utils.smape)
+                                               score=score)
     print(2, res)
     """
 
-    res = MFETSLandmarking.ft_model_ses(ts, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_ses(ts, score=score)
     print(3, res)
 
-    res = MFETSLandmarking.ft_model_hwes_add(ts, ts_period, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_hwes_add(ts, ts_period, score=score)
     print(4, res)
 
-    res = MFETSLandmarking.ft_model_hwes_mul(ts, ts_period, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_hwes_mul(ts, ts_period, score=score)
     print(5, res)
 
-    res = MFETSLandmarking.ft_model_arima_100_c(ts, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_arima_100_c(ts, score=score)
     print(6, res)
 
-    res = MFETSLandmarking.ft_model_arima_010_c(ts, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_arima_010_c(ts, score=score)
     print(7, res)
 
-    res = MFETSLandmarking.ft_model_arima_110_c(ts, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_arima_110_c(ts, score=score)
     print(8, res)
 
-    res = MFETSLandmarking.ft_model_arima_011_nc(ts, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_arima_011_nc(ts, score=score)
     print(9, res)
 
-    res = MFETSLandmarking.ft_model_arima_011_c(ts, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_arima_011_c(ts, score=score)
     print(10, res)
 
     res = MFETSLandmarking.ft_model_arima_022_nc(ts,
-                                                 score=_utils.smape,
+                                                 score=score,
                                                  num_cv_folds=5)
     print(11, res)
 
     res = MFETSLandmarking.ft_model_arima_112_c(ts,
-                                                score=_utils.smape,
+                                                score=score,
                                                 num_cv_folds=5)
     print(12, res)
 
-    res = MFETSLandmarking.ft_model_linear(ts, score=_utils.smape)
+    res = MFETSLandmarking.ft_model_linear(ts, score=score)
     print(15, res)
 
     res = MFETSLandmarking.ft_model_linear_first_acf_nonpos(ts)
