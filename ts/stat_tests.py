@@ -54,7 +54,7 @@ class MFETSStatTests:
     @classmethod
     def ft_test_lb(cls,
                    ts_residuals: np.ndarray,
-                   ts_period: int,
+                   max_lags: t.Optional[int] = 16,
                    return_pval: bool = False) -> float:
         """Ljung-Box (LB) test of autocorrelation in residuals.
 
@@ -76,7 +76,7 @@ class MFETSStatTests:
         TODO.
         """
         res = statsmodels.stats.diagnostic.acorr_ljungbox(ts_residuals,
-                                                          lags=ts_period,
+                                                          lags=max_lags,
                                                           return_df=False)
 
         stat, pvalue = res
@@ -89,37 +89,39 @@ class MFETSStatTests:
     @classmethod
     def ft_test_earch(cls,
                       ts_residuals: np.ndarray,
-                      ts_period: int,
+                      max_lags: t.Optional[int] = 16,
                       return_pval: bool = False) -> float:
         """TODO."""
         stat, pvalue = statsmodels.stats.diagnostic.het_arch(
-            ts_residuals, nlags=ts_period)[:2]
+            ts_residuals, nlags=max_lags)[:2]
 
         if return_pval:
             return pvalue
 
         return stat
 
+    """
     @classmethod
     def ft_test_lb_garch(
         cls,
         ts_residuals: np.ndarray,
-        ts_period: int,
+        max_lags: t.Optional[int] = 16,
         arch_order: t.Tuple[int, int] = (1, 1),
         return_pval: bool = False,
     ) -> float:
-        """TODO."""
         p, q = arch_order
+
         model_arch = arch.arch_model(ts_residuals,
-                                     mean="zero",
+                                     mean="constant",
                                      vol="GARCH",
                                      p=p,
                                      q=q,
                                      rescale=True)
+
         model_res_arch = model_arch.fit(disp="off")
 
         stat, pvalue = statsmodels.stats.diagnostic.acorr_ljungbox(
-            ts_residuals, lags=ts_period, return_df=False)
+            model_res_arch.resid, lags=max_lags, return_df=False)
 
         if return_pval:
             return pvalue
@@ -130,32 +132,34 @@ class MFETSStatTests:
     def ft_test_earch_garch(
         cls,
         ts_residuals: np.ndarray,
-        ts_period: int,
+        max_lags: t.Optional[int] = 16,
         arch_order: t.Tuple[int, int] = (1, 1),
         return_pval: bool = False,
     ) -> float:
-        """TODO."""
         p, q = arch_order
+
         model_arch = arch.arch_model(ts_residuals,
                                      mean="zero",
                                      vol="GARCH",
                                      p=p,
                                      q=q,
                                      rescale=True)
+
         model_res_arch = model_arch.fit(disp="off")
 
         stat, pvalue = statsmodels.stats.diagnostic.het_arch(
-            model_res_arch.resid, nlags=ts_period)[:2]
+            model_res_arch.resid, nlags=max_lags)[:2]
 
         if return_pval:
             return pvalue
 
         return stat
+    """
 
     @classmethod
     def ft_test_adf(cls,
                     ts: np.ndarray,
-                    max_lags: t.Optional[int] = None,
+                    max_lags: t.Optional[int] = 16,
                     return_pval: bool = False) -> float:
         """Augmented Dickey-Fuller (ADF) test.
 
@@ -177,7 +181,7 @@ class MFETSStatTests:
     def ft_test_adf_gls(cls,
                         ts: np.ndarray,
                         lag: t.Optional[int] = None,
-                        max_lags: t.Optional[int] = None,
+                        max_lags: t.Optional[int] = 16,
                         return_pval: bool = False) -> float:
         """Dickey-Fuller GLS (ADF-GLS) test.
 
@@ -217,7 +221,7 @@ class MFETSStatTests:
     @classmethod
     def ft_test_kpss(cls,
                      ts: np.ndarray,
-                     lag: t.Optional[int] = None,
+                     max_lags: t.Optional[int] = 16,
                      return_pval: bool = False) -> float:
         """Kwiatkowski-Phillips-Schmidt-Shin (KPSS) test.
 
@@ -229,7 +233,7 @@ class MFETSStatTests:
         ------
         TODO.
         """
-        res = arch.unitroot.KPSS(ts, lags=lag)
+        res = arch.unitroot.KPSS(ts, lags=max_lags)
 
         if return_pval:
             return res.pvalue
@@ -263,19 +267,19 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy().astype(float)
 
-    res = MFETSStatTests.ft_test_lb(ts_residuals, ts_period)
+    res = MFETSStatTests.ft_test_lb(ts_residuals)
     print(res)
 
-    res = MFETSStatTests.ft_test_earch(ts_residuals, ts_period)
+    res = MFETSStatTests.ft_test_earch(ts_residuals)
     print(res)
 
-    res = MFETSStatTests.ft_test_earch_garch(ts_residuals, ts_period)
+    """
+    res = MFETSStatTests.ft_test_earch_garch(ts_residuals)
     print(res)
 
-    res = MFETSStatTests.ft_test_lb_garch(ts_residuals, ts_period)
+    res = MFETSStatTests.ft_test_lb_garch(ts_residuals)
     print(res)
-
-    exit(1)
+    """
 
     res = MFETSStatTests.ft_test_adf(ts, return_pval=False)
     print(res)
