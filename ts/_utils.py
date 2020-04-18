@@ -66,7 +66,8 @@ def smape(arr_a: np.ndarray,
         the percentage form (in [0, 100] range). Return the
         error in fraction form (in [0, 1] range) otherwise.
     """
-    res = np.mean(np.abs(arr_a - arr_b) / (1e-9 + np.abs(arr_a) + np.abs(arr_b)))
+    res = np.mean(
+        np.abs(arr_a - arr_b) / (1e-9 + np.abs(arr_a) + np.abs(arr_b)))
 
     if percentage:
         res *= 100
@@ -77,9 +78,19 @@ def smape(arr_a: np.ndarray,
     return res
 
 
-def sample_data(ts: np.ndarray, lm_sample_frac: float) -> np.ndarray:
+def sample_data(ts: np.ndarray,
+                lm_sample_frac: float,
+                X: t.Optional[np.ndarray] = None) -> np.ndarray:
     """Select ``lm_sample_frac`` percent of data from ``ts``."""
-    if lm_sample_frac >= 1.0:
+    threshold = int(np.ceil(ts.size * lm_sample_frac))
+
+    if threshold >= ts.size:
+        if X is not None:
+            return ts, X
+
         return ts
 
-    return ts[:np.ceil(ts.size * lm_sample_frac)]
+    if X is not None:
+        return ts[:threshold], X[:threshold, :]
+
+    return ts[:threshold]
