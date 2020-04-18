@@ -25,6 +25,7 @@ class MFETSLandmarking:
         y: np.ndarray,
         model: t.Any,
         score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        X: t.Optional[np.ndarray] = None,
         args_fit: t.Optional[t.Dict[str, t.Any]] = None,
         tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
         num_cv_folds: int = 5,
@@ -32,20 +33,23 @@ class MFETSLandmarking:
         scale_range: t.Optional[t.Tuple[int, int]] = (0, 1),
     ) -> np.ndarray:
         """TODO."""
-        if args_fit is None:
-            args_fit = {}
-
-        y = _utils.sample_data(ts=y, lm_sample_frac=lm_sample_frac)
-
         if tskf is None:
             tskf = sklearn.model_selection.TimeSeriesSplit(
                 n_splits=num_cv_folds)
 
+        if args_fit is None:
+            args_fit = {}
+
+        if X is None:
+            # Note: 'X' are the unitless timesteps of the timeseries
+            y = _utils.sample_data(ts=y, lm_sample_frac=lm_sample_frac)
+            X = np.arange(y.size).reshape(-1, 1)
+
+        else:
+            y, X = _utils.sample_data(ts=y, X=X, lm_sample_frac=lm_sample_frac)
+
         y = y.reshape(-1, 1)
         res = np.zeros(tskf.n_splits, dtype=float)
-
-        # Note: x are the unitless timesteps of the timeseries
-        X = np.arange(y.size).reshape(-1, 1)
 
         if scale_range is not None:
             scaler = sklearn.preprocessing.MinMaxScaler(
@@ -267,6 +271,36 @@ class MFETSLandmarking:
         model = sklearn.linear_model.LinearRegression()
 
         res = cls._standard_pipeline_sklearn(y=ts,
+                                             model=model,
+                                             score=score,
+                                             tskf=tskf,
+                                             num_cv_folds=num_cv_folds,
+                                             lm_sample_frac=lm_sample_frac)
+
+        return res
+
+    @classmethod
+    def ft_model_linear_seasonal(
+            cls,
+            ts: np.ndarray,
+            ts_period: int,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+    ) -> np.ndarray:
+        """TODO."""
+        model = sklearn.linear_model.LinearRegression()
+
+        X = np.tile(np.arange(ts_period), 1 + ts.size // ts_period)[:ts.size,
+                                                                    np.newaxis]
+        # Note: remove one dummy variable to avoid the 'dummy
+        # variable trap'.
+        X = sklearn.preprocessing.OneHotEncoder(
+            sparse=False).fit_transform(X)[:, 1:]
+
+        res = cls._standard_pipeline_sklearn(y=ts,
+                                             X=X,
                                              model=model,
                                              score=score,
                                              tskf=tskf,
@@ -795,14 +829,16 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy().astype(float)
 
-    score = lambda *args: sklearn.metrics.mean_squared_error(*args, squared=False)
+    score = lambda *args: sklearn.metrics.mean_squared_error(*args,
+                                                             squared=False)
+
+    res = MFETSLandmarking.ft_model_linear_seasonal(ts, ts_period, score=score)
+    print(17, res)
 
     res = MFETSLandmarking.ft_model_naive_drift(ts, score=score)
     print(14, res)
 
-    res = MFETSLandmarking.ft_model_naive_seasonal(ts,
-                                                   ts_period,
-                                                   score=score)
+    res = MFETSLandmarking.ft_model_naive_seasonal(ts, ts_period, score=score)
     print(15, res)
 
     res = MFETSLandmarking.ft_model_naive(ts, score=score)
@@ -813,7 +849,6 @@ def _test() -> None:
 
     res = MFETSLandmarking.ft_model_mean_first_acf_nonpos(ts)
     print(14, res)
-
     """
     res = MFETSLandmarking.ft_model_arch_1_c(ts_residuals, score=score)
     print(1, res)
