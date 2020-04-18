@@ -15,6 +15,7 @@ import _period
 import _detrend
 import _get_data
 import _models
+import _embed
 
 
 class MFETSLandmarking:
@@ -271,6 +272,56 @@ class MFETSLandmarking:
         model = sklearn.linear_model.LinearRegression()
 
         res = cls._standard_pipeline_sklearn(y=ts,
+                                             model=model,
+                                             score=score,
+                                             tskf=tskf,
+                                             num_cv_folds=num_cv_folds,
+                                             lm_sample_frac=lm_sample_frac)
+
+        return res
+
+    @classmethod
+    def ft_model_linear_embed_lag_1(
+            cls,
+            ts: np.ndarray,
+            ts_period: int,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+    ) -> np.ndarray:
+        """TODO."""
+        model = sklearn.linear_model.LinearRegression()
+
+        X = _embed.embed_ts(ts=ts, dim=ts_period, lag=1)
+
+        res = cls._standard_pipeline_sklearn(y=ts[ts_period:],
+                                             X=X,
+                                             model=model,
+                                             score=score,
+                                             tskf=tskf,
+                                             num_cv_folds=num_cv_folds,
+                                             lm_sample_frac=lm_sample_frac)
+
+        return res
+
+    @classmethod
+    def ft_model_linear_embed_lag_2(
+            cls,
+            ts: np.ndarray,
+            ts_period: int,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+    ) -> np.ndarray:
+        """TODO."""
+        model = sklearn.linear_model.LinearRegression()
+
+        X = _embed.embed_ts(ts=ts, dim=ts_period, lag=2)
+
+        res = cls._standard_pipeline_sklearn(y=ts[ts_period:],
+                                             X=X,
                                              model=model,
                                              score=score,
                                              tskf=tskf,
@@ -831,6 +882,17 @@ def _test() -> None:
 
     score = lambda *args: sklearn.metrics.mean_squared_error(*args,
                                                              squared=False)
+
+    res = MFETSLandmarking.ft_model_linear_embed_lag_1(ts,
+                                                       ts_period,
+                                                       score=score)
+    print(18, res)
+
+    res = MFETSLandmarking.ft_model_linear_embed_lag_2(ts,
+                                                       ts_period,
+                                                       score=score)
+    print(18, res)
+    exit(1)
 
     res = MFETSLandmarking.ft_model_linear_seasonal(ts, ts_period, score=score)
     print(17, res)
