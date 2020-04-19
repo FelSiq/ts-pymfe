@@ -65,10 +65,8 @@ class MFETSGeneral:
         return _period.ts_period(ts)
 
     @classmethod
-    def ft_frac_tp(cls,
-                   ts: np.ndarray,
-                   normalize: bool = False) -> t.Union[int, float]:
-        """Fraction of turning points in the time-series.
+    def ft_turning_points(cls, ts: np.ndarray) -> np.ndarray:
+        """Turning points in the time-series.
 
         A turning point is a time-series point `p_{i}` which both neighbor
         values, p_{i-1} and p_{i+1}, are either lower (p_{i} > p_{i+1} and
@@ -79,37 +77,52 @@ class MFETSGeneral:
         ts: :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        normalize : bool, optional
-            If False, return the number of turning points instead.
-
         Returns
         -------
-        float or int
-            Fraction of turning points in the time-series, if ``normalize``
-            is True. Number of turning points otherwise.
+        :obj:`np.ndarray`
+            Binary array marking where is the turning points in the
+            time-series.
 
         References
         ----------
         TODO.
         """
         diff_arr = np.ediff1d(ts)
-        frac_tp = np.sum(diff_arr[1:] * diff_arr[:-1] < 0)
-
-        if normalize:
-            frac_tp /= ts.size - 1
-
-        return frac_tp
+        turning_points = (diff_arr[1:] * diff_arr[:-1] < 0).astype(int)
+        return turning_points
 
     @classmethod
-    def ft_frac_sc(cls,
-                   ts: np.ndarray,
-                   ddof: int = 1,
-                   normalize: bool = True) -> t.Union[int, float]:
-        """Fraction of step change points in the time-series.
+    def ft_turning_points_trend(cls, ts_trend: np.ndarray) -> np.ndarray:
+        """Turning points in the time-series trend.
+
+        A turning point is a time-series point `p_{i}` which both neighbor
+        values, p_{i-1} and p_{i+1}, are either lower (p_{i} > p_{i+1} and
+        p_{i} > p_{i-1}) or higher (p_{i} < p_{i+1} and p_{i} < p_{i-1}).
+
+        Parameters
+        ----------
+        ts_trend: :obj:`np.ndarray`
+            One-dimensional time-series trend values.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Binary array marking where is the turning points in the
+            time-series trend.
+
+        References
+        ----------
+        TODO.
+        """
+        return cls.ft_turning_points(ts=ts_trend)
+
+    @classmethod
+    def ft_step_changes(cls, ts: np.ndarray, ddof: int = 1) -> np.ndarray:
+        """Step change points in the time-series.
 
         Let p_{t_{a}}^{t_{b}} be the subsequence of observations from the
         timestep t_{a} and t_{b}, both inclusive. A point `p_i` is a
-        turning point if and only if
+        step change if and only if:
 
         abs(p_{i} - mean(p_{1}^{i-1})) > 2 * std(p_{1}^{i-1})
 
@@ -121,14 +134,11 @@ class MFETSGeneral:
         ddof : float, optional
             Degrees of freedom for standard deviation.
 
-        normalize : bool, optional
-            If False, return the number of step changes instead.
-
         Returns
         -------
-        float or int
-            Fraction of step change points in the time-series, if
-            ``normalize`` is True. Number of step changes otherwise.
+        :obj:`np.ndarray`
+            Binary array marking where is the step change points in the
+            time-series.
 
         References
         ----------
@@ -138,16 +148,46 @@ class MFETSGeneral:
 
         ts_mean_abs_div = np.abs(ts[1:] - ts_cmeans[:-1])
 
-        num_sc = 0
+        step_changes = np.array([
+            int(ts_mean_abs_div[i - 1] > 2 * np.std(ts[:i], ddof=ddof))
+            for i in np.arange(1 + ddof, ts.size)
+        ],
+                                dtype=int)
 
-        for i in np.arange(1 + ddof, ts.size):
-            num_sc += int(
-                ts_mean_abs_div[i - 1] > 2 * np.std(ts[:i], ddof=ddof))
+        return step_changes
 
-        if normalize:
-            num_sc /= ts.size - 1
+    @classmethod
+    def ft_step_changes_trend(cls,
+                              ts_trend: np.ndarray,
+                              ddof: int = 1) -> np.ndarray:
+        """Step change points in the time-series trend.
 
-        return num_sc
+        Let p_{t_{a}}^{t_{b}} be the subsequence of observations from the
+        timestep t_{a} and t_{b}, both inclusive. A point `p_i` is a
+        step change if and only if:
+
+        abs(p_{i} - mean(p_{1}^{i-1})) > 2 * std(p_{1}^{i-1})
+
+        Parameters
+        ----------
+        ts_trend: :obj:`np.ndarray`
+            One-dimensional time-series trend values.
+
+        ddof : float, optional
+            Degrees of freedom for standard deviation.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Binary array marking where is the step change points in the
+            time-series trend.
+
+        References
+        ----------
+        TODO.
+        """
+        step_changes = cls.ft_step_changes(ts=ts_trend, ddof=ddof)
+        return step_changes
 
     @classmethod
     def ft_pred(cls,
@@ -376,6 +416,20 @@ def _test() -> None:
     ts = ts.to_numpy()
     print("TS period:", ts_period)
 
+    res = MFETSGeneral.ft_turning_points(ts)
+    print(np.mean(res))
+
+    res = MFETSGeneral.ft_step_changes(ts)
+    print(np.mean(res))
+
+    res = MFETSGeneral.ft_turning_points_trend(ts_trend)
+    print(np.mean(res))
+
+    res = MFETSGeneral.ft_step_changes_trend(ts_trend)
+    print(np.mean(res))
+
+    exit(1)
+
     res = MFETSGeneral.ft_hist_entropy(ts)
     print(res)
 
@@ -383,12 +437,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_length(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_frac_tp(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_frac_sc(ts)
     print(res)
 
     res = MFETSGeneral.ft_pred(
