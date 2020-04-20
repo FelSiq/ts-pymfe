@@ -1,4 +1,9 @@
-"""TODO. https://people.duke.edu/~rnau/411arim.htm#mixed"""
+"""TODO.
+
+Future refs:
+https://people.duke.edu/~rnau/411arim.htm#mixed
+https://otexts.com/fpp2/taxonomy.html
+"""
 import typing as t
 import warnings
 
@@ -684,7 +689,7 @@ class MFETSLandmarking:
         return res
 
     @classmethod
-    def ft_model_hwes_add(
+    def ft_model_hwes_ada(
             cls,
             ts: np.ndarray,
             ts_period: int,
@@ -713,7 +718,7 @@ class MFETSLandmarking:
         return res
 
     @classmethod
-    def ft_model_hwes_mul(
+    def ft_model_hwes_adm(
             cls,
             ts: np.ndarray,
             ts_period: int,
@@ -727,7 +732,7 @@ class MFETSLandmarking:
 
         args_inst = {
             "seasonal_periods": ts_period,
-            "trend": "mul",
+            "trend": "add",
             "seasonal": "mul",
         }
 
@@ -883,6 +888,12 @@ def _test() -> None:
     score = lambda *args: sklearn.metrics.mean_squared_error(*args,
                                                              squared=False)
 
+    res = MFETSLandmarking.ft_model_hwes_ada(ts, ts_period, score=score)
+    print(4, res)
+
+    res = MFETSLandmarking.ft_model_hwes_adm(ts, ts_period, score=score)
+    print(5, res)
+
     res = MFETSLandmarking.ft_model_linear_embed_lag_1(ts,
                                                        ts_period,
                                                        score=score)
@@ -891,8 +902,7 @@ def _test() -> None:
     res = MFETSLandmarking.ft_model_linear_embed_lag_2(ts,
                                                        ts_period,
                                                        score=score)
-    print(18, res)
-    exit(1)
+    print(19, res)
 
     res = MFETSLandmarking.ft_model_linear_seasonal(ts, ts_period, score=score)
     print(17, res)
@@ -922,12 +932,6 @@ def _test() -> None:
 
     res = MFETSLandmarking.ft_model_ses(ts, score=score)
     print(3, res)
-
-    res = MFETSLandmarking.ft_model_hwes_add(ts, ts_period, score=score)
-    print(4, res)
-
-    res = MFETSLandmarking.ft_model_hwes_mul(ts, ts_period, score=score)
-    print(5, res)
 
     res = MFETSLandmarking.ft_model_arima_100_c(ts, score=score)
     print(6, res)
