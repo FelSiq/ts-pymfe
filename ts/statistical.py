@@ -333,7 +333,7 @@ class MFETSStatistical:
         return ts_kurt
 
     @classmethod
-    def ft_rolling_mean_diff(
+    def ft_mdiff_moving_mean(
         cls,
         ts: np.ndarray,
         ts_period: int,
@@ -349,7 +349,7 @@ class MFETSStatistical:
         return np.abs(ts_rol_win.mean().diff(ts_period))
 
     @classmethod
-    def ft_rolling_var_diff(
+    def ft_mdiff_moving_var(
         cls,
         ts: np.ndarray,
         ts_period: int,
@@ -366,7 +366,7 @@ class MFETSStatistical:
         return np.abs(ts_rol_win.var(ddof=ddof).diff(ts_period))
 
     @classmethod
-    def ft_rolling_sd_diff(
+    def ft_mdiff_moving_sd(
         cls,
         ts: np.ndarray,
         ts_period: int,
@@ -383,7 +383,7 @@ class MFETSStatistical:
         return np.abs(ts_rol_win.std(ddof=ddof).diff(ts_period))
 
     @classmethod
-    def ft_rolling_skewness_diff(
+    def ft_mdiff_moving_skewness(
         cls,
         ts: np.ndarray,
         ts_period: int,
@@ -408,7 +408,7 @@ class MFETSStatistical:
         return res
 
     @classmethod
-    def ft_rolling_kurtosis_diff(
+    def ft_mdiff_moving_kurtosis(
         cls,
         ts: np.ndarray,
         ts_period: int,
@@ -433,7 +433,7 @@ class MFETSStatistical:
         return res
 
     @classmethod
-    def ft_rolling_gmean_diff(
+    def ft_mdiff_moving_gmean(
         cls,
         ts: np.ndarray,
         ts_period: int,
@@ -451,7 +451,7 @@ class MFETSStatistical:
         return res
 
     @classmethod
-    def ft_rolling_kldiv_diff(
+    def ft_mdiff_moving_kldiv(
             cls,
             ts: np.ndarray,
             ts_period: int,
@@ -625,25 +625,25 @@ def _test() -> None:
     res = MFETSStatistical.ft_stability(ts)
     print("stability", np.var(res))
 
-    res = MFETSStatistical.ft_rolling_mean_diff(ts, ts_period)
+    res = MFETSStatistical.ft_mdiff_moving_mean(ts, ts_period)
     print(np.nanmax(res))
 
-    res = MFETSStatistical.ft_rolling_var_diff(ts, ts_period)
+    res = MFETSStatistical.ft_mdiff_moving_var(ts, ts_period)
     print(np.nanmax(res))
 
-    res = MFETSStatistical.ft_rolling_skewness_diff(ts, ts_period)
+    res = MFETSStatistical.ft_mdiff_moving_skewness(ts, ts_period)
     print("skewness diff", np.nanmax(res))
 
-    res = MFETSStatistical.ft_rolling_kurtosis_diff(ts, ts_period)
+    res = MFETSStatistical.ft_mdiff_moving_kurtosis(ts, ts_period)
     print("kurtosis diff", np.nanmax(res))
 
-    res = MFETSStatistical.ft_rolling_gmean_diff(ts, ts_period)
+    res = MFETSStatistical.ft_mdiff_moving_gmean(ts, ts_period)
     print("gmean diff", np.nanmax(res))
 
-    res = MFETSStatistical.ft_rolling_sd_diff(ts, ts_period)
+    res = MFETSStatistical.ft_mdiff_moving_sd(ts, ts_period)
     print(np.nanmax(res))
 
-    res = MFETSStatistical.ft_rolling_kldiv_diff(ts, ts_period)
+    res = MFETSStatistical.ft_mdiff_moving_kldiv(ts, ts_period)
     print(np.nanmax(res))
 
     res = MFETSStatistical.ft_skewness_residuals(ts_residuals)
