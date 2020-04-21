@@ -193,6 +193,33 @@ class MFETSStatistical:
         return np.std(np.diff(ts, n=num_diff), ddof=ddof)
 
     @classmethod
+    def ft_sd_mdiff(cls,
+                    ts: np.ndarray,
+                    ts_period: int,
+                    ddof: int = 1) -> float:
+        """TODO.
+
+        Parameters
+        ----------
+        ts: :obj:`np.ndarray`
+            TODO.
+
+        ddof : float, optional
+            Degrees of freedom for standard deviation.
+
+        Returns
+        -------
+        float
+        TODO.
+
+        References
+        ----------
+        TODO.
+        """
+        ts_diff = ts[ts_period:] - ts[:-ts_period]
+        return np.std(ts_diff, ddof=ddof)
+
+    @classmethod
     def ft_skewness_residuals(cls,
                               ts_residuals: np.ndarray,
                               method: int = 3,
@@ -255,6 +282,20 @@ class MFETSStatistical:
                          bias: bool = True) -> float:
         """TODO."""
         ts_diff = np.diff(ts, n=num_diff)
+        ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_diff,
+                                                               method=method,
+                                                               bias=bias)
+
+        return ts_skew
+
+    @classmethod
+    def ft_skewness_mdiff(cls,
+                          ts: np.ndarray,
+                          ts_period: int,
+                          method: int = 3,
+                          bias: bool = True) -> float:
+        """TODO."""
+        ts_diff = ts[ts_period] - ts[:-ts_period]
         ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_diff,
                                                                method=method,
                                                                bias=bias)
@@ -326,6 +367,20 @@ class MFETSStatistical:
                          bias: bool = True) -> float:
         """TODO."""
         ts_diff = np.diff(ts, n=num_diff)
+        ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_diff,
+                                                               method=method,
+                                                               bias=bias)
+
+        return ts_kurt
+
+    @classmethod
+    def ft_kurtosis_mdiff(cls,
+                          ts: np.ndarray,
+                          ts_period: int,
+                          method: int = 3,
+                          bias: bool = True) -> float:
+        """TODO."""
+        ts_diff = ts[ts_period:] - ts[:-ts_period]
         ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_diff,
                                                                method=method,
                                                                bias=bias)
@@ -601,11 +656,21 @@ def _test() -> None:
     res = MFETSStatistical.ft_sd_diff(ts)
     print("sd diff", res)
 
+    res = MFETSStatistical.ft_sd_mdiff(ts, ts_period)
+    print("sd mdiff", res)
+
     res = MFETSStatistical.ft_skewness_diff(ts)
     print("skewness diff", res)
 
+    res = MFETSStatistical.ft_skewness_mdiff(ts, ts_period)
+    print("skewness mdiff", res)
+
     res = MFETSStatistical.ft_kurtosis_diff(ts)
     print("kurtosis diff", res)
+
+    res = MFETSStatistical.ft_kurtosis_mdiff(ts, ts_period)
+    print("kurtosis mdiff", res)
+    exit(1)
 
     res = MFETSStatistical.ft_sd_diff(ts)
     print("sd diff", res)
