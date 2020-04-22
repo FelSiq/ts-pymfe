@@ -249,7 +249,7 @@ class MFETSLandmarking:
         args_fit = {
             "trend": "c",
             "disp": False,
-            "transparams": False,
+            "transparams": True,
             "maxiter": 1,
         }
 
@@ -324,6 +324,31 @@ class MFETSLandmarking:
         model = sklearn.linear_model.LinearRegression()
 
         X = _embed.embed_ts(ts=ts, dim=ts_period, lag=2)
+
+        res = cls._standard_pipeline_sklearn(y=ts[ts_period:],
+                                             X=X,
+                                             model=model,
+                                             score=score,
+                                             tskf=tskf,
+                                             num_cv_folds=num_cv_folds,
+                                             lm_sample_frac=lm_sample_frac)
+
+        return res
+
+    @classmethod
+    def ft_model_linear_embed_lag_m(
+            cls,
+            ts: np.ndarray,
+            ts_period: int,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+    ) -> np.ndarray:
+        """TODO."""
+        model = sklearn.linear_model.LinearRegression()
+
+        X = _embed.embed_ts(ts=ts, dim=3, lag=ts_period)
 
         res = cls._standard_pipeline_sklearn(y=ts[ts_period:],
                                              X=X,
@@ -447,7 +472,7 @@ class MFETSLandmarking:
         args_fit = {
             "trend": "c",
             "disp": False,
-            "transparams": False,
+            "transparams": True,
             "maxiter": maxiter,
             "solver": solver,
         }
@@ -481,7 +506,7 @@ class MFETSLandmarking:
         args_fit = {
             "disp": False,
             "trend": "c",
-            "transparams": False,
+            "transparams": True,
             "maxiter": maxiter,
             "solver": solver,
         }
@@ -515,7 +540,7 @@ class MFETSLandmarking:
         args_fit = {
             "disp": False,
             "trend": "c",
-            "transparams": False,
+            "transparams": True,
             "maxiter": maxiter,
             "solver": solver,
         }
@@ -549,7 +574,7 @@ class MFETSLandmarking:
         args_fit = {
             "disp": False,
             "trend": "nc",
-            "transparams": False,
+            "transparams": True,
             "maxiter": maxiter,
             "solver": solver,
         }
@@ -583,7 +608,7 @@ class MFETSLandmarking:
         args_fit = {
             "disp": False,
             "trend": "c",
-            "transparams": False,
+            "transparams": True,
             "maxiter": maxiter,
             "solver": solver,
         }
@@ -617,7 +642,7 @@ class MFETSLandmarking:
         args_fit = {
             "disp": False,
             "trend": "nc",
-            "transparams": False,
+            "transparams": True,
             "maxiter": maxiter,
             "solver": solver,
         }
@@ -651,7 +676,7 @@ class MFETSLandmarking:
         args_fit = {
             "disp": False,
             "trend": "c",
-            "transparams": False,
+            "transparams": True,
             "maxiter": maxiter,
             "solver": solver,
         }
@@ -903,6 +928,11 @@ def _test() -> None:
                                                        ts_period,
                                                        score=score)
     print(19, res)
+
+    res = MFETSLandmarking.ft_model_linear_embed_lag_m(ts,
+                                                       ts_period,
+                                                       score=score)
+    print(20, res)
 
     res = MFETSLandmarking.ft_model_linear_seasonal(ts, ts_period, score=score)
     print(17, res)
