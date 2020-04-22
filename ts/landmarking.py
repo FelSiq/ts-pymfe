@@ -730,6 +730,7 @@ class MFETSLandmarking:
             "seasonal_periods": ts_period,
             "trend": "add",
             "seasonal": "add",
+            "damped": True,
         }
 
         res = cls._standard_pipeline_statsmodels(ts=ts,
@@ -759,6 +760,7 @@ class MFETSLandmarking:
             "seasonal_periods": ts_period,
             "trend": "add",
             "seasonal": "mul",
+            "damped": True,
         }
 
         # Note: scaling time-series in [1, 2] interval rather than
