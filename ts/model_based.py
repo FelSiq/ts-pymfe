@@ -4,6 +4,7 @@ import sklearn.preprocessing
 import statsmodels.tsa.holtwinters
 import statsmodels.regression
 import statsmodels.api
+import statsmodels.tsa.arima_model
 import numpy as np
 import arch
 
@@ -231,14 +232,48 @@ class MFETSModelBased:
 
         return curvature
 
+    @classmethod
+    def ft_avg_cycle_period(cls, ts_residuals: np.ndarray) -> float:
+        """TODO.
+
+        https://otexts.com/fpp2/non-seasonal-arima.html
+        """
+        model_res = statsmodels.tsa.arima_model.ARIMA(ts_residuals,
+                                                      order=(2, 0, 0)).fit(
+                                                          disp=-1,
+                                                          full_output=False)
+        theta_a, theta_b = model_res.arparams
+
+        has_cycle = theta_a**2 + 4 * theta_b < 0
+
+        if not has_cycle:
+            return np.nan
+
+        avg_cycle_period = 2 * np.pi / np.arccos(-0.25 * theta_a *
+                                                 (1 - theta_b) / theta_b)
+
+        return avg_cycle_period
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
+
+    # Note: add cyclic behaviour to data
+    # ts += -100 * (np.random.random(ts.size) < 0.3)
+    """
+    import matplotlib.pyplot as plt
+    plt.plot(ts)
+    plt.show()
+    """
 
     ts_period = _period.ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSModelBased.ft_avg_cycle_period(ts_residuals)
+    print(res)
+    exit(1)
 
     res = MFETSModelBased.ft_linearity(ts_trend)
     print(res)
