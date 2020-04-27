@@ -6,7 +6,6 @@ import statsmodels.regression
 import statsmodels.api
 import statsmodels.tsa.arima_model
 import numpy as np
-import arch
 
 import _orthopoly
 import _period

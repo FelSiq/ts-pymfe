@@ -100,62 +100,6 @@ class MFETSStatTests:
 
         return stat
 
-    """
-    @classmethod
-    def ft_test_lb_garch(
-        cls,
-        ts_residuals: np.ndarray,
-        max_lags: t.Optional[int] = 16,
-        arch_order: t.Tuple[int, int] = (1, 1),
-        return_pval: bool = False,
-    ) -> float:
-        p, q = arch_order
-
-        model_arch = arch.arch_model(ts_residuals,
-                                     mean="constant",
-                                     vol="GARCH",
-                                     p=p,
-                                     q=q,
-                                     rescale=True)
-
-        model_res_arch = model_arch.fit(disp="off")
-
-        stat, pvalue = statsmodels.stats.diagnostic.acorr_ljungbox(
-            model_res_arch.resid, lags=max_lags, return_df=False)
-
-        if return_pval:
-            return pvalue
-
-        return stat
-
-    @classmethod
-    def ft_test_earch_garch(
-        cls,
-        ts_residuals: np.ndarray,
-        max_lags: t.Optional[int] = 16,
-        arch_order: t.Tuple[int, int] = (1, 1),
-        return_pval: bool = False,
-    ) -> float:
-        p, q = arch_order
-
-        model_arch = arch.arch_model(ts_residuals,
-                                     mean="zero",
-                                     vol="GARCH",
-                                     p=p,
-                                     q=q,
-                                     rescale=True)
-
-        model_res_arch = model_arch.fit(disp="off")
-
-        stat, pvalue = statsmodels.stats.diagnostic.het_arch(
-            model_res_arch.resid, nlags=max_lags)[:2]
-
-        if return_pval:
-            return pvalue
-
-        return stat
-    """
-
     @classmethod
     def ft_test_adf(cls,
                     ts: np.ndarray,
@@ -272,14 +216,6 @@ def _test() -> None:
 
     res = MFETSStatTests.ft_test_earch(ts_residuals)
     print(res)
-
-    """
-    res = MFETSStatTests.ft_test_earch_garch(ts_residuals)
-    print(res)
-
-    res = MFETSStatTests.ft_test_lb_garch(ts_residuals)
-    print(res)
-    """
 
     res = MFETSStatTests.ft_test_adf(ts, return_pval=False)
     print(res)
