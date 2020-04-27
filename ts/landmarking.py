@@ -3,12 +3,12 @@
 Future refs:
 https://people.duke.edu/~rnau/411arim.htm#mixed
 https://otexts.com/fpp2/taxonomy.html
+https://otexts.com/fpp2/forecasting-on-training-and-test-sets.html
 """
 import typing as t
 import warnings
 
 import numpy as np
-import arch
 import sklearn.model_selection
 import statsmodels.tsa.arima_model
 import statsmodels.tsa.holtwinters
@@ -150,59 +150,6 @@ class MFETSLandmarking:
                                             1).ravel()
 
                     res[ind_fold] = score(ts_pred, ts_test)
-
-                except ValueError:
-                    res[ind_fold] = np.nan
-
-        return res
-
-    @classmethod
-    def _standard_pipeline_arch(
-            cls,
-            ts_residuals: np.ndarray,
-            model_callable: t.Any,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            args_inst: t.Optional[t.Dict[str, t.Any]] = None,
-            args_fit: t.Optional[t.Dict[str, t.Any]] = None,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-    ) -> np.ndarray:
-        """TODO."""
-        if args_inst is None:
-            args_inst = {}
-
-        if args_fit is None:
-            args_fit = {}
-
-        ts_residuals = _utils.sample_data(ts=ts_residuals,
-                                          lm_sample_frac=lm_sample_frac)
-
-        if tskf is None:
-            tskf = sklearn.model_selection.TimeSeriesSplit(
-                n_splits=num_cv_folds)
-
-        ts_residuals = ts_residuals.reshape(-1, 1)
-        res = np.zeros(tskf.n_splits, dtype=float)
-
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore",
-                                    module="arch",
-                                    category=RuntimeWarning)
-
-            for ind_fold, (inds_train,
-                           inds_test) in enumerate(tskf.split(ts_residuals)):
-                ts_train, ts_test = ts_residuals[inds_train], ts_residuals[
-                    inds_test]
-
-                try:
-                    model = model_callable(ts_train,
-                                           **args_inst).fit(**args_fit)
-
-                    ts_var_pred = model.forecast(
-                        horizon=ts_test.size).variance.values[-1, :]
-
-                    res[ind_fold] = score(ts_var_pred, np.var(ts_test))
 
                 except ValueError:
                     res[ind_fold] = np.nan
@@ -777,83 +724,6 @@ class MFETSLandmarking:
 
         return res
 
-    """
-    @classmethod
-    def ft_model_arch_1_c(
-            cls,
-            ts_residuals: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-    ) -> np.ndarray:
-        model_callable = arch.arch_model
-
-        args_inst = {
-            "mean": "constant",
-            "p": 1,
-            "vol": "ARCH",
-            "rescale": True,
-        }
-        args_fit = {
-            "update_freq": 0,
-            "disp": "off",
-            "options": {
-                "disp": False
-            },
-            "show_warning": False,
-        }
-
-        res = cls._standard_pipeline_arch(ts_residuals=ts_residuals,
-                                          model_callable=model_callable,
-                                          score=score,
-                                          args_inst=args_inst,
-                                          args_fit=args_fit,
-                                          tskf=tskf,
-                                          num_cv_folds=num_cv_folds,
-                                          lm_sample_frac=lm_sample_frac)
-
-        return res
-
-    @classmethod
-    def ft_model_garch_11_c(
-            cls,
-            ts_residuals: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-    ) -> np.ndarray:
-        model_callable = arch.arch_model
-
-        args_inst = {
-            "mean": "constant",
-            "p": 1,
-            "q": 1,
-            "vol": "GARCH",
-            "rescale": True,
-        }
-        args_fit = {
-            "update_freq": 0,
-            "disp": "off",
-            "options": {
-                "disp": False
-            },
-            "show_warning": False,
-        }
-
-        res = cls._standard_pipeline_arch(ts_residuals=ts_residuals,
-                                          model_callable=model_callable,
-                                          score=score,
-                                          args_inst=args_inst,
-                                          args_fit=args_fit,
-                                          tskf=tskf,
-                                          num_cv_folds=num_cv_folds,
-                                          lm_sample_frac=lm_sample_frac)
-
-        return res
-    """
-
     @classmethod
     def ft_model_mean_first_acf_nonpos(
             cls,
@@ -953,14 +823,6 @@ def _test() -> None:
 
     res = MFETSLandmarking.ft_model_mean_first_acf_nonpos(ts)
     print(14, res)
-    """
-    res = MFETSLandmarking.ft_model_arch_1_c(ts_residuals, score=score)
-    print(1, res)
-
-    res = MFETSLandmarking.ft_model_garch_11_c(ts_residuals,
-                                               score=score)
-    print(2, res)
-    """
 
     res = MFETSLandmarking.ft_model_ses(ts, score=score)
     print(3, res)
