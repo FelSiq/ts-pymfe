@@ -13,6 +13,12 @@ import supersmoother
 
 import _get_data
 
+try:
+    import _period
+
+except ImportError:
+    pass
+
 
 def detrend(ts: np.ndarray,
             degrees: t.Union[int, t.Sequence[int]] = (1, 2, 3),
@@ -109,6 +115,9 @@ def decompose(ts: t.Union[np.ndarray, pd.core.series.Series],
               ts_period: t.Optional[int] = None,
               plot: bool = False) -> t.Tuple[t.Optional[np.ndarray], ...]:
     """TODO."""
+    if ts_period is None:
+        ts_period = _period.ts_period(ts)
+
     if ts_period <= 1:
         return _decompose_ssmoother(ts=ts, plot=plot)
 
