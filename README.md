@@ -11,6 +11,10 @@ Volume 73, Issues 10–12, June 2010, Pages 2006-2016)](https://www.sciencedirec
 5. [B.D. Fulcher, M.A. Little, N.S. Jones. Highly comparative time-series analysis: the empirical structure of time series and their methods. J. Roy. Soc. Interface 10, 83 (2013).](https://royalsocietypublishing.org/doi/full/10.1098/rsif.2013.0048)
 
 
+## Books
+1. [Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting: principles and practice, 2nd edition, OTexts: Melbourne, Australia. OTexts.com/fpp2. Accessed on April 29 2020.](https://otexts.com/fpp2/)
+
+
 ## Packages
 1. [tsfeatures (R language)](https://github.com/robjhyndman/tsfeatures)
 2. [hctsa (Matlab language)](https://github.com/benfulcher/hctsa)
