@@ -600,19 +600,9 @@ class MFETSStatistical:
     def ft_exp_max_lyap(cls,
                         ts: np.ndarray,
                         embed_dim: int,
-                        lag: int,
-                        method: str = "rosenstein") -> float:
+                        lag: int) -> float:
         """TODO."""
-        VALID_METHODS = ("eckmann", "rosenstein")
-
-        if method not in VALID_METHODS:
-            raise ValueError("'method' ({}) not in {}.".format(
-                method, VALID_METHODS))
-
-        if method == "rosenstein":
-            return nolds.lyap_r(data=ts, lag=lag, emb_dim=embed_dim)
-
-        return nolds.lyap_e(data=ts, emb_dim=embed_dim)
+        return nolds.lyap_r(data=ts, lag=lag, emb_dim=embed_dim)
 
     @classmethod
     def ft_exp_hurst(cls, ts: np.ndarray) -> float:
