@@ -1,9 +1,9 @@
 import typing as t
-import operator
 
 import statsmodels.tsa.stattools
 import numpy as np
 
+import _utils
 import _detrend
 import _period
 import _get_data
@@ -197,15 +197,10 @@ class MFETSAutocorr:
                                     nlags=max_nlags,
                                     unbiased=unbiased)
 
-        if ts_acfs.size <= 2:
-            return np.nan
-
-        acfs_diff = np.diff(ts_acfs)
-        acfs_locmin = np.flatnonzero(
-            np.logical_and(0 < acfs_diff[1:], 0 > acfs_diff[:-1]))
+        acfs_locmin = np.flatnonzero(_utils.find_crit_pt(ts_acfs, type_="min"))
 
         try:
-            return acfs_locmin[0] + 2
+            return acfs_locmin[0] + 1
 
         except IndexError:
             return np.nan
@@ -390,11 +385,10 @@ class MFETSAutocorr:
         return gen_autocorr
 
     @classmethod
-    def ft_autocorr_shape(
+    def ft_autocorr_crit_pt(
             cls,
             ts: np.ndarray,
-            maxima: bool = True,
-            normalize: bool = True,
+            crit_point_type: str = "non-plateau",
             unbiased: bool = True,
             max_nlags: t.Optional[int] = None,
             ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
@@ -404,17 +398,12 @@ class MFETSAutocorr:
                                     nlags=max_nlags,
                                     unbiased=unbiased)
 
-        diff_arr_1 = np.diff(ts_acfs)
-        diff_arr_2 = np.diff(diff_arr_1)
+        ac_shape = _utils.find_crit_pt(arr=ts_acfs, type_=crit_point_type)
 
-        turning_points = diff_arr_1[1:] * diff_arr_1[:-1] < 0
-
-        func = np.mean if normalize else np.sum
-        rel = operator.gt if maxima else operator.lt
-
-        crit_points = func(rel(diff_arr_2[turning_points], 0))
-
-        return crit_points
+        # Note: in 'hctsa', either the sum or the mean is returned.
+        # However, to enable summarization, here we return the whole
+        # array.
+        return ac_shape
 
 
 def _test() -> None:
@@ -424,13 +413,12 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
-    res = MFETSAutocorr.ft_autocorr_shape(ts)
+    res = MFETSAutocorr.ft_autocorr_crit_pt(ts)
     print(res)
     exit(1)
 
     res = MFETSAutocorr.ft_gen_autocorr(ts)
     print(res)
-    exit(1)
 
     res = MFETSAutocorr.ft_tc3(ts, only_numerator=False)
     print(res)
