@@ -9,6 +9,11 @@ def apply_on_tiles(ts: np.ndarray, num_tiles: int,
                    func: t.Callable[[np.ndarray],
                                     t.Any], *args, **kwargs) -> np.ndarray:
     """Apply a function on time-series tiles (non-overlapping windows)."""
+    if num_tiles > 0.5 * ts.size:
+        raise ValueError("'num_tiles' ({}) larger than half the "
+                         "time-series size ({}).".format(
+                             num_tiles, 0.5 * ts.size))
+
     res = np.array(
         [
             func(split, *args, **kwargs)  # type: ignore
@@ -94,3 +99,12 @@ def sample_data(ts: np.ndarray,
         return ts[:threshold], X[:threshold, :]
 
     return ts[:threshold]
+
+
+def standardize_ts(ts: np.ndarray, ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+    """Standardize (z-score normalization) time-series."""
+    if ts_scaled is None:
+        return sklearn.preprocessing.StandardScaler().fit_transform(
+            ts.reshape(-1, 1)).ravel()
+
+    return ts
