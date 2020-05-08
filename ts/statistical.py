@@ -64,9 +64,7 @@ class MFETSStatistical:
         except:
             funcs = [funcs]
 
-        if ts_scaled is None:
-            ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
-                ts.reshape(-1, 1)).ravel()
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         # Note: originally, the step size of the threshold is calculated
         # as step_size * std(ts). However, we are considering just the
@@ -513,9 +511,7 @@ class MFETSStatistical:
             ts_scaled: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """TODO."""
-        if ts_scaled is None:
-            ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
-                ts.reshape(-1, 1)).ravel()
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         kl_divs = np.zeros(ts.size - ts_period, dtype=float)
 
@@ -537,14 +533,7 @@ class MFETSStatistical:
                      ddof: int = 1,
                      ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
-        if num_tiles > 0.5 * ts.size:
-            raise ValueError("'num_tiles' ({}) larger than half the "
-                             "time-series size ({}).".format(
-                                 num_tiles, 0.5 * ts.size))
-
-        if ts_scaled is None:
-            ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
-                ts.reshape(-1, 1)).ravel()
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         tilled_vars = _utils.apply_on_tiles(ts=ts_scaled,
                                             num_tiles=num_tiles,
@@ -562,14 +551,7 @@ class MFETSStatistical:
                      num_tiles: int = 16,
                      ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
-        if num_tiles > 0.5 * ts.size:
-            raise ValueError("'num_tiles' ({}) larger than half the "
-                             "time-series size ({}).".format(
-                                 num_tiles, 0.5 * ts.size))
-
-        if ts_scaled is None:
-            ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
-                ts.reshape(-1, 1)).ravel()
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         tilled_means = _utils.apply_on_tiles(ts=ts_scaled,
                                              num_tiles=num_tiles,
@@ -597,9 +579,7 @@ class MFETSStatistical:
         return vars_
 
     @classmethod
-    def ft_exp_max_lyap(cls,
-                        ts: np.ndarray,
-                        embed_dim: int,
+    def ft_exp_max_lyap(cls, ts: np.ndarray, embed_dim: int,
                         lag: int) -> float:
         """TODO."""
         return nolds.lyap_r(data=ts, lag=lag, emb_dim=embed_dim)
@@ -631,6 +611,31 @@ class MFETSStatistical:
         ts = ts - ts.min() + epsilon
         return scipy.stats.boxcox_normmax(ts, method="mle")
 
+    @classmethod
+    def ft_t_mean(cls, ts: np.ndarray, pcut: float = 0.02) -> np.ndarray:
+        """TODO."""
+        return pymfe.statistical.MFEStatistical.ft_t_mean(N=ts, pcut=pcut)
+
+    @classmethod
+    def ft_local_extrema(
+            cls,
+            ts: np.ndarray,
+            num_tiles: int = 16,
+            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        def get_extreme_val(tile: np.ndarray) -> float:
+            """Get extreme (maximum in absolute) value of a tile."""
+            max_, min_ = np.quantile(tile, (0, 1))
+            return _max if abs(min_) <= max_ else min_
+
+        tilled_extrema = _utils.apply_on_tiles(ts=ts_scaled,
+                                               num_tiles=num_tiles,
+                                               func=get_extreme_val)
+
+        return tilled_extrema
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -639,6 +644,13 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSStatistical.ft_t_mean(ts)
+    print("trimmed mean", res)
+
+    res = MFETSStatistical.ft_local_extrema(ts)
+    print("Local extrema", res)
+    exit(1)
 
     res = MFETSStatistical.ft_opt_boxcox_coef(ts)
     print(res)
@@ -660,7 +672,6 @@ def _test() -> None:
 
     res = MFETSStatistical.ft_kurtosis_mdiff(ts, ts_period)
     print("kurtosis mdiff", res)
-    exit(1)
 
     res = MFETSStatistical.ft_sd_diff(ts)
     print("sd diff", res)
