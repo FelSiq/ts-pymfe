@@ -1,4 +1,5 @@
 import typing as t
+import operator
 
 import statsmodels.tsa.stattools
 import numpy as np
@@ -308,6 +309,113 @@ class MFETSAutocorr:
 
         return trev
 
+    @classmethod
+    def ft_tc3(cls,
+               ts: np.ndarray,
+               lag: t.Optional[int] = None,
+               only_numerator: bool = True,
+               unbiased: bool = True,
+               max_nlags: t.Optional[int] = None) -> float:
+        """TODO."""
+        if lag is None:
+            lag = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
+                                                    unbiased=unbiased,
+                                                    max_nlags=max_nlags)
+
+        ts_shift_1 = ts[:-2 * lag]
+        ts_shift_2 = ts[lag:-lag]
+        ts_shift_3 = ts[2 * lag:]
+
+        _aux = ts_shift_1 * ts_shift_2
+        numen = np.mean(_aux * ts_shift_3)
+
+        if only_numerator:
+            return numen
+
+        denom = np.abs(np.mean(_aux))**1.5
+
+        tc3 = numen / denom
+
+        return tc3
+
+    @classmethod
+    def ft_gen_autocorr(cls,
+                        ts: np.ndarray,
+                        alpha: float = 1,
+                        beta: float = 1,
+                        lag: t.Optional[int] = None,
+                        unbiased: bool = True,
+                        max_nlags: t.Optional[int] = None) -> float:
+        """TODO.
+
+        References
+        ----------
+        .. [1] S.M. Duarte Queirós, L.G. Moyano, Yet on statistical properties
+            of traded volume: Correlation and mutual information at different
+            value magnitudes, Physica A: Statistical Mechanics and its
+            Applications, Volume 383, Issue 1, 2007, Pages 10-15, ISSN
+            0378-4371, https://doi.org/10.1016/j.physa.2007.04.082.
+
+        .. [2] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+
+        .. [3] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
+        if lag is None:
+            lag = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
+                                                    unbiased=unbiased,
+                                                    max_nlags=max_nlags)
+
+        ts_abs = np.abs(ts)
+        ts_sft_1 = ts_abs[:-lag]
+        ts_sft_2 = ts_abs[lag:]
+
+        ts_sft_1_a = ts_sft_1**alpha
+        ts_sft_2_b = ts_sft_2**beta
+
+        ts_sft_1_a_mean = np.mean(ts_sft_1_a)
+        ts_sft_2_b_mean = np.mean(ts_sft_2_b)
+
+        gen_autocorr = (
+            np.mean(ts_sft_1_a * ts_sft_2_b) -
+            ts_sft_1_a_mean * ts_sft_2_b_mean /
+            (np.sqrt(np.mean(ts_sft_1**(2 * alpha)) - ts_sft_1_a_mean**2) *
+             np.sqrt(np.mean(ts_sft_2**(2 * beta)) - ts_sft_2_b_mean**2)))
+
+        return gen_autocorr
+
+    @classmethod
+    def ft_autocorr_shape(
+            cls,
+            ts: np.ndarray,
+            maxima: bool = True,
+            normalize: bool = True,
+            unbiased: bool = True,
+            max_nlags: t.Optional[int] = None,
+            ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+        """TODO."""
+        if ts_acfs is None:
+            ts_acfs = cls._calc_acf(data=ts,
+                                    nlags=max_nlags,
+                                    unbiased=unbiased)
+
+        diff_arr_1 = np.diff(ts_acfs)
+        diff_arr_2 = np.diff(diff_arr_1)
+
+        turning_points = diff_arr_1[1:] * diff_arr_1[:-1] < 0
+
+        func = np.mean if normalize else np.sum
+        rel = operator.gt if maxima else operator.lt
+
+        crit_points = func(rel(diff_arr_2[turning_points], 0))
+
+        return crit_points
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -315,6 +423,17 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSAutocorr.ft_autocorr_shape(ts)
+    print(res)
+    exit(1)
+
+    res = MFETSAutocorr.ft_gen_autocorr(ts)
+    print(res)
+    exit(1)
+
+    res = MFETSAutocorr.ft_tc3(ts, only_numerator=False)
+    print(res)
 
     res = MFETSAutocorr.ft_sfirst_acf_locmin(ts)
     print(res)
