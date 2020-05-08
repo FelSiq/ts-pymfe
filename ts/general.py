@@ -87,9 +87,7 @@ class MFETSGeneral:
         ----------
         TODO.
         """
-        diff_arr = np.diff(ts)
-        turning_points = (diff_arr[1:] * diff_arr[:-1] < 0).astype(int)
-        return turning_points
+        return _utils.find_crit_pt(ts, type_="non-plateau")
 
     @classmethod
     def ft_turning_points_trend(cls, ts_trend: np.ndarray) -> np.ndarray:
