@@ -14,6 +14,25 @@ import _get_data
 
 class MFETSInfoTheory:
     @classmethod
+    def precompute_auto_mut_info(cls,
+                                 ts: np.ndarray,
+                                 num_bins: int = 64,
+                                 max_lags: int = 64,
+                                 return_dist: bool = True,
+                                 **kwargs) -> t.Dict[str, np.ndarray]:
+        """TODO."""
+        precomp_vals = {}
+
+        if "auto_mut_info" in kwargs:
+            precomp_vals["auto_mut_info"] = cls.ft_auto_info(
+                ts=ts,
+                num_bins=num_bins,
+                max_lags=max_lags,
+                return_dist=return_dist)
+
+        return precomp_vals
+
+    @classmethod
     def ft_hist_entropy(cls,
                         ts: np.ndarray,
                         num_bins: int = 10,
@@ -30,12 +49,45 @@ class MFETSInfoTheory:
         return entropy
 
     @classmethod
-    def ft_auto_info(cls,
-                     ts: np.ndarray,
-                     num_bins: int = 64,
-                     max_lags: int = 8,
-                     return_dist: bool = True) -> float:
+    def ft_first_crit_pt_ami(
+        cls,
+        ts: np.ndarray,
+        num_bins: int = 64,
+        max_lags: int = 64,
+        return_dist: bool = True,
+        auto_mut_info: t.Optional[np.ndarray] = None
+    ) -> t.Union[int, float]:
         """TODO."""
+        if auto_mut_info is None:
+            auto_mut_info = cls.ft_auto_mut_info(ts=ts,
+                                                 num_bins=num_bins,
+                                                 max_lags=max_lags,
+                                                 return_dist=return_dist)
+
+        # Note: if 'return_dist=True', return the first local maximum.
+        # If otherwise, return the first local minimum.
+        type_ = "max" if return_dist else "min"
+
+        crit_point = _utils.find_crit_pt(arr=auto_mut_info, type_=type_)
+
+        try:
+            return np.flatnonzero(crit_point)[0] + 1
+
+        except IndexError:
+            return np.nan
+
+    @classmethod
+    def ft_auto_mut_info(
+            cls,
+            ts: np.ndarray,
+            num_bins: int = 64,
+            max_lags: int = 64,
+            return_dist: bool = True,
+            auto_mut_info: t.Optional[np.ndarray] = None) -> float:
+        """TODO."""
+        if auto_mut_info is not None:
+            return auto_mut_info
+
         max_ind = ts.size - max_lags
 
         ts_slice = ts[:max_ind]
@@ -72,7 +124,10 @@ def _test() -> None:
     ts = ts.to_numpy()
     print("TS period:", ts_period)
 
-    res = MFETSInfoTheory.ft_auto_info(ts, return_dist=True)
+    res = MFETSInfoTheory.ft_first_crit_pt_ami(ts, return_dist=True)
+    print(res)
+
+    res = MFETSInfoTheory.ft_auto_mut_info(ts, return_dist=True)
     print(res)
     exit(1)
 
