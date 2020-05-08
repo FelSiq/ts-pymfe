@@ -87,7 +87,7 @@ class MFETSGeneral:
         ----------
         TODO.
         """
-        diff_arr = np.ediff1d(ts)
+        diff_arr = np.diff(ts)
         turning_points = (diff_arr[1:] * diff_arr[:-1] < 0).astype(int)
         return turning_points
 
@@ -355,23 +355,21 @@ class MFETSGeneral:
                            radius: t.Union[int, float] = 1,
                            embed_dim: int = 2,
                            lag: t.Optional[int] = None,
-                           normalize_ts: bool = True,
                            normalize: bool = True,
                            ts_acfs: t.Optional[np.ndarray] = None,
                            max_nlags: t.Optional[int] = None,
-                           unbiased: bool = True) -> t.Union[int, float]:
+                           unbiased: bool = True,
+                           ts_scaled: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
         if radius <= 0:
             raise ValueError(
                 "'radius' must be positive (got {}).".format(radius))
 
+        ts = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
         if lag is None:
             lag = autocorr.MFETSAutocorr.ft_first_acf_nonpos(
                 ts=ts, ts_acfs=ts_acfs, max_nlags=max_nlags, unbiased=unbiased)
-
-        if normalize_ts:
-            ts = sklearn.preprocessing.StandardScaler().fit_transform(
-                ts.reshape(-1, 1)).ravel()
 
         # Note: embed is given by x(t) = [x(t-1), x(t-2), ..., x(t-m+1)]^T
         embed = _embed.embed_ts(ts, dim=embed_dim, lag=lag)
@@ -389,22 +387,6 @@ class MFETSGeneral:
             in_hypersphere /= embed_radius.size
 
         return in_hypersphere
-
-    @classmethod
-    def ft_hist_entropy(cls,
-                        ts: np.ndarray,
-                        num_bins: int = 10,
-                        normalize: bool = True) -> np.ndarray:
-        """TODO."""
-        ts_disc = np.digitize(ts, np.linspace(np.min(ts), np.max(ts),
-                                              num_bins))
-
-        entropy = scipy.stats.entropy(ts_disc, base=2)
-
-        if normalize:
-            entropy /= np.log2(ts_disc.size)
-
-        return entropy
 
 
 def _test() -> None:
@@ -429,9 +411,6 @@ def _test() -> None:
     print(np.mean(res))
 
     exit(1)
-
-    res = MFETSGeneral.ft_hist_entropy(ts)
-    print(res)
 
     res = MFETSGeneral.ft_embed_in_sphere(ts)
     print(res)
