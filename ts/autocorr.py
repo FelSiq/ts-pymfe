@@ -19,7 +19,7 @@ class MFETSAutocorr:
                   unbiased: bool = True) -> np.ndarray:
         """TODO."""
         if nlags is None:
-            nlags = data.size // 2
+            nlags = data.size // 4
 
         acf = statsmodels.tsa.stattools.acf(data,
                                             nlags=nlags,
@@ -194,7 +194,8 @@ class MFETSAutocorr:
             unbiased: bool = True,
             ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
-        if ts_acfs is None:
+        if (ts_acfs is None
+                or (max_nlags is not None and tc_acfs.size != max_nlags)):
             ts_acfs = cls._calc_acf(data=ts,
                                     nlags=max_nlags,
                                     unbiased=unbiased)
@@ -361,7 +362,8 @@ class MFETSAutocorr:
             max_nlags: t.Optional[int] = None,
             ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
-        if ts_acfs is None:
+        if (ts_acfs is None
+                or (max_nlags is not None and tc_acfs.size != max_nlags)):
             ts_acfs = cls._calc_acf(data=ts,
                                     nlags=max_nlags,
                                     unbiased=unbiased)
@@ -433,8 +435,30 @@ class MFETSAutocorr:
         return gaussian_lb_test
 
     @classmethod
-    def ft_ioi_autocorr_diff(cls, ts: np.ndarray, nlags: int = 8) -> np.ndarray:
+    def ft_autocorr_out_dist(
+            cls,
+            ts: np.ndarray,
+            p: float = 0.8,
+            max_nlags: t.Optional[int] = None,
+            unbiased: bool = True,
+            ts_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
+        if (ts_acfs is None
+                or (max_nlags is not None and tc_acfs.size != max_nlags)):
+            ts_acfs = cls._calc_acf(data=ts,
+                                    nlags=max_nlags,
+                                    unbiased=unbiased)
+
+        ts_abs = np.abs(ts)
+        ts_inliners = ts[ts_abs <= np.quantile(ts_abs, p)]
+
+        ts_inliners_acfs = cls._calc_acf(data=ts_inliners,
+                                         nlags=max_nlags,
+                                         unbiased=unbiased)
+
+        dist_acfs = np.abs(ts_acfs[:ts_inliners_acfs.size] - ts_inliners_acfs)
+
+        return dist_acfs
 
 
 def _test() -> None:
@@ -443,6 +467,10 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSAutocorr.ft_autocorr_out_dist(ts)
+    print(res)
+    exit(1)
 
     res = MFETSAutocorr.ft_sfirst_acf_nonpos(ts)
     print(res)
