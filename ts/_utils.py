@@ -173,13 +173,29 @@ def fit_gaussian_mix(
     ts: np.ndarray,
     n_components: int = 2,
     random_state: t.Optional[int] = None,
+    return_residuals: bool = False,
     gaussian_model: t.Optional[sklearn.mixture.GaussianMixture] = None
-) -> sklearn.mixture.GaussianMixture:
-    """Fit a Gaussian Mixture model to the time-series data."""
+) -> t.Union[np.ndarray, sklearn.mixture.GaussianMixture]:
+    """Fit a Gaussian Mixture model to the time-series data.
+
+    The fitted model is returned unless ``return_residuals`` is
+    True, which in this case the model residuals is returned
+    instead.
+    """
+    if ts.ndim == 1:
+        ts = ts.reshape(-1, 1)
+
     if gaussian_model is None or gaussian_model.n_components != n_components:
         gaussian_model = sklearn.mixture.GaussianMixture(
             n_components=n_components, random_state=random_state)
-        gaussian_model.fit(X=ts.reshape(-1, 1))
+
+        if return_residuals:
+            return (ts - gaussian_model.fit_predict(X=ts)).ravel()
+
+        gaussian_model.fit(X=ts)
+
+    if return_residuals:
+        return (ts - gaussian_model.predict(X=ts)).ravel()
 
     return gaussian_model
 
