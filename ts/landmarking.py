@@ -13,6 +13,7 @@ import sklearn.model_selection
 import statsmodels.tsa.arima_model
 import statsmodels.tsa.holtwinters
 import statsmodels.tools.sm_exceptions
+import sklearn.mixture
 
 import autocorr
 import _utils
@@ -166,7 +167,7 @@ class MFETSLandmarking:
             lm_sample_frac: float = 1.0,
             unbiased: bool = True,
             max_nlags: t.Optional[int] = None,
-    ) -> np.ndarray:
+            **kwargs) -> np.ndarray:
         """TODO."""
         score = lambda ts_pred, ts_test: (
             autocorr.MFETSAutocorr.ft_first_acf_nonpos(
@@ -176,7 +177,8 @@ class MFETSLandmarking:
                                                 tskf=tskf,
                                                 score=score,
                                                 num_cv_folds=num_cv_folds,
-                                                lm_sample_frac=lm_sample_frac)
+                                                lm_sample_frac=lm_sample_frac,
+                                                **kwargs)
 
         return model_acf_first_nonpos
 
@@ -208,6 +210,30 @@ class MFETSLandmarking:
                                                  tskf=tskf,
                                                  num_cv_folds=num_cv_folds,
                                                  lm_sample_frac=lm_sample_frac)
+
+        return res
+
+    @classmethod
+    def ft_model_gaussian(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            n_components: int = 2,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            random_state: t.Optional[int] = None,
+    ) -> np.ndarray:
+        """TODO."""
+        model = sklearn.mixture.GaussianMixture(n_components=n_components,
+                                                random_state=random_state)
+
+        res = cls._standard_pipeline_sklearn(y=ts,
+                                             model=model,
+                                             score=score,
+                                             tskf=tskf,
+                                             num_cv_folds=num_cv_folds,
+                                             lm_sample_frac=lm_sample_frac)
 
         return res
 
@@ -784,6 +810,10 @@ def _test() -> None:
 
     score = lambda *args: sklearn.metrics.mean_squared_error(*args,
                                                              squared=False)
+
+    res = MFETSLandmarking.ft_model_gaussian(ts, score=score, random_state=16)
+    print(4, res)
+    exit(1)
 
     res = MFETSLandmarking.ft_model_hwes_ada(ts, ts_period, score=score)
     print(4, res)
