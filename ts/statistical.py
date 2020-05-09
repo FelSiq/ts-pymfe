@@ -17,80 +17,21 @@ import _get_data
 
 class MFETSStatistical:
     @classmethod
-    def precompute_time_delta_stats_it(
-            cls,
-            ts: np.ndarray,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            step_size: float = 0.05,
-            **kwargs) -> t.Dict[str, t.Union[float, np.ndarray]]:
+    def ft_ioi_mean(cls,
+                    ts: np.ndarray,
+                    step_size: float = 0.05,
+                    normalize: bool = True,
+                    ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
-        precomp_vals = {}  # type: t.Dict[str, t.Union[float, np.ndarray]]
+        tdelta_it_mean = _utils.calc_ioi_stats(ts=ts,
+                                               funcs=np.mean,
+                                               ts_scaled=ts_scaled,
+                                               step_size=step_size)
 
-        funcs = collections.OrderedDict((
-            ("median", lambda arr: np.median(arr) / ts.size),
-            ("mean", lambda arr: np.mean(arr) / ts.size),
-            ("std", lambda arr: np.std(arr, ddof=1) / np.sqrt(arr.size + 1)),
-        ))
+        if normalize:
+            tdelta_it_mean = 2 * tdelta_it_mean / ts.size - 1
 
-        _formatted_keys = list(map("tdelta_it_{}".format, funcs.keys()))
-
-        if not frozenset(_formatted_keys).issubset(kwargs):
-            res = cls._calc_time_deltas_stats_it(ts=ts,
-                                                 funcs=funcs.values(),
-                                                 ts_scaled=ts_scaled,
-                                                 step_size=step_size)
-
-            precomp_vals.update(zip(_formatted_keys, res.T))
-
-        return precomp_vals
-
-    @classmethod
-    def _calc_time_deltas_stats_it(cls,
-                                   ts: np.ndarray,
-                                   funcs: t.Union[t.Callable[[np.ndarray],
-                                                             float],
-                                                  t.Iterable[t.Callable[
-                                                      [np.ndarray], float]]],
-                                   ts_scaled: t.Optional[np.ndarray] = None,
-                                   step_size: float = 0.05) -> np.ndarray:
-        """TODO.
-
-        https://github.com/benfulcher/hctsa/blob/master/Operations/DN_OutlierInclude.m
-        """
-        try:
-            if len(funcs) == 0:
-                raise ValueError("'funcs' is empty.")
-
-        except:
-            funcs = [funcs]
-
-        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-
-        # Note: originally, the step size of the threshold is calculated
-        # as step_size * std(ts). However, we are considering just the
-        # normalized time-series and, therefore, std(ts_scaled) = 1.
-        # This means that the step size is actually just the step_size.
-        ts_abs = np.abs(ts_scaled)
-        max_abs_ts = np.max(ts_abs)
-
-        res = []  # type: t.List[float]
-        threshold = 0.0
-
-        while threshold < max_abs_ts:
-            threshold += step_size
-            outlier_tsteps = np.flatnonzero(ts_abs >= threshold)
-
-            if (outlier_tsteps.size < 0.02 * ts_scaled.size
-                    or outlier_tsteps.size <= 1):
-                break
-
-            diff_tsteps = np.diff(outlier_tsteps)
-
-            res.append([func(diff_tsteps) for func in funcs])
-
-        res = np.asarray(res, dtype=float)
-
-        return res
+        return tdelta_it_mean
 
     @classmethod
     def ft_trend(cls,
@@ -645,6 +586,12 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
+    res = MFETSStatistical.ft_ioi_mean(ts)
+    print(res)
+    res = MFETSStatistical.precompute_time_delta_stats_it(ts)
+    print(res["tdelta_it_mean"])
+    exit(1)
+
     res = MFETSStatistical.ft_t_mean(ts)
     print("trimmed mean", res)
 
@@ -732,8 +679,6 @@ def _test() -> None:
     print(res)
 
     exit(1)
-    res = MFETSStatistical.precompute_time_delta_stats_it(ts)
-    print(res)
 
 
 if __name__ == "__main__":
