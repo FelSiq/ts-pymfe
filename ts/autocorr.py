@@ -2,6 +2,7 @@ import typing as t
 
 import statsmodels.tsa.stattools
 import numpy as np
+import sklearn.mixture
 
 import _utils
 import _detrend
@@ -405,6 +406,29 @@ class MFETSAutocorr:
         # array.
         return ac_shape
 
+    @classmethod
+    def ft_autocorr_gaussian_resid(
+        cls,
+        ts: np.ndarray,
+        n_components: int = 2,
+        nlags: int = 2,
+        unbiased: bool = True,
+        random_state: t.Optional[int] = None,
+        gaussian_model: t.Optional[sklearn.mixture.GaussianMixture] = None
+    ) -> np.ndarray:
+        """TODO."""
+        gaussian_model = _utils.fit_gaussian_mix(ts=ts,
+                                                 n_components=n_components,
+                                                 random_state=random_state,
+                                                 gaussian_model=gaussian_model)
+        ts_preds = gaussian_model.predict(ts.reshape(-1, 1))
+        ts_resid = ts - ts_preds
+        gaussian_resid_acf = cls._calc_acf(data=ts_resid,
+                                           nlags=nlags,
+                                           unbiased=unbiased)
+
+        return gaussian_resid_acf
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -412,6 +436,10 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSAutocorr.ft_autocorr_gaussian_resid(ts)
+    print(res)
+    exit(1)
 
     res = MFETSAutocorr.ft_autocorr_crit_pt(ts)
     print(res)
