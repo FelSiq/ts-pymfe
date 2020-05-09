@@ -568,8 +568,8 @@ class MFETSStatistical:
 
         def get_extreme_val(tile: np.ndarray) -> float:
             """Get extreme (maximum in absolute) value of a tile."""
-            max_, min_ = np.quantile(tile, (0, 1))
-            return _max if abs(min_) <= max_ else min_
+            min_, max_ = np.quantile(tile, (0, 1))
+            return max_ if abs(min_) <= max_ else min_
 
         tilled_extrema = _utils.apply_on_tiles(ts=ts_scaled,
                                                num_tiles=num_tiles,
@@ -586,18 +586,16 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
+    res = MFETSStatistical.ft_local_extrema(ts)
+    print("Local extrema", res)
+    exit(1)
+
     res = MFETSStatistical.ft_ioi_mean(ts)
     print(res)
-    res = MFETSStatistical.precompute_time_delta_stats_it(ts)
-    print(res["tdelta_it_mean"])
     exit(1)
 
     res = MFETSStatistical.ft_t_mean(ts)
     print("trimmed mean", res)
-
-    res = MFETSStatistical.ft_local_extrema(ts)
-    print("Local extrema", res)
-    exit(1)
 
     res = MFETSStatistical.ft_opt_boxcox_coef(ts)
     print(res)
