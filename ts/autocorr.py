@@ -4,6 +4,7 @@ import statsmodels.tsa.stattools
 import numpy as np
 import sklearn.mixture
 
+import stat_tests
 import _utils
 import _detrend
 import _period
@@ -411,7 +412,7 @@ class MFETSAutocorr:
         cls,
         ts: np.ndarray,
         n_components: int = 2,
-        nlags: int = 2,
+        nlags: int = 8,
         unbiased: bool = True,
         random_state: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
@@ -422,17 +423,48 @@ class MFETSAutocorr:
         if gaussian_resid is None:
             ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-            gaussian_resid = _utils.fit_gaussian_mix(ts=ts_scaled,
-                                                     n_components=n_components,
-                                                     random_state=random_state,
-                                                     gaussian_model=gaussian_model,
-                                                     return_residuals=True)
+            gaussian_resid = _utils.fit_gaussian_mix(
+                ts=ts_scaled,
+                n_components=n_components,
+                random_state=random_state,
+                gaussian_model=gaussian_model,
+                return_residuals=True)
 
         gaussian_resid_acf = cls._calc_acf(data=gaussian_resid,
                                            nlags=nlags,
                                            unbiased=unbiased)
 
         return gaussian_resid_acf
+
+    @classmethod
+    def ft_test_gaussian_resid(
+        cls,
+        ts: np.ndarray,
+        n_components: int = 2,
+        nlags: int = 8,
+        return_pval: bool = True,
+        random_state: t.Optional[int] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        gaussian_resid: t.Optional[np.ndarray] = None,
+        gaussian_model: t.Optional[sklearn.mixture.GaussianMixture] = None,
+    ) -> np.ndarray:
+        """TODO."""
+        if gaussian_resid is None:
+            ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+            gaussian_resid = _utils.fit_gaussian_mix(
+                ts=ts_scaled,
+                n_components=n_components,
+                random_state=random_state,
+                gaussian_model=gaussian_model,
+                return_residuals=True)
+
+        gaussian_lb_test = stat_tests.MFETSStatTests.ft_test_lb(
+            ts_residuals=gaussian_resid,
+            max_lags=nlags,
+            return_pval=return_pval)
+
+        return gaussian_lb_test
 
 
 def _test() -> None:
@@ -441,6 +473,10 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSAutocorr.ft_test_gaussian_resid(ts, random_state=16)
+    print(res)
+    exit(1)
 
     res = MFETSAutocorr.ft_autocorr_gaussian_resid(ts, random_state=16)
     print(res)
