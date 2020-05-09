@@ -1,5 +1,6 @@
 import typing as t
 
+import sklearn.mixture
 import sklearn.preprocessing
 import statsmodels.tsa.holtwinters
 import statsmodels.regression
@@ -7,6 +8,7 @@ import statsmodels.api
 import statsmodels.tsa.arima_model
 import numpy as np
 
+import _utils
 import _orthopoly
 import _period
 import _detrend
@@ -253,6 +255,28 @@ class MFETSModelBased:
 
         return avg_cycle_period
 
+    @classmethod
+    def ft_gaussian_mle(
+        cls,
+        ts: np.ndarray,
+        n_components: int = 2,
+        random_state: t.Optional[int] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        gaussian_model: t.Optional[sklearn.mixture.GaussianMixture] = None,
+    ) -> float:
+        """TODO."""
+        ts_scaled = _utils.standardize_ts(ts=ts,
+                                          ts_scaled=ts_scaled).reshape(-1, 1)
+
+        gaussian_model = _utils.fit_gaussian_mix(ts=ts_scaled,
+                                                 n_components=n_components,
+                                                 random_state=random_state,
+                                                 gaussian_model=gaussian_model)
+
+        gaussian_mle = gaussian_model.score(ts_scaled)
+
+        return gaussian_mle
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -269,6 +293,10 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSModelBased.ft_gaussian_mle(ts)
+    print(res)
+    exit(1)
 
     res = MFETSModelBased.ft_avg_cycle_period(ts_residuals)
     print(res)
