@@ -169,6 +169,21 @@ def find_crit_pt(arr: np.ndarray, type_: str) -> np.ndarray:
     return np.hstack((0, local_m.astype(int), 0))
 
 
+def fit_gaussian_mix(
+    ts: np.ndarray,
+    n_components: int = 2,
+    random_state: t.Optional[int] = None,
+    gaussian_model: t.Optional[sklearn.mixture.GaussianMixture] = None
+) -> sklearn.mixture.GaussianMixture:
+    """Fit a Gaussian Mixture model to the time-series data."""
+    if gaussian_model is None or gaussian_model.n_components != n_components:
+        gaussian_model = sklearn.mixture.GaussianMixture(
+            n_components=n_components, random_state=random_state)
+        gaussian_model.fit(X=ts.reshape(-1, 1))
+
+    return gaussian_model
+
+
 def _test() -> None:
     import matplotlib.pyplot as plt
     np.random.seed(16)
