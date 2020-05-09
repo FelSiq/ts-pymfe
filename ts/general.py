@@ -326,6 +326,44 @@ class MFETSGeneral:
         return cross_num
 
     @classmethod
+    def ft_moving_threshold(cls,
+                            ts: np.ndarray,
+                            rate_absorption: float = 0.1,
+                            rate_decay: float = 0.1,
+                            ts_scaled: t.Optional[np.ndarray] = None,
+                            relative: bool = False) -> np.ndarray:
+        """TODO."""
+        if not 0 < rate_decay < 1:
+            raise ValueError("'rate_decay' must be in (0, 1) (got {})."
+                             "".format(rate_decay))
+
+        if not 0 < rate_absorption < 1:
+            raise ValueError("'rate_absorption' must be in (0, 1) (got"
+                             " {}).".format(rate_absorption))
+
+        ts_scaled = np.abs(_utils.standardize_ts(ts=ts, ts_scaled=ts_scaled))
+
+        # Note: threshold[0] = std(ts_scaled) = 1.0.
+        threshold = np.ones(1 + ts.size, dtype=float)
+
+        _ra = 1 + rate_absorption
+        _rd = 1 - rate_decay
+
+        for ind in np.arange(ts_scaled.size):
+            if ts_scaled[ind] > threshold[ind]:
+                # Absorb from the time series (absolute) values
+                threshold[1 + ind] = _ra * ts_scaled[ind]
+            else:
+                # Decay the threshold
+                threshold[1 + ind] = _rd * threshold[ind]
+
+        if relative:
+            # Note: ignore the first initial threshold
+            return threshold[1:] - ts_scaled
+
+        return threshold
+
+    @classmethod
     def ft_sample_entropy(cls,
                           ts: np.ndarray,
                           embed_dim: int = 2,
@@ -348,16 +386,17 @@ class MFETSGeneral:
         return sample_entropy
 
     @classmethod
-    def ft_embed_in_sphere(cls,
-                           ts: np.ndarray,
-                           radius: t.Union[int, float] = 1,
-                           embed_dim: int = 2,
-                           lag: t.Optional[int] = None,
-                           normalize: bool = True,
-                           ts_acfs: t.Optional[np.ndarray] = None,
-                           max_nlags: t.Optional[int] = None,
-                           unbiased: bool = True,
-                           ts_scaled: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+    def ft_embed_in_sphere(
+            cls,
+            ts: np.ndarray,
+            radius: t.Union[int, float] = 1,
+            embed_dim: int = 2,
+            lag: t.Optional[int] = None,
+            normalize: bool = True,
+            ts_acfs: t.Optional[np.ndarray] = None,
+            max_nlags: t.Optional[int] = None,
+            unbiased: bool = True,
+            ts_scaled: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
         if radius <= 0:
             raise ValueError(
@@ -388,6 +427,7 @@ class MFETSGeneral:
 
 
 def _test() -> None:
+    import matplotlib.pyplot as plt
     ts = _get_data.load_data(2)
 
     ts_period = _period.ts_period(ts)
@@ -395,6 +435,10 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
     print("TS period:", ts_period)
+
+    res = MFETSGeneral.ft_moving_threshold(ts, relative=True)
+    print(res)
+    exit(1)
 
     res = MFETSGeneral.ft_turning_points(ts)
     print(np.mean(res))
