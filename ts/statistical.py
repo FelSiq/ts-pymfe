@@ -17,11 +17,12 @@ import _get_data
 
 class MFETSStatistical:
     @classmethod
-    def ft_ioi_mean(cls,
-                    ts: np.ndarray,
-                    step_size: float = 0.05,
-                    normalize: bool = True,
-                    ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+    def ft_ioi_tdelta_mean(
+            cls,
+            ts: np.ndarray,
+            step_size: float = 0.05,
+            normalize: bool = True,
+            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
         tdelta_it_mean = _utils.calc_ioi_stats(ts=ts,
                                                funcs=np.mean,
@@ -590,7 +591,7 @@ def _test() -> None:
     print("Local extrema", res)
     exit(1)
 
-    res = MFETSStatistical.ft_ioi_mean(ts)
+    res = MFETSStatistical.ft_ioi_tdelta_mean(ts)
     print(res)
     exit(1)
 
