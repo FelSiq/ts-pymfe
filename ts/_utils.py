@@ -2,6 +2,7 @@ import typing as t
 import operator
 
 import sklearn.preprocessing
+import sklearn.mixture
 import numpy as np
 import pandas as pd
 
@@ -198,6 +199,55 @@ def fit_gaussian_mix(
         return (ts - gaussian_model.predict(X=ts)).ravel()
 
     return gaussian_model
+
+
+def calc_ioi_stats(ts: np.ndarray,
+                   funcs: t.Union[t.Callable[[np.ndarray], float],
+                                  t.Iterable[t.Callable[[np.ndarray], float]]],
+                   ts_scaled: t.Optional[np.ndarray] = None,
+                   step_size: float = 0.05,
+                   differentiate: bool = False) -> np.ndarray:
+    """TODO.
+
+    https://github.com/benfulcher/hctsa/blob/master/Operations/DN_OutlierInclude.m
+    """
+    try:
+        if len(funcs) == 0:
+            raise ValueError("'funcs' is empty.")
+
+    except:
+        funcs = [funcs]
+
+    ts_scaled = standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+    # Note: originally, the step size of the threshold is calculated
+    # as step_size * std(ts). However, we are considering just the
+    # normalized time-series and, therefore, std(ts_scaled) = 1.
+    # This means that the step size is actually just the step_size.
+    ts_abs = np.abs(ts_scaled)
+    max_abs_ts = np.max(ts_abs)
+
+    res = []  # type: t.List[float]
+    threshold = 0.0
+
+    while threshold < max_abs_ts:
+        threshold += step_size
+        outlier_tsteps = np.flatnonzero(ts_abs >= threshold)
+
+        if (outlier_tsteps.size < 0.02 * ts_scaled.size
+                or outlier_tsteps.size <= 1):
+            break
+
+        diff_tsteps = np.diff(outlier_tsteps, int(differentiate))
+
+        res.append([func(diff_tsteps) for func in funcs])
+
+    res = np.asarray(res, dtype=float)
+
+    if res.shape[1] == 1:
+        return res.ravel()
+
+    return res
 
 
 def _test() -> None:
