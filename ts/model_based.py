@@ -4,8 +4,8 @@ import sklearn.mixture
 import sklearn.preprocessing
 import statsmodels.tsa.holtwinters
 import statsmodels.regression
-import statsmodels.api
 import statsmodels.tsa.arima_model
+import statsmodels.tools
 import numpy as np
 
 import _utils
@@ -62,7 +62,9 @@ class MFETSModelBased:
                                             funcs=ioi_std_func,
                                             ts_scaled=ts_scaled,
                                             step_size=step_size)
-            thresholds = np.arange(ioi_std.size) * step_size
+
+            thresholds = statsmodels.tools.add_constant(
+                np.arange(ioi_std.size) * step_size)
 
             precomp_vals["res_ioi_std_lin_model"] = (
                 statsmodels.regression.linear_model.OLS(ioi_std,
@@ -106,6 +108,8 @@ class MFETSModelBased:
         X = _orthopoly.ortho_poly(ts=np.arange(ts_trend.size),
                                   degree=degree,
                                   return_coeffs=False)
+
+        X = statsmodels.tools.add_constant(X)
 
         ts_trend_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
             ts_trend.reshape(-1, 1)).ravel()
@@ -229,7 +233,7 @@ class MFETSModelBased:
         if res_model_orthop_reg is None:
             res_model_orthop_reg = cls._fit_ortho_pol_reg(ts_trend=ts_trend)
 
-        linearity, _ = res_model_orthop_reg.params
+        _, linearity, _ = res_model_orthop_reg.params
 
         return linearity
 
@@ -244,7 +248,7 @@ class MFETSModelBased:
         if res_model_orthop_reg is None:
             res_model_orthop_reg = cls._fit_ortho_pol_reg(ts_trend=ts_trend)
 
-        _, curvature = res_model_orthop_reg.params
+        _, _, curvature = res_model_orthop_reg.params
 
         return curvature
 
@@ -326,7 +330,7 @@ class MFETSModelBased:
                 ts=ts, step_size=step_size,
                 ts_scaled=ts_scaled)["res_ioi_std_lin_model"]
 
-        curvature = res_ioi_std_lin_model.params[0]
+        _, curvature = res_ioi_std_lin_model.params
 
         return curvature
 
@@ -367,19 +371,15 @@ def _test() -> None:
 
     res = MFETSModelBased.ft_ioi_std_adj_r_sqr(ts)
     print(res)
-    exit(1)
 
     res = MFETSModelBased.ft_ioi_std_curvature(ts)
     print(res)
-    exit(1)
 
     res = MFETSModelBased.ft_gaussian_mle(ts)
     print(res)
-    exit(1)
 
     res = MFETSModelBased.ft_avg_cycle_period(ts_residuals)
     print(res)
-    exit(1)
 
     res = MFETSModelBased.ft_linearity(ts_trend)
     print(res)
