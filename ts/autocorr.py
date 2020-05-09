@@ -13,13 +13,29 @@ import _get_data
 
 class MFETSAutocorr:
     @classmethod
+    def precompute_acf(cls,
+                       ts: np.ndarray,
+                       nlags: t.Optional[int] = None,
+                       unbiased: bool = True,
+                       **kwargs) -> t.Dict[str, np.ndarray]:
+        """TODO."""
+        precomp_vals = {}
+
+        if "ts_acfs" not in kwargs:
+            precomp_vals["ts_acfs"] = cls.ft_acf(ts=ts,
+                                                 nlags=nlags,
+                                                 unbiased=unbiased)
+
+        return precomp_vals
+
+    @classmethod
     def _calc_acf(cls,
                   data: np.ndarray,
-                  nlags: t.Optional[int] = 5,
+                  nlags: t.Optional[int] = None,
                   unbiased: bool = True) -> np.ndarray:
         """TODO."""
         if nlags is None:
-            nlags = data.size // 4
+            nlags = data.size // 2
 
         acf = statsmodels.tsa.stattools.acf(data,
                                             nlags=nlags,
@@ -30,7 +46,7 @@ class MFETSAutocorr:
     @classmethod
     def _calc_pacf(cls,
                    data: np.ndarray,
-                   nlags: t.Optional[int] = 5,
+                   nlags: t.Optional[int] = None,
                    method: str = "ols-unbiased") -> np.ndarray:
         """TODO."""
         if nlags is None:
@@ -42,7 +58,7 @@ class MFETSAutocorr:
     @classmethod
     def ft_pacf(cls,
                 ts: np.ndarray,
-                nlags: int = 5,
+                nlags: t.Optional[int] = None,
                 method: str = "ols-unbiased") -> np.ndarray:
         """TODO."""
         return cls._calc_pacf(data=ts, nlags=nlags, method=method)
@@ -51,7 +67,7 @@ class MFETSAutocorr:
     def ft_pacf_diff(cls,
                      ts: np.ndarray,
                      num_diff: int = 1,
-                     nlags: int = 5,
+                     nlags: t.Optional[int] = None,
                      method: str = "ols-unbiased") -> np.ndarray:
         """TODO."""
         return cls._calc_pacf(data=np.diff(ts, n=num_diff),
@@ -61,7 +77,7 @@ class MFETSAutocorr:
     @classmethod
     def ft_pacf_residuals(cls,
                           ts_residuals: np.ndarray,
-                          nlags: int = 5,
+                          nlags: t.Optional[int] = None,
                           method: str = "ols-unbiased") -> np.ndarray:
         """TODO."""
         return cls._calc_pacf(data=ts_residuals, nlags=nlags, method=method)
@@ -69,7 +85,7 @@ class MFETSAutocorr:
     @classmethod
     def ft_pacf_trend(cls,
                       ts_trend: np.ndarray,
-                      nlags: int = 5,
+                      nlags: t.Optional[int] = None,
                       method: str = "ols-unbiased") -> np.ndarray:
         """TODO."""
         return cls._calc_pacf(data=ts_trend, nlags=nlags, method=method)
@@ -77,7 +93,7 @@ class MFETSAutocorr:
     @classmethod
     def ft_pacf_seasonality(cls,
                             ts_season: np.ndarray,
-                            nlags: int = 5,
+                            nlags: t.Optional[int] = None,
                             method: str = "ols-unbiased") -> np.ndarray:
         """TODO."""
         return cls._calc_pacf(data=ts_season, nlags=nlags, method=method)
@@ -85,7 +101,7 @@ class MFETSAutocorr:
     @classmethod
     def ft_pacf_detrended(cls,
                           ts_detrended: np.ndarray,
-                          nlags: int = 5,
+                          nlags: t.Optional[int] = None,
                           method: str = "ols-unbiased") -> np.ndarray:
         """TODO."""
         return cls._calc_pacf(data=ts_detrended, nlags=nlags, method=method)
@@ -93,7 +109,7 @@ class MFETSAutocorr:
     @classmethod
     def ft_pacf_deseasonalized(cls,
                                ts_deseasonalized: np.ndarray,
-                               nlags: int = 5,
+                               nlags: t.Optional[int] = None,
                                method: str = "ols-unbiased") -> np.ndarray:
         """TODO."""
         return cls._calc_pacf(data=ts_deseasonalized,
@@ -103,11 +119,11 @@ class MFETSAutocorr:
     @classmethod
     def ft_acf(cls,
                ts: np.ndarray,
-               nlags: int = 5,
+               nlags: t.Optional[int] = None,
                unbiased: bool = True,
                ts_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
-        if ts_acfs is not None and ts_acfs.size == nlags:
+        if ts_acfs is not None and (nlags is None or ts_acfs.size == nlags):
             return ts_acfs
 
         return cls._calc_acf(data=ts, nlags=nlags, unbiased=unbiased)
@@ -116,7 +132,7 @@ class MFETSAutocorr:
     def ft_acf_diff(cls,
                     ts: np.ndarray,
                     num_diff: int = 1,
-                    nlags: int = 5,
+                    nlags: t.Optional[int] = None,
                     unbiased: bool = True) -> np.ndarray:
         """TODO."""
         return cls._calc_acf(data=np.diff(ts, n=num_diff),
@@ -126,7 +142,7 @@ class MFETSAutocorr:
     @classmethod
     def ft_acf_residuals(cls,
                          ts_residuals: np.ndarray,
-                         nlags: int = 5,
+                         nlags: t.Optional[int] = None,
                          unbiased: bool = True) -> np.ndarray:
         """TODO."""
         return cls._calc_acf(data=ts_residuals, nlags=nlags, unbiased=unbiased)
@@ -134,7 +150,7 @@ class MFETSAutocorr:
     @classmethod
     def ft_acf_trend(cls,
                      ts_trend: np.ndarray,
-                     nlags: int = 5,
+                     nlags: t.Optional[int] = None,
                      unbiased: bool = True) -> np.ndarray:
         """TODO."""
         return cls._calc_acf(data=ts_trend, nlags=nlags, unbiased=unbiased)
@@ -142,7 +158,7 @@ class MFETSAutocorr:
     @classmethod
     def ft_acf_seasonality(cls,
                            ts_season: np.ndarray,
-                           nlags: int = 5,
+                           nlags: t.Optional[int] = None,
                            unbiased: bool = True) -> np.ndarray:
         """TODO."""
         return cls._calc_acf(data=ts_season, nlags=nlags, unbiased=unbiased)
@@ -150,7 +166,7 @@ class MFETSAutocorr:
     @classmethod
     def ft_acf_detrended(cls,
                          ts_detrended: np.ndarray,
-                         nlags: int = 5,
+                         nlags: t.Optional[int] = None,
                          unbiased: bool = True) -> np.ndarray:
         """TODO."""
         return cls._calc_acf(data=ts_detrended, nlags=nlags, unbiased=unbiased)
@@ -158,7 +174,7 @@ class MFETSAutocorr:
     @classmethod
     def ft_acf_deseasonalized(cls,
                               ts_deseasonalized: np.ndarray,
-                              nlags: int = 5,
+                              nlags: t.Optional[int] = None,
                               unbiased: bool = True) -> np.ndarray:
         """TODO."""
         return cls._calc_acf(data=ts_deseasonalized,
@@ -282,9 +298,10 @@ class MFETSAutocorr:
                max_nlags: t.Optional[int] = None) -> float:
         """TODO."""
         if lag is None:
-            lag = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
-                                                    unbiased=unbiased,
-                                                    max_nlags=max_nlags)
+            _aux = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
+                                                     unbiased=unbiased,
+                                                     max_nlags=max_nlags)
+            lag = 1 if np.isnan(_aux) else _aux
 
         ts_shift_1 = ts[:-2 * lag]
         ts_shift_2 = ts[lag:-lag]
@@ -331,9 +348,10 @@ class MFETSAutocorr:
             DOI: 10.1098/rsif.2013.0048
         """
         if lag is None:
-            lag = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
-                                                    unbiased=unbiased,
-                                                    max_nlags=max_nlags)
+            _aux = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
+                                                     unbiased=unbiased,
+                                                     max_nlags=max_nlags)
+            lag = 1 if np.isnan(_aux) else _aux
 
         ts_abs = np.abs(ts)
         ts_sft_1 = ts_abs[:-lag]
@@ -470,14 +488,12 @@ def _test() -> None:
 
     res = MFETSAutocorr.ft_autocorr_out_dist(ts)
     print(res)
-    exit(1)
 
     res = MFETSAutocorr.ft_sfirst_acf_nonpos(ts)
     print(res)
 
     res = MFETSAutocorr.ft_sfirst_acf_locmin(ts)
     print(res)
-    exit(1)
 
     res = MFETSAutocorr.ft_first_acf_locmin(ts)
     print(res)
