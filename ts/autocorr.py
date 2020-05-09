@@ -414,16 +414,19 @@ class MFETSAutocorr:
         nlags: int = 2,
         unbiased: bool = True,
         random_state: t.Optional[int] = None,
-        gaussian_model: t.Optional[sklearn.mixture.GaussianMixture] = None
+        ts_scaled: t.Optional[np.ndarray] = None,
+        gaussian_model: t.Optional[sklearn.mixture.GaussianMixture] = None,
     ) -> np.ndarray:
         """TODO."""
-        gaussian_model = _utils.fit_gaussian_mix(ts=ts,
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        gaussian_resid = _utils.fit_gaussian_mix(ts=ts_scaled,
                                                  n_components=n_components,
                                                  random_state=random_state,
-                                                 gaussian_model=gaussian_model)
-        ts_preds = gaussian_model.predict(ts.reshape(-1, 1))
-        ts_resid = ts - ts_preds
-        gaussian_resid_acf = cls._calc_acf(data=ts_resid,
+                                                 gaussian_model=gaussian_model,
+                                                 return_residuals=True)
+
+        gaussian_resid_acf = cls._calc_acf(data=gaussian_resid,
                                            nlags=nlags,
                                            unbiased=unbiased)
 
@@ -437,7 +440,7 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
-    res = MFETSAutocorr.ft_autocorr_gaussian_resid(ts)
+    res = MFETSAutocorr.ft_autocorr_gaussian_resid(ts, random_state=16)
     print(res)
     exit(1)
 
