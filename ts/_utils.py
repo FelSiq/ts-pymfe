@@ -250,6 +250,36 @@ def calc_ioi_stats(ts: np.ndarray,
     return res
 
 
+def apply_on_ts_samples(
+        ts: np.ndarray,
+        func: t.Callable[[np.ndarray], float],
+        num_samples: int = 128,
+        sample_size_frac: float = 0.2,
+        random_state: t.Optional[int] = None,
+        **kwargs) -> np.ndarray:
+    """TODO."""
+    if not 0 < sample_size_frac < 1:
+        raise ValueError("'sample_size_frac' must be in (0, 1) "
+                         "range (got {}).".format(sample_size_frac))
+
+    if random_state is not None:
+        np.random.seed(random_state)
+
+    sample_size = int(np.ceil(ts.size * sample_size_frac))
+    start_inds = np.random.randint(ts.size - sample_size + 1,
+                                   size=num_samples)
+
+    res = np.array([
+        func(ts[s_ind:s_ind + sample_size], **kwargs)
+        for s_ind in start_inds
+    ], dtype=float)
+
+    # Note: the original metafeatures are the mean value of
+    # 'result'. However, to enable summarization,
+    # here we return all the values.
+    return res
+
+
 def _test() -> None:
     import matplotlib.pyplot as plt
     np.random.seed(16)
