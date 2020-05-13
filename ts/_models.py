@@ -16,7 +16,7 @@ class TSNaive:
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """TODO."""
-        return np.full(fill_value=self.last_obs, shape=X.size)
+        return np.full(fill_value=self.last_obs, shape=X.shape)
 
 
 class TSNaiveDrift:
@@ -70,3 +70,39 @@ class TSNaiveSeasonal:
         shift = (X - self.y.size) // self.ts_period
         inds = X - self.ts_period * (1 + shift)
         return self.y[inds]
+
+
+class _TSLocalStat:
+    """TODO."""
+    def __init__(self, stat_func: t.Callable[[np.ndarray], float],
+                 train_prop: float):
+        """TODO."""
+        if not 0 < train_prop <= 1:
+            raise ValueError("'train_prop' must be in (0, 1] "
+                             "(got {}).".format(train_prop))
+
+        self.train_prop = train_prop
+        self.loc_mean_fit = None
+        self._stat_func = stat_func
+
+    def fit(self, _: np.ndarray, y: np.ndarray) -> "_TSLocalStat":
+        """TODO."""
+        last_ind = max(1, int(np.ceil(y.size * self.train_prop)))
+        self.loc_mean_fit = self._stat_func(y[-last_ind:])
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """TODO."""
+        return np.full(fill_value=self.loc_mean_fit, shape=X.shape)
+
+
+class TSLocalMean(_TSLocalStat):
+    """TODO."""
+    def __init__(self, train_prop: float = 0.25):
+        super().__init__(stat_func=np.mean, train_prop=train_prop)
+
+
+class TSLocalMedian(_TSLocalStat):
+    """TODO."""
+    def __init__(self, train_prop: float = 0.25):
+        super().__init__(stat_func=np.median, train_prop=train_prop)

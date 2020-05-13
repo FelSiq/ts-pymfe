@@ -214,6 +214,50 @@ class MFETSLandmarking:
         return res
 
     @classmethod
+    def ft_model_loc_mean(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            loc_prop: float = 0.25,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+    ) -> np.ndarray:
+        """TODO."""
+        model = _models.TSLocalMean(train_prop=loc_prop)
+
+        res = cls._standard_pipeline_sklearn(y=ts,
+                                             model=model,
+                                             score=score,
+                                             tskf=tskf,
+                                             num_cv_folds=num_cv_folds,
+                                             lm_sample_frac=lm_sample_frac)
+
+        return res
+
+    @classmethod
+    def ft_model_loc_median(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            loc_prop: float = 0.25,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+    ) -> np.ndarray:
+        """TODO."""
+        model = _models.TSLocalMedian(train_prop=loc_prop)
+
+        res = cls._standard_pipeline_sklearn(y=ts,
+                                             model=model,
+                                             score=score,
+                                             tskf=tskf,
+                                             num_cv_folds=num_cv_folds,
+                                             lm_sample_frac=lm_sample_frac)
+
+        return res
+
+    @classmethod
     def ft_model_gaussian(
             cls,
             ts: np.ndarray,
@@ -810,6 +854,14 @@ def _test() -> None:
 
     score = lambda *args: sklearn.metrics.mean_squared_error(*args,
                                                              squared=False)
+
+    res = MFETSLandmarking.ft_model_loc_median(ts, score=score)
+    print(4, res)
+    exit(1)
+
+    res = MFETSLandmarking.ft_model_loc_mean(ts, score=score)
+    print(4, res)
+    exit(1)
 
     res = MFETSLandmarking.ft_model_gaussian(ts, score=score, random_state=16)
     print(4, res)
