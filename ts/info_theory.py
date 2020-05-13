@@ -243,16 +243,93 @@ class MFETSInfoTheory:
                            lag: int = 1,
                            ddof: int = 1) -> float:
         """TODO."""
-        control_entropy = cls.ft_sample_entropy(
-           ts=np.diff(ts),
-           embed_dim=embed_dim,
-           factor=factor,
-           metric=metric,
-           p=p,
-           lag=lag,
-           ddof=ddof)
+        control_entropy = cls.ft_sample_entropy(ts=np.diff(ts),
+                                                embed_dim=embed_dim,
+                                                factor=factor,
+                                                metric=metric,
+                                                p=p,
+                                                lag=lag,
+                                                ddof=ddof)
 
         return control_entropy
+
+    @classmethod
+    def ft_surprise(cls,
+                    ts: np.ndarray,
+                    num_bins: int = 10,
+                    memory_size: t.Union[float, int] = 0.1,
+                    num_it: int = 128,
+                    method: str = "distribution",
+                    epsilon: float = 1.0e-8,
+                    random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        VALID_METHODS = ("distribution", "1-transition")
+
+        if method not in VALID_METHODS:
+            raise ValueError("'method' must in {} (got '{}')."
+                             "".format(VALID_METHODS, method))
+
+        if memory_size <= 0:
+            raise ValueError("'memory_size' must be positive (got "
+                             "{}).".format(memory_size))
+
+        if num_it <= 0:
+            raise ValueError("'num_it' must be positive (got {})."
+                             "".format(num_it))
+
+        def get_reference_inds(inds_num: int) -> np.ndarray:
+            """Get min(ts.size - memory_size, inds_num) random reference indices."""
+            if ts.size - memory_size > num_it:
+                if random_state is not None:
+                    np.random.seed(random_state)
+
+                # Note: we can't use indices before the first 'memory_size'
+                # indices as reference, since we need a 'memory' of size
+                # 'memory_size' (i.e., we need at least 'memory_size' past
+                # indices). Therefore, we always skip they.
+                return memory_size + np.random.choice(
+                    ts.size - memory_size, size=inds_num, replace=False)
+
+            # Note: the requested number of indices is not smaller than
+            # the number of available indices. Therefore, just return
+            # all available indices.
+            return np.arange(memory_size, ts.size)
+
+        if 0 < memory_size < 1:
+            memory_size = int(np.ceil(ts.size * memory_size))
+
+        if method == "distribution":
+
+            def prob_func(ref_ind: int, ts_bin: np.ndarray):
+                return np.mean(ts_bin[ref_ind -
+                                      memory_size:ref_ind] == ts_bin[ref_ind])
+
+        else:
+
+            def prob_func(ref_ind: int, ts_bin: np.ndarray):
+                mem_data = ts_bin[ref_ind - memory_size:ref_ind]
+                prev_val = mem_data[-1]
+                prev_val_inds = np.flatnonzero(mem_data[:-1] == prev_val)
+                return np.mean(mem_data[prev_val_inds + 1] == ts_bin[ref_ind])
+
+        # Note: not necessarily we need to to this on the differenced
+        # time-series. This should be optional in the future.
+        ts_diff = np.diff(ts)
+
+        # Note: discretize time-series using an equiprobable histogram
+        # (i.e. all bins have approximately the same number of instances).
+        ts_bin = np.digitize(ts_diff,
+                             np.quantile(ts_diff, np.linspace(0, 1, num_bins)))
+
+        probs = np.zeros(num_it, dtype=float)
+
+        for ind, ref_ind in enumerate(get_reference_inds(inds_num=num_it)):
+            probs[ind] = prob_func(ref_ind=ref_ind, ts_bin=ts_bin)
+
+        probs[probs < epsilon] = 1.0
+        surprise = -np.log(probs)
+
+        return surprise
 
 
 def _test() -> None:
@@ -263,6 +340,10 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
     print("TS period:", ts_period)
+
+    res = MFETSInfoTheory.ft_surprise(ts, random_state=16)
+    print(res)
+    exit(1)
 
     res = MFETSInfoTheory.ft_sample_entropy(ts, lag=1)
     print(res)
