@@ -458,12 +458,14 @@ class MFETSStatistical:
         kl_divs = np.zeros(ts.size - ts_period, dtype=float)
 
         next_wind = ts_scaled[:ts_period]
+        next_bin = np.histogram(next_wind)[0]
         i = 1
 
         while i < ts.size - ts_period:
-            cur_wind = next_wind
+            cur_wind, cur_bin = next_wind, next_bin
             next_wind = ts_scaled[i:i + ts_period]
-            kl_divs[i - 1] = scipy.stats.entropy(cur_wind, next_wind)
+            next_bin = np.histogram(next_wind)[0]
+            kl_divs[i - 1] = scipy.stats.entropy(next_bin, cur_bin)
             i += 1
 
         return np.diff(kl_divs[np.isfinite(kl_divs)])
@@ -587,6 +589,11 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
+    res = MFETSStatistical.ft_mdiff_moving_kldiv(ts, ts_period)
+    print(res)
+    print(np.nanmax(res))
+    exit(1)
+
     res = MFETSStatistical.ft_local_extrema(ts)
     print("Local extrema", res)
     exit(1)
@@ -653,9 +660,6 @@ def _test() -> None:
     print("gmean diff", np.nanmax(res))
 
     res = MFETSStatistical.ft_mdiff_moving_sd(ts, ts_period)
-    print(np.nanmax(res))
-
-    res = MFETSStatistical.ft_mdiff_moving_kldiv(ts, ts_period)
     print(np.nanmax(res))
 
     res = MFETSStatistical.ft_skewness_residuals(ts_residuals)
