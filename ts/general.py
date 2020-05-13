@@ -364,28 +364,6 @@ class MFETSGeneral:
         return threshold
 
     @classmethod
-    def ft_sample_entropy(cls,
-                          ts: np.ndarray,
-                          embed_dim: int = 2,
-                          factor: float = 0.2,
-                          metric: str = "chebyshev",
-                          p: t.Union[int, float] = 2,
-                          lag: int = 1,
-                          ddof: int = 1) -> float:
-        """TODO."""
-        def neigh_num(dim: int) -> int:
-            embed = _embed.embed_ts(ts, dim=dim, lag=lag)
-            dist_mat = scipy.spatial.distance.pdist(embed, metric=metric, p=p)
-            return np.sum(dist_mat < threshold)
-
-        threshold = factor * np.std(ts, ddof=ddof)
-
-        sample_entropy = -np.log(
-            neigh_num(embed_dim + 1) / neigh_num(embed_dim))
-
-        return sample_entropy
-
-    @classmethod
     def ft_embed_in_sphere(
             cls,
             ts: np.ndarray,
@@ -477,9 +455,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_period(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_sample_entropy(ts, lag=1)
     print(res)
 
     res = MFETSGeneral.ft_peak_frac(ts_season, ts_period=ts_period)

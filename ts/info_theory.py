@@ -49,12 +49,40 @@ class MFETSInfoTheory:
         return precomp_vals
 
     @classmethod
+    def _auto_mut_info(cls,
+                       ts: np.ndarray,
+                       lag: int,
+                       num_bins: int = 64,
+                       return_dist: bool = False) -> float:
+        """TODO."""
+        ts_x = ts[:-lag]
+        ts_y = ts[lag:]
+
+        ts_x_bin = np.histogram(ts_x, bins=num_bins)[0]
+        ts_y_bin = np.histogram(ts_y, bins=num_bins)[0]
+        joint_prob = np.histogram2d(ts_x, ts_y, bins=num_bins, density=True)[0]
+
+        ent_ts_x = scipy.stats.entropy(ts_x_bin, base=2)
+        ent_ts_y = scipy.stats.entropy(ts_y_bin, base=2)
+        ent_joint = scipy.stats.entropy(joint_prob.ravel(), base=2)
+
+        auto_info = ent_ts_x + ent_ts_y - ent_joint
+
+        if return_dist:
+            # Note: this is the same as defining, right from the start,
+            # auto_info = (ent_ts_x + ent_ts_y) / ent_joint
+            # However, here all steps are kept to make the code clearer.
+            auto_info = 1 - auto_info / ent_joint
+
+        return auto_info
+
+    @classmethod
     def ft_hist_entropy(cls,
                         ts: np.ndarray,
                         num_bins: int = 10,
-                        normalize: bool = True) -> np.ndarray:
+                        normalize: bool = True) -> float:
         """TODO."""
-        freqs = np.histogram(ts)[0]
+        freqs = np.histogram(ts, density=True)[0]
 
         entropy = scipy.stats.entropy(freqs, base=2)
 
@@ -62,6 +90,31 @@ class MFETSInfoTheory:
             entropy /= np.log2(freqs.size)
 
         return entropy
+
+    @classmethod
+    def ft_hist_ent_out_diff(cls,
+                             ts: np.ndarray,
+                             num_bins: int = 10,
+                             pcut: float = 0.05,
+                             normalize: bool = True) -> float:
+        """TODO."""
+        if not 0 < pcut < 0.5:
+            raise ValueError("'pcut' must be in (0.0, 0.5) (got "
+                             "{}).".format(pcut))
+
+        cut_low, cut_high = np.quantile(ts, (pcut, 1 - pcut))
+        ts_inliners = ts[np.logical_and(cut_low <= ts, ts <= cut_high)]
+
+        ent_ts = cls.ft_hist_entropy(ts=ts,
+                                     num_bins=num_bins,
+                                     normalize=normalize)
+        ent_ts_inliners = cls.ft_hist_entropy(ts=ts_inliners,
+                                              num_bins=num_bins,
+                                              normalize=normalize)
+
+        entropy_diff = ent_ts - ent_ts_inliners
+
+        return entropy_diff
 
     @classmethod
     def ft_first_crit_pt_ami(
@@ -90,34 +143,6 @@ class MFETSInfoTheory:
 
         except IndexError:
             return np.nan
-
-    @classmethod
-    def _auto_mut_info(cls,
-                       ts: np.ndarray,
-                       lag: int,
-                       num_bins: int = 64,
-                       return_dist: bool = False) -> float:
-        """TODO."""
-        ts_x = ts[:-lag]
-        ts_y = ts[lag:]
-
-        ts_x_bin = np.histogram(ts_x, bins=num_bins)[0]
-        ts_y_bin = np.histogram(ts_y, bins=num_bins)[0]
-        joint_prob = np.histogram2d(ts_x, ts_y, bins=num_bins, density=True)[0]
-
-        ent_ts_x = scipy.stats.entropy(ts_x_bin, base=2)
-        ent_ts_y = scipy.stats.entropy(ts_y_bin, base=2)
-        ent_joint = scipy.stats.entropy(joint_prob.ravel(), base=2)
-
-        auto_info = ent_ts_x + ent_ts_y - ent_joint
-
-        if return_dist:
-            # Note: this is the same as defining, right from the start,
-            # auto_info = (ent_ts_x + ent_ts_y) / ent_joint
-            # However, here all steps are kept to make the code clearer.
-            auto_info = 1 - auto_info / ent_joint
-
-        return auto_info
 
     @classmethod
     def ft_auto_mut_info(
@@ -186,6 +211,49 @@ class MFETSInfoTheory:
 
         return curvature
 
+    @classmethod
+    def ft_sample_entropy(cls,
+                          ts: np.ndarray,
+                          embed_dim: int = 2,
+                          factor: float = 0.2,
+                          metric: str = "chebyshev",
+                          p: t.Union[int, float] = 2,
+                          lag: int = 1,
+                          ddof: int = 1) -> float:
+        """TODO."""
+        def neigh_num(dim: int) -> int:
+            embed = _embed.embed_ts(ts, dim=dim, lag=lag)
+            dist_mat = scipy.spatial.distance.pdist(embed, metric=metric, p=p)
+            return np.sum(dist_mat < threshold)
+
+        threshold = factor * np.std(ts, ddof=ddof)
+
+        sample_entropy = -np.log(
+            neigh_num(embed_dim + 1) / neigh_num(embed_dim))
+
+        return sample_entropy
+
+    @classmethod
+    def ft_control_entropy(cls,
+                           ts: np.ndarray,
+                           embed_dim: int = 2,
+                           factor: float = 0.2,
+                           metric: str = "chebyshev",
+                           p: t.Union[int, float] = 2,
+                           lag: int = 1,
+                           ddof: int = 1) -> float:
+        """TODO."""
+        control_entropy = cls.ft_sample_entropy(
+           ts=np.diff(ts),
+           embed_dim=embed_dim,
+           factor=factor,
+           metric=metric,
+           p=p,
+           lag=lag,
+           ddof=ddof)
+
+        return control_entropy
+
 
 def _test() -> None:
     ts = _get_data.load_data(2)
@@ -195,6 +263,12 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
     print("TS period:", ts_period)
+
+    res = MFETSInfoTheory.ft_sample_entropy(ts, lag=1)
+    print(res)
+
+    res = MFETSInfoTheory.ft_control_entropy(ts, lag=1)
+    print(res)
 
     res = MFETSInfoTheory.ft_ami_curvature(ts, random_state=16)
     print(res)
@@ -206,6 +280,9 @@ def _test() -> None:
     print(res)
 
     res = MFETSInfoTheory.ft_hist_entropy(ts)
+    print(res)
+
+    res = MFETSInfoTheory.ft_hist_ent_out_diff(ts)
     print(res)
 
 
