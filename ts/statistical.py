@@ -1,21 +1,17 @@
 import typing as t
-import collections
 
-import sklearn.preprocessing
 import numpy as np
-import pandas as pd
 import pymfe.statistical
 import nolds
 import scipy.stats
 
 import _detrend
-import _embed
 import _period
 import _utils
 import _get_data
 
 
-class MFETSStatistical:
+class MFETSGlobalStats:
     @classmethod
     def ft_ioi_tdelta_mean(
             cls,
@@ -328,201 +324,6 @@ class MFETSStatistical:
         return ts_kurt
 
     @classmethod
-    def ft_mdiff_moving_mean(
-        cls,
-        ts: np.ndarray,
-        ts_period: int,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
-    ) -> np.ndarray:
-        """TODO."""
-        if ts_rol_win is None:
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=ts_period,
-                                                   ts_scaled=ts_scaled)
-
-        return np.abs(ts_rol_win.mean().diff(ts_period))
-
-    @classmethod
-    def ft_mdiff_moving_var(
-        cls,
-        ts: np.ndarray,
-        ts_period: int,
-        ddof: int = 1,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
-    ) -> np.ndarray:
-        """TODO."""
-        if ts_rol_win is None:
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=ts_period,
-                                                   ts_scaled=ts_scaled)
-
-        return np.abs(ts_rol_win.var(ddof=ddof).diff(ts_period))
-
-    @classmethod
-    def ft_mdiff_moving_sd(
-        cls,
-        ts: np.ndarray,
-        ts_period: int,
-        ddof: int = 1,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
-    ) -> np.ndarray:
-        """TODO."""
-        if ts_rol_win is None:
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=ts_period,
-                                                   ts_scaled=ts_scaled)
-
-        return np.abs(ts_rol_win.std(ddof=ddof).diff(ts_period))
-
-    @classmethod
-    def ft_mdiff_moving_skewness(
-        cls,
-        ts: np.ndarray,
-        ts_period: int,
-        method: int = 3,
-        bias: bool = True,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
-    ) -> np.ndarray:
-        """TODO."""
-        if ts_rol_win is None:
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=ts_period,
-                                                   ts_scaled=ts_scaled)
-
-        res = np.abs(
-            ts_rol_win.apply(pymfe.statistical.MFEStatistical.ft_skewness,
-                             kwargs={
-                                 "method": method,
-                                 "bias": bias
-                             }).diff(ts_period))
-
-        return res
-
-    @classmethod
-    def ft_mdiff_moving_kurtosis(
-        cls,
-        ts: np.ndarray,
-        ts_period: int,
-        method: int = 3,
-        bias: bool = True,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
-    ) -> np.ndarray:
-        """TODO."""
-        if ts_rol_win is None:
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=ts_period,
-                                                   ts_scaled=ts_scaled)
-
-        res = np.abs(
-            ts_rol_win.apply(pymfe.statistical.MFEStatistical.ft_kurtosis,
-                             kwargs={
-                                 "method": method,
-                                 "bias": bias
-                             }).diff(ts_period))
-
-        return res
-
-    @classmethod
-    def ft_mdiff_moving_gmean(
-        cls,
-        ts: np.ndarray,
-        ts_period: int,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
-    ) -> np.ndarray:
-        """TODO."""
-        if ts_rol_win is None:
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=ts_period,
-                                                   ts_scaled=ts_scaled)
-
-        res = np.abs(ts_rol_win.apply(scipy.stats.gmean).diff(ts_period))
-
-        return res
-
-    @classmethod
-    def ft_mdiff_moving_kldiv(
-            cls,
-            ts: np.ndarray,
-            ts_period: int,
-            ts_scaled: t.Optional[np.ndarray] = None,
-    ) -> np.ndarray:
-        """TODO."""
-        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-
-        kl_divs = np.zeros(ts.size - ts_period, dtype=float)
-
-        next_wind = ts_scaled[:ts_period]
-        next_bin = np.histogram(next_wind)[0]
-        i = 1
-
-        while i < ts.size - ts_period:
-            cur_wind, cur_bin = next_wind, next_bin
-            next_wind = ts_scaled[i:i + ts_period]
-            next_bin = np.histogram(next_wind)[0]
-            kl_divs[i - 1] = scipy.stats.entropy(next_bin, cur_bin)
-            i += 1
-
-        return np.diff(kl_divs[np.isfinite(kl_divs)])
-
-    @classmethod
-    def ft_lumpiness(cls,
-                     ts: np.ndarray,
-                     num_tiles: int = 16,
-                     ddof: int = 1,
-                     ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
-        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-
-        tilled_vars = _utils.apply_on_tiles(ts=ts_scaled,
-                                            num_tiles=num_tiles,
-                                            func=np.var,
-                                            ddof=ddof)
-
-        # Note: the 'lumpiness' is defined as the variance of the
-        # tilled variances. However, here, to enable other summarization,
-        # we return the full array of tiled variances.
-        return tilled_vars
-
-    @classmethod
-    def ft_stability(cls,
-                     ts: np.ndarray,
-                     num_tiles: int = 16,
-                     ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
-        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-
-        tilled_means = _utils.apply_on_tiles(ts=ts_scaled,
-                                             num_tiles=num_tiles,
-                                             func=np.mean)
-
-        # Note: the 'stability' is defined as the variance of the
-        # tilled means. However, here, to enable other summarization,
-        # we return the full array of tiled variances.
-        return tilled_means
-
-    @classmethod
-    def ft_spikiness(cls,
-                     ts_residuals: np.ndarray,
-                     ddof: int = 1) -> np.ndarray:
-        """TODO."""
-        vars_ = np.array([
-            np.var(np.delete(ts_residuals, i), ddof=ddof)
-            for i in np.arange(ts_residuals.size)
-        ],
-                         dtype=float)
-
-        # Note: on the original reference paper, the spikiness is calculated
-        # as the variance of the 'vars_'. However, to enable summarization,
-        # here we return the full array.
-        return vars_
-
-    @classmethod
     def ft_exp_max_lyap(cls, ts: np.ndarray, embed_dim: int,
                         lag: int) -> float:
         """TODO."""
@@ -560,26 +361,6 @@ class MFETSStatistical:
         """TODO."""
         return pymfe.statistical.MFEStatistical.ft_t_mean(N=ts, pcut=pcut)
 
-    @classmethod
-    def ft_local_extrema(
-            cls,
-            ts: np.ndarray,
-            num_tiles: int = 16,
-            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
-        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-
-        def get_extreme_val(tile: np.ndarray) -> float:
-            """Get extreme (maximum in absolute) value of a tile."""
-            min_, max_ = np.quantile(tile, (0, 1))
-            return max_ if abs(min_) <= max_ else min_
-
-        tilled_extrema = _utils.apply_on_tiles(ts=ts_scaled,
-                                               num_tiles=num_tiles,
-                                               func=get_extreme_val)
-
-        return tilled_extrema
-
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -589,99 +370,60 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
-    res = MFETSStatistical.ft_mdiff_moving_kldiv(ts, ts_period)
+    res = MFETSGlobalStats.ft_ioi_tdelta_mean(ts)
     print(res)
-    print(np.nanmax(res))
-    exit(1)
 
-    res = MFETSStatistical.ft_local_extrema(ts)
-    print("Local extrema", res)
-    exit(1)
-
-    res = MFETSStatistical.ft_ioi_tdelta_mean(ts)
-    print(res)
-    exit(1)
-
-    res = MFETSStatistical.ft_t_mean(ts)
+    res = MFETSGlobalStats.ft_t_mean(ts)
     print("trimmed mean", res)
 
-    res = MFETSStatistical.ft_opt_boxcox_coef(ts)
+    res = MFETSGlobalStats.ft_opt_boxcox_coef(ts)
     print(res)
 
-    res = MFETSStatistical.ft_sd_diff(ts)
+    res = MFETSGlobalStats.ft_sd_diff(ts)
     print("sd diff", res)
 
-    res = MFETSStatistical.ft_sd_mdiff(ts, ts_period)
+    res = MFETSGlobalStats.ft_sd_mdiff(ts, ts_period)
     print("sd mdiff", res)
 
-    res = MFETSStatistical.ft_skewness_diff(ts)
+    res = MFETSGlobalStats.ft_skewness_diff(ts)
     print("skewness diff", res)
 
-    res = MFETSStatistical.ft_skewness_mdiff(ts, ts_period)
+    res = MFETSGlobalStats.ft_skewness_mdiff(ts, ts_period)
     print("skewness mdiff", res)
 
-    res = MFETSStatistical.ft_kurtosis_diff(ts)
+    res = MFETSGlobalStats.ft_kurtosis_diff(ts)
     print("kurtosis diff", res)
 
-    res = MFETSStatistical.ft_kurtosis_mdiff(ts, ts_period)
+    res = MFETSGlobalStats.ft_kurtosis_mdiff(ts, ts_period)
     print("kurtosis mdiff", res)
 
-    res = MFETSStatistical.ft_sd_diff(ts)
+    res = MFETSGlobalStats.ft_sd_diff(ts)
     print("sd diff", res)
 
-    res = MFETSStatistical.ft_exp_max_lyap(ts, embed_dim=ts_period, lag=1)
+    res = MFETSGlobalStats.ft_exp_max_lyap(ts, embed_dim=ts_period, lag=1)
     print("exp max lyap", res)
 
-    res = MFETSStatistical.ft_exp_hurst(ts)
+    res = MFETSGlobalStats.ft_exp_hurst(ts)
     print("exp hurst", res)
 
-    res = MFETSStatistical.ft_spikiness(ts_residuals)
-    print(np.var(res))
-
-    res = MFETSStatistical.ft_lumpiness(ts)
-    print("lumpiness", np.var(res))
-
-    res = MFETSStatistical.ft_stability(ts)
-    print("stability", np.var(res))
-
-    res = MFETSStatistical.ft_mdiff_moving_mean(ts, ts_period)
-    print(np.nanmax(res))
-
-    res = MFETSStatistical.ft_mdiff_moving_var(ts, ts_period)
-    print(np.nanmax(res))
-
-    res = MFETSStatistical.ft_mdiff_moving_skewness(ts, ts_period)
-    print("skewness diff", np.nanmax(res))
-
-    res = MFETSStatistical.ft_mdiff_moving_kurtosis(ts, ts_period)
-    print("kurtosis diff", np.nanmax(res))
-
-    res = MFETSStatistical.ft_mdiff_moving_gmean(ts, ts_period)
-    print("gmean diff", np.nanmax(res))
-
-    res = MFETSStatistical.ft_mdiff_moving_sd(ts, ts_period)
-    print(np.nanmax(res))
-
-    res = MFETSStatistical.ft_skewness_residuals(ts_residuals)
+    res = MFETSGlobalStats.ft_skewness_residuals(ts_residuals)
     print(res)
 
-    res = MFETSStatistical.ft_kurtosis_residuals(ts_residuals)
+    res = MFETSGlobalStats.ft_kurtosis_residuals(ts_residuals)
     print(res)
 
-    res = MFETSStatistical.ft_sd_residuals(ts_residuals)
+    res = MFETSGlobalStats.ft_sd_residuals(ts_residuals)
     print(res)
 
-    res = MFETSStatistical.ft_trend(ts_residuals, ts_trend + ts_residuals)
+    res = MFETSGlobalStats.ft_trend(ts_residuals, ts_trend + ts_residuals)
     print(res)
 
-    res = MFETSStatistical.ft_seasonality(ts_residuals,
+    res = MFETSGlobalStats.ft_seasonality(ts_residuals,
                                           ts_season + ts_residuals)
     print(res)
 
-    res = MFETSStatistical.ft_dfa(ts)
+    res = MFETSGlobalStats.ft_dfa(ts)
     print(res)
-
-    exit(1)
 
 
 if __name__ == "__main__":
