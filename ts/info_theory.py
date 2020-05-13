@@ -1,6 +1,7 @@
 import typing as t
 
 import numpy as np
+import sklearn.linear_model
 import scipy.stats
 import pandas as pd
 
@@ -75,7 +76,7 @@ class MFETSInfoTheory:
         if auto_mut_info is None:
             auto_mut_info = cls.ft_auto_mut_info(ts=ts,
                                                  num_bins=num_bins,
-                                                 max_nlags=max_nlags,
+                                                 lags=max_nlags,
                                                  return_dist=return_dist)
 
         # Note: if 'return_dist=True', return the first local maximum.
@@ -91,55 +92,99 @@ class MFETSInfoTheory:
             return np.nan
 
     @classmethod
+    def _auto_mut_info(cls,
+                       ts: np.ndarray,
+                       lag: int,
+                       num_bins: int = 64,
+                       return_dist: bool = False) -> float:
+        """TODO."""
+        ts_x = ts[:-lag]
+        ts_y = ts[lag:]
+
+        ts_x_bin = np.histogram(ts_x, bins=num_bins)[0]
+        ts_y_bin = np.histogram(ts_y, bins=num_bins)[0]
+        joint_prob = np.histogram2d(ts_x, ts_y, bins=num_bins, density=True)[0]
+
+        ent_ts_x = scipy.stats.entropy(ts_x_bin, base=2)
+        ent_ts_y = scipy.stats.entropy(ts_y_bin, base=2)
+        ent_joint = scipy.stats.entropy(joint_prob.ravel(), base=2)
+
+        auto_info = ent_ts_x + ent_ts_y - ent_joint
+
+        if return_dist:
+            # Note: this is the same as defining, right from the start,
+            # auto_info = (ent_ts_x + ent_ts_y) / ent_joint
+            # However, here all steps are kept to make the code clearer.
+            auto_info = 1 - auto_info / ent_joint
+
+        return auto_info
+
+    @classmethod
     def ft_auto_mut_info(
             cls,
             ts: np.ndarray,
             num_bins: int = 64,
-            max_nlags: t.Optional[int] = None,
+            lags: t.Optional[t.Sequence[int]] = None,
             return_dist: bool = True,
             unbiased: bool = True,
             ts_acfs: t.Optional[np.ndarray] = None,
-            auto_mut_info: t.Optional[np.ndarray] = None) -> float:
+            auto_mut_info: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
         if auto_mut_info is not None:
             return auto_mut_info
 
-        if max_nlags is None:
+        if lags is None:
             _aux = autocorr.MFETSAutocorr.ft_first_acf_nonpos(
                 ts=ts, unbiased=unbiased, ts_acfs=ts_acfs)
-            max_nlags = 16 if np.isnan(_aux) else _aux
+            lags = np.asarray([1 if np.isnan(_aux) else _aux])
 
-        max_ind = ts.size - max_nlags
+        elif np.isscalar(lags):
+            lags = np.arange(1, 1 + lags)
 
-        ts_slice = ts[:max_ind]
-        ts_bin = np.histogram(ts_slice, bins=num_bins)[0]
-        ent_ts = scipy.stats.entropy(ts_bin, base=2)
+        auto_info = np.zeros(lags.size, dtype=float)
 
-        auto_info = np.zeros(max_nlags, dtype=float)
-
-        for lag in np.arange(1, 1 + max_nlags):
-            ts_lagged = ts[lag:max_ind + lag]
-            ts_bin_lagged = np.histogram(ts_lagged, bins=num_bins)[0]
-            joint_prob = np.histogram2d(ts_slice, ts_lagged, bins=num_bins)[0]
-
-            ent_ts_lagged = scipy.stats.entropy(ts_bin_lagged, base=2)
-            ent_joint = scipy.stats.entropy(joint_prob.ravel(), base=2)
-
-            auto_info[lag - 1] = ent_ts + ent_ts_lagged - ent_joint
-
-            if return_dist:
-                # Note: this is the same as defining, right from the start,
-                # auto_info[lag - 1] = (ent_ts + ent_ts_lagged) / ent_joint
-                # However, here all steps are kept to make the code clearer.
-                auto_info[lag - 1] = 1 - auto_info[lag - 1] / ent_joint
+        for ind, lag in enumerate(lags):
+            auto_info[ind] = cls._auto_mut_info(ts=ts,
+                                                lag=lag,
+                                                num_bins=num_bins,
+                                                return_dist=return_dist)
 
         return auto_info
 
+    @classmethod
     def ft_ami_curvature(
-            cls,
-            ts: np.ndarray,
+        cls,
+        ts: np.ndarray,
+        noise_range: t.Tuple[float, float] = (0, 3),
+        noise_inc_num: float = 10,
+        random_state: t.Optional[int] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
     ) -> float:
         """TODO."""
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        if random_state is not None:
+            np.random.seed(random_state)
+
+        gaussian_noise = np.random.randn(ts_scaled.size)
+        noise_std = np.linspace(*noise_range, noise_inc_num)
+
+        ami = np.zeros(noise_inc_num, dtype=float)
+
+        for ind, cur_std in enumerate(noise_std):
+            ts_corrupted = ts_scaled + cur_std * gaussian_noise
+
+            ami[ind] = cls.ft_auto_mut_info(ts=ts_corrupted,
+                                            unbiased=True,
+                                            num_bins=32,
+                                            return_dist=False)
+
+        model = sklearn.linear_model.LinearRegression().fit(
+            X=noise_std.reshape(-1, 1), y=ami)
+
+        curvature = model.coef_[0]
+
+        return curvature
 
 
 def _test() -> None:
@@ -150,6 +195,9 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
     print("TS period:", ts_period)
+
+    res = MFETSInfoTheory.ft_ami_curvature(ts, random_state=16)
+    print(res)
 
     res = MFETSInfoTheory.ft_first_crit_pt_ami(ts, return_dist=True)
     print(res)
