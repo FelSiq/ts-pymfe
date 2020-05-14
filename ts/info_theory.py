@@ -118,12 +118,12 @@ class MFETSInfoTheory:
 
     @classmethod
     def ft_first_crit_pt_ami(
-        cls,
-        ts: np.ndarray,
-        num_bins: int = 64,
-        max_nlags: int = 64,
-        return_dist: bool = True,
-        auto_mut_info: t.Optional[np.ndarray] = None
+            cls,
+            ts: np.ndarray,
+            num_bins: int = 64,
+            max_nlags: int = 64,
+            return_dist: bool = True,
+            auto_mut_info: t.Optional[np.ndarray] = None
     ) -> t.Union[int, float]:
         """TODO."""
         if auto_mut_info is None:
@@ -212,24 +212,48 @@ class MFETSInfoTheory:
         return curvature
 
     @classmethod
-    def ft_sample_entropy(cls,
+    def ft_approx_entropy(cls,
                           ts: np.ndarray,
                           embed_dim: int = 2,
-                          factor: float = 0.2,
+                          threshold: float = 0.2,
                           metric: str = "chebyshev",
                           p: t.Union[int, float] = 2,
                           lag: int = 1,
-                          ddof: int = 1) -> float:
+                          ts_scaled: t.Optional[np.ndarray] = None) -> float:
         """TODO."""
         def neigh_num(dim: int) -> int:
-            embed = _embed.embed_ts(ts, dim=dim, lag=lag)
+            embed = _embed.embed_ts(ts_scaled, dim=dim, lag=lag)
+            dist_mat = scipy.spatial.distance.cdist(embed,
+                                                    embed,
+                                                    metric=metric,
+                                                    p=p)
+            return np.mean(np.log(np.mean(dist_mat < threshold, axis=1)))
+
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        approx_entropy = neigh_num(embed_dim) - neigh_num(embed_dim + 1)
+
+        return approx_entropy
+
+    @classmethod
+    def ft_sample_entropy(cls,
+                          ts: np.ndarray,
+                          embed_dim: int = 2,
+                          threshold: float = 0.2,
+                          metric: str = "chebyshev",
+                          p: t.Union[int, float] = 2,
+                          lag: int = 1,
+                          ts_scaled: t.Optional[np.ndarray] = None) -> float:
+        """TODO."""
+        def log_neigh_num(dim: int) -> int:
+            embed = _embed.embed_ts(ts_scaled, dim=dim, lag=lag)
             dist_mat = scipy.spatial.distance.pdist(embed, metric=metric, p=p)
-            return np.sum(dist_mat < threshold)
+            return np.log(np.sum(dist_mat < threshold))
 
-        threshold = factor * np.std(ts, ddof=ddof)
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        sample_entropy = -np.log(
-            neigh_num(embed_dim + 1) / neigh_num(embed_dim))
+        sample_entropy = log_neigh_num(embed_dim) - log_neigh_num(embed_dim +
+                                                                  1)
 
         return sample_entropy
 
@@ -341,12 +365,16 @@ def _test() -> None:
     ts = ts.to_numpy()
     print("TS period:", ts_period)
 
-    res = MFETSInfoTheory.ft_surprise(ts, random_state=16)
+    res = MFETSInfoTheory.ft_sample_entropy(ts, lag=1)
+    print(res)
+
+    res = MFETSInfoTheory.ft_approx_entropy(ts, lag=1)
     print(res)
     exit(1)
 
-    res = MFETSInfoTheory.ft_sample_entropy(ts, lag=1)
+    res = MFETSInfoTheory.ft_surprise(ts, random_state=16)
     print(res)
+    exit(1)
 
     res = MFETSInfoTheory.ft_control_entropy(ts, lag=1)
     print(res)
