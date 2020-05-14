@@ -28,7 +28,7 @@ def apply_on_tiles(ts: np.ndarray, num_tiles: int,
 
 def get_rolling_window(
     ts: np.ndarray,
-    window_size: int,
+    window_size: t.Union[float, int],
     center: bool = True,
     ts_scaled: t.Optional[np.ndarray] = None,
 ) -> pd.core.window.rolling.Rolling:
@@ -37,11 +37,26 @@ def get_rolling_window(
     If ``center`` is True, then each rolling window is centered at the
     central instance rather than the initial instance.
     """
+    if window_size <= 0:
+        raise ValueError("'window_size' must be positive (got {})."
+                         "".format(window_size))
+
     if ts_scaled is None:
         ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
             ts.reshape(-1, 1)).ravel()
 
-    window_size = min(ts.size, window_size)
+    if 0 < window_size < 1:
+        window_size = max(1, int(np.ceil(window_size * ts.size)))
+
+    else:
+        window_size = min(ts.size, window_size)
+
+    if window_size % 2 == 0:
+        # Note: forcing 'window_size' be a off number in order to the
+        # reference value be exactly on the window center (and avoid
+        # possibility of bias towards the larger tail)
+        window_size -= 1
+
     return pd.Series(ts_scaled).rolling(window_size, center=center)
 
 
@@ -250,13 +265,12 @@ def calc_ioi_stats(ts: np.ndarray,
     return res
 
 
-def apply_on_ts_samples(
-        ts: np.ndarray,
-        func: t.Callable[[np.ndarray], float],
-        num_samples: int = 128,
-        sample_size_frac: float = 0.2,
-        random_state: t.Optional[int] = None,
-        **kwargs) -> np.ndarray:
+def apply_on_ts_samples(ts: np.ndarray,
+                        func: t.Callable[[np.ndarray], float],
+                        num_samples: int = 128,
+                        sample_size_frac: float = 0.2,
+                        random_state: t.Optional[int] = None,
+                        **kwargs) -> np.ndarray:
     """TODO."""
     if not 0 < sample_size_frac < 1:
         raise ValueError("'sample_size_frac' must be in (0, 1) "
@@ -266,13 +280,12 @@ def apply_on_ts_samples(
         np.random.seed(random_state)
 
     sample_size = int(np.ceil(ts.size * sample_size_frac))
-    start_inds = np.random.randint(ts.size - sample_size + 1,
-                                   size=num_samples)
+    start_inds = np.random.randint(ts.size - sample_size + 1, size=num_samples)
 
     res = np.array([
-        func(ts[s_ind:s_ind + sample_size], **kwargs)
-        for s_ind in start_inds
-    ], dtype=float)
+        func(ts[s_ind:s_ind + sample_size], **kwargs) for s_ind in start_inds
+    ],
+                   dtype=float)
 
     # Note: the original metafeatures are the mean value of
     # 'result'. However, to enable summarization,
