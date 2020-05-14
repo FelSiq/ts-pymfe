@@ -325,6 +325,7 @@ class MFETSGeneral:
                        ts: np.ndarray,
                        step_size: float = 0.1,
                        start_point: t.Optional[t.Union[int, float]] = None,
+                       relative_dist: bool = True,
                        walker_path: t.Optional[np.ndarray] = None,
                        ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
@@ -334,6 +335,9 @@ class MFETSGeneral:
             walker_path = cls._ts_walker(ts=ts_scaled,
                                          step_size=step_size,
                                          start_point=start_point)
+
+        if relative_dist:
+            return np.abs(walker_path - ts_scaled)
 
         return walker_path
 
