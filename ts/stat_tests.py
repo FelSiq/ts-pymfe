@@ -7,7 +7,6 @@ import statsmodels.stats.diagnostic
 
 import _period
 import _detrend
-import _embed
 import _get_data
 
 
