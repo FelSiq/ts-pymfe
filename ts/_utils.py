@@ -48,6 +48,21 @@ def process_window_size(ts: np.ndarray, window_size: t.Union[float,
     return window_size
 
 
+def standardize_ts(ts: np.ndarray,
+                   ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+    """Standardize (z-score normalization) time-series."""
+    if ts_scaled is None:
+        if not isinstance(ts, np.ndarray):
+            ts = np.asarray(ts, dtype=float)
+
+        if ts.ndim == 1:
+            ts = ts.reshape(-1, 1)
+
+        return sklearn.preprocessing.StandardScaler().fit_transform(ts).ravel()
+
+    return ts
+
+
 def get_rolling_window(
     ts: np.ndarray,
     window_size: t.Union[float, int],
@@ -59,11 +74,9 @@ def get_rolling_window(
     If ``center`` is True, then each rolling window is centered at the
     central instance rather than the initial instance.
     """
-    if ts_scaled is None:
-        ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
-            ts.reshape(-1, 1)).ravel()
+    ts_scaled = standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-    window_size = process_window_size(ts=ts, window_size=window_size)
+    window_size = process_window_size(ts=ts_scaled, window_size=window_size)
 
     return pd.Series(ts_scaled).rolling(window_size, center=center)
 
@@ -124,16 +137,6 @@ def sample_data(ts: np.ndarray,
         return ts[:threshold], X[:threshold, :]
 
     return ts[:threshold]
-
-
-def standardize_ts(ts: np.ndarray,
-                   ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-    """Standardize (z-score normalization) time-series."""
-    if ts_scaled is None:
-        return sklearn.preprocessing.StandardScaler().fit_transform(
-            ts.reshape(-1, 1)).ravel()
-
-    return ts
 
 
 def find_plateau_pt(arr: np.ndarray,
