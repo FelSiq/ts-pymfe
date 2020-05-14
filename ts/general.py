@@ -382,14 +382,14 @@ class MFETSGeneral:
             raise ValueError(
                 "'radius' must be positive (got {}).".format(radius))
 
-        ts = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         if lag is None:
             lag = autocorr.MFETSAutocorr.ft_first_acf_nonpos(
-                ts=ts, ts_acfs=ts_acfs, max_nlags=max_nlags, unbiased=unbiased)
+                ts=ts_scaled, ts_acfs=ts_acfs, max_nlags=max_nlags, unbiased=unbiased)
 
         # Note: embed is given by x(t) = [x(t-1), x(t-2), ..., x(t-m+1)]^T
-        embed = _embed.embed_ts(ts, dim=embed_dim, lag=lag)
+        embed = _embed.embed_ts(ts_scaled, dim=embed_dim, lag=lag)
 
         # Note: here we supposed that every embed forms a zero-centered
         # hypersphere using the regular hypersphere equation:
@@ -416,6 +416,10 @@ def _test() -> None:
     ts = ts.to_numpy()
     print("TS period:", ts_period)
 
+    res = MFETSGeneral.ft_embed_in_sphere(ts)
+    print(res)
+    exit(1)
+
     res = MFETSGeneral.ft_pred(ts)
     print(res)
     exit(1)
@@ -434,9 +438,6 @@ def _test() -> None:
 
     res = MFETSGeneral.ft_step_changes_trend(ts_trend)
     print(np.mean(res))
-
-    res = MFETSGeneral.ft_embed_in_sphere(ts)
-    print(res)
 
     res = MFETSGeneral.ft_length(ts)
     print(res)
