@@ -215,14 +215,14 @@ class MFETSInfoTheory:
     def ft_approx_entropy(cls,
                           ts: np.ndarray,
                           embed_dim: int = 2,
+                          embed_lag: int = 1,
                           threshold: float = 0.2,
                           metric: str = "chebyshev",
                           p: t.Union[int, float] = 2,
-                          lag: int = 1,
                           ts_scaled: t.Optional[np.ndarray] = None) -> float:
         """TODO."""
         def neigh_num(dim: int) -> int:
-            embed = _embed.embed_ts(ts_scaled, dim=dim, lag=lag)
+            embed = _embed.embed_ts(ts_scaled, dim=dim, lag=embed_lag)
             dist_mat = scipy.spatial.distance.cdist(embed,
                                                     embed,
                                                     metric=metric,
@@ -239,14 +239,14 @@ class MFETSInfoTheory:
     def ft_sample_entropy(cls,
                           ts: np.ndarray,
                           embed_dim: int = 2,
+                          embed_lag: int = 1,
                           threshold: float = 0.2,
                           metric: str = "chebyshev",
                           p: t.Union[int, float] = 2,
-                          lag: int = 1,
                           ts_scaled: t.Optional[np.ndarray] = None) -> float:
         """TODO."""
         def log_neigh_num(dim: int) -> int:
-            embed = _embed.embed_ts(ts_scaled, dim=dim, lag=lag)
+            embed = _embed.embed_ts(ts_scaled, dim=dim, lag=embed_lag)
             dist_mat = scipy.spatial.distance.pdist(embed, metric=metric, p=p)
             return np.log(np.sum(dist_mat < threshold))
 
@@ -261,19 +261,19 @@ class MFETSInfoTheory:
     def ft_control_entropy(cls,
                            ts: np.ndarray,
                            embed_dim: int = 2,
-                           factor: float = 0.2,
+                           threshold: float = 0.2,
                            metric: str = "chebyshev",
                            p: t.Union[int, float] = 2,
-                           lag: int = 1,
-                           ddof: int = 1) -> float:
+                           embed_lag: int = 1,
+                           ts_scaled: t.Optional[np.ndarray] = None) -> float:
         """TODO."""
         control_entropy = cls.ft_sample_entropy(ts=np.diff(ts),
                                                 embed_dim=embed_dim,
-                                                factor=factor,
+                                                embed_lag=embed_lag,
+                                                threshold=threshold,
                                                 metric=metric,
                                                 p=p,
-                                                lag=lag,
-                                                ddof=ddof)
+                                                ts_scaled=ts_scaled)
 
         return control_entropy
 
@@ -365,19 +365,18 @@ def _test() -> None:
     ts = ts.to_numpy()
     print("TS period:", ts_period)
 
-    res = MFETSInfoTheory.ft_sample_entropy(ts, lag=1)
+    res = MFETSInfoTheory.ft_sample_entropy(ts)
     print(res)
 
-    res = MFETSInfoTheory.ft_approx_entropy(ts, lag=1)
+    res = MFETSInfoTheory.ft_approx_entropy(ts)
+    print(res)
+
+    res = MFETSInfoTheory.ft_control_entropy(ts)
+    print(res)
+
+    res = MFETSInfoTheory.ft_surprise(ts, random_state=16, method="1-transition")
     print(res)
     exit(1)
-
-    res = MFETSInfoTheory.ft_surprise(ts, random_state=16)
-    print(res)
-    exit(1)
-
-    res = MFETSInfoTheory.ft_control_entropy(ts, lag=1)
-    print(res)
 
     res = MFETSInfoTheory.ft_ami_curvature(ts, random_state=16)
     print(res)
