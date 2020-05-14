@@ -6,7 +6,7 @@ import numpy as np
 def embed_ts(ts: np.ndarray,
              dim: int,
              lag: int = 1,
-             include_val: bool = False) -> np.ndarray:
+             include_val: bool = True) -> np.ndarray:
     """Embbed a time-series in dimension ``dim``.
 
     Arguments
@@ -34,10 +34,12 @@ def embed_ts(ts: np.ndarray,
     if lag <= 0:
         raise ValueError("'lag' must be positive (got {}).".format(lag))
 
-    if dim * lag >= ts.size:
-        raise ValueError("'dim * lag' ({}) must be smaller than "
-                         "the time-series length ({}).".format(
-                             dim * lag, ts.size))
+    if dim * lag > ts.size:
+        raise ValueError("'dim * lag' ({}) can't be larger than the "
+                         "time-series length ({}).".format(dim * lag, ts.size))
+
+    if include_val:
+        dim -= 1
 
     ts_emb = np.zeros((ts.size - dim * lag, dim + int(include_val)),
                       dtype=ts.dtype)
