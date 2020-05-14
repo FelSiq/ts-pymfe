@@ -75,10 +75,39 @@ class MFETSLocalStats:
         return rolling_stat.values
 
     @classmethod
+    def _moving_stat_shift(cls,
+                           ts: np.ndarray,
+                           stat_func: t.Callable[..., np.ndarray],
+                           window_size: t.Union[int, float] = 0.1,
+                           diff_order: int = 1,
+                           diff_lag: int = 1,
+                           abs_value: bool = True,
+                           remove_nan: bool = True,
+                           ts_scaled: t.Optional[np.ndarray] = None,
+                           ts_rol_win: t.Optional[
+                               pd.core.window.rolling.Rolling] = None,
+                           **kwargs) -> np.ndarray:
+        """TODO."""
+        rolling_stat = stat_func(ts=ts,
+                                 window_size=window_size,
+                                 remove_nan=remove_nan,
+                                 ts_scaled=ts_scaled,
+                                 ts_rol_win=ts_rol_win,
+                                 **kwargs)
+
+        rolling_stat_shifts = cls._rol_stat_postprocess(rolling_stat,
+                                                        remove_nan=False,
+                                                        diff_order=diff_order,
+                                                        diff_lag=diff_lag,
+                                                        abs_value=abs_value)
+
+        return rolling_stat_shifts
+
+    @classmethod
     def ft_moving_avg(
         cls,
         ts: np.ndarray,
-        window_size: int,
+        window_size: t.Union[int, float] = 0.1,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
@@ -97,7 +126,7 @@ class MFETSLocalStats:
     def ft_moving_avg_shift(
         cls,
         ts: np.ndarray,
-        window_size: int,
+        window_size: t.Union[int, float] = 0.1,
         diff_order: int = 1,
         diff_lag: int = 1,
         abs_value: bool = True,
@@ -106,25 +135,24 @@ class MFETSLocalStats:
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
     ) -> np.ndarray:
         """TODO."""
-        rolling_stat = cls.ft_moving_avg(ts=ts,
-                                         window_size=window_size,
-                                         remove_nan=remove_nan,
-                                         ts_scaled=ts_scaled,
-                                         ts_rol_win=ts_rol_win)
+        rolling_stat_shift = cls._moving_stat_shift(
+            ts=ts,
+            stat_func=cls.ft_moving_avg,
+            window_size=window_size,
+            diff_order=diff_order,
+            diff_lag=diff_lag,
+            abs_value=abs_value,
+            remove_nan=remove_nan,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win)
 
-        rolling_stat_shifts = cls._rol_stat_postprocess(rolling_stat,
-                                                        remove_nan=False,
-                                                        diff_order=diff_order,
-                                                        diff_lag=diff_lag,
-                                                        abs_value=abs_value)
-
-        return rolling_stat_shifts
+        return rolling_stat_shift
 
     @classmethod
     def ft_moving_var(
         cls,
         ts: np.ndarray,
-        window_size: int,
+        window_size: t.Union[int, float] = 0.1,
         ddof: int = 1,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
@@ -141,10 +169,38 @@ class MFETSLocalStats:
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
     @classmethod
+    def ft_moving_var_shift(
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        ddof: int = 1,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        rolling_stat_shift = cls._moving_stat_shift(
+            ts=ts,
+            stat_func=cls.ft_moving_var,
+            window_size=window_size,
+            diff_order=diff_order,
+            diff_lag=diff_lag,
+            abs_value=abs_value,
+            remove_nan=remove_nan,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+            ddof=ddof)
+
+        return rolling_stat_shift
+
+    @classmethod
     def ft_moving_sd(
         cls,
         ts: np.ndarray,
-        window_size: int,
+        window_size: t.Union[int, float] = 0.1,
         ddof: int = 1,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
@@ -161,12 +217,39 @@ class MFETSLocalStats:
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
     @classmethod
+    def ft_moving_sd_shift(
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        ddof: int = 1,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        rolling_stat_shift = cls._moving_stat_shift(ts=ts,
+                                                    stat_func=cls.ft_moving_sd,
+                                                    window_size=window_size,
+                                                    diff_order=diff_order,
+                                                    diff_lag=diff_lag,
+                                                    abs_value=abs_value,
+                                                    remove_nan=remove_nan,
+                                                    ts_scaled=ts_scaled,
+                                                    ts_rol_win=ts_rol_win,
+                                                    ddof=ddof)
+
+        return rolling_stat_shift
+
+    @classmethod
     def ft_moving_skewness(
         cls,
         ts: np.ndarray,
-        window_size: int,
+        window_size: t.Union[int, float] = 0.1,
         method: int = 3,
-        bias: bool = True,
+        unbiased: bool = False,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
@@ -179,17 +262,47 @@ class MFETSLocalStats:
 
         rolling_stat = ts_rol_win.apply(
             pymfe.statistical.MFEStatistical.ft_skewness,
-            kwargs=dict(method=method, bias=bias))
+            kwargs=dict(method=method, bias=~unbiased))
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
+
+    @classmethod
+    def ft_moving_skewness_shift(
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        method: int = 3,
+        unbiased: bool = False,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        rolling_stat_shift = cls._moving_stat_shift(
+            ts=ts,
+            stat_func=cls.ft_moving_skewness,
+            window_size=window_size,
+            diff_order=diff_order,
+            diff_lag=diff_lag,
+            abs_value=abs_value,
+            remove_nan=remove_nan,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+            method=method,
+            unbiased=unbiased)
+
+        return rolling_stat_shift
 
     @classmethod
     def ft_moving_kurtosis(
         cls,
         ts: np.ndarray,
-        window_size: int,
+        window_size: t.Union[int, float] = 0.1,
         method: int = 3,
-        bias: bool = True,
+        unbiased: bool = False,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
@@ -202,15 +315,45 @@ class MFETSLocalStats:
 
         rolling_stat = ts_rol_win.apply(
             pymfe.statistical.MFEStatistical.ft_kurtosis,
-            kwargs=dict(method=method, bias=bias))
+            kwargs=dict(method=method, bias=~unbiased))
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
+
+    @classmethod
+    def ft_moving_kurtosis_shift(
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        method: int = 3,
+        unbiased: bool = False,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        rolling_stat_shift = cls._moving_stat_shift(
+            ts=ts,
+            stat_func=cls.ft_moving_kurtosis,
+            window_size=window_size,
+            diff_order=diff_order,
+            diff_lag=diff_lag,
+            abs_value=abs_value,
+            remove_nan=remove_nan,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+            method=method,
+            unbiased=unbiased)
+
+        return rolling_stat_shift
 
     @classmethod
     def ft_moving_acf(
         cls,
         ts: np.ndarray,
-        window_size: int,
+        window_size: t.Union[int, float] = 0.1,
         unbiased: bool = True,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
@@ -229,10 +372,38 @@ class MFETSLocalStats:
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
     @classmethod
+    def ft_moving_acf_shift(
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        unbiased: bool = True,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        rolling_stat_shift = cls._moving_stat_shift(
+            ts=ts,
+            stat_func=cls.ft_moving_acf,
+            window_size=window_size,
+            diff_order=diff_order,
+            diff_lag=diff_lag,
+            abs_value=abs_value,
+            remove_nan=remove_nan,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+            unbiased=unbiased)
+
+        return rolling_stat_shift
+
+    @classmethod
     def ft_moving_gmean(
         cls,
         ts: np.ndarray,
-        window_size: int,
+        window_size: t.Union[int, float] = 0.1,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
@@ -248,16 +419,45 @@ class MFETSLocalStats:
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
     @classmethod
+    def ft_moving_gmean_shift(
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        rolling_stat_shift = cls._moving_stat_shift(
+            ts=ts,
+            stat_func=cls.ft_moving_gmean,
+            window_size=window_size,
+            diff_order=diff_order,
+            diff_lag=diff_lag,
+            abs_value=abs_value,
+            remove_nan=remove_nan,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win)
+
+        return rolling_stat_shift
+
+    @classmethod
     def ft_moving_kldiv(
         cls,
         ts: np.ndarray,
-        window_size: int,
+        window_size: t.Union[int, float] = 0.1,
         remove_inf: bool = True,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """TODO."""
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        window_size = _utils.process_window_size(ts=ts_scaled,
+                                                 window_size=window_size)
 
         rolling_stat = np.zeros(ts.size - window_size, dtype=float)
 
@@ -276,6 +476,34 @@ class MFETSLocalStats:
             rolling_stat = rolling_stat[np.isfinite(rolling_stat)]
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
+
+    @classmethod
+    def ft_moving_kldiv_shift(
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_inf: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        rolling_stat = cls.ft_moving_kldiv(ts=ts,
+                                           window_size=window_size,
+                                           remove_nan=remove_nan,
+                                           remove_inf=remove_inf,
+                                           ts_scaled=ts_scaled)
+
+        rolling_stat_shifts = cls._rol_stat_postprocess(rolling_stat,
+                                                        remove_nan=False,
+                                                        diff_order=diff_order,
+                                                        diff_lag=diff_lag,
+                                                        abs_value=abs_value)
+
+        return rolling_stat_shifts
 
     @classmethod
     def ft_lumpiness(cls,
@@ -356,10 +584,31 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts)
     ts = ts.to_numpy()
 
-    res = MFETSLocalStats.ft_moving_avg(ts, ts_period)
+    res = MFETSLocalStats.ft_moving_avg(ts)
     print(res)
 
-    res = MFETSLocalStats.ft_moving_avg_shift(ts, ts_period)
+    res = MFETSLocalStats.ft_moving_avg_shift(ts)
+    print(res)
+
+    res = MFETSLocalStats.ft_moving_var_shift(ts)
+    print(res)
+
+    res = MFETSLocalStats.ft_moving_skewness_shift(ts)
+    print("skewness diff", np.nanmax(res))
+
+    res = MFETSLocalStats.ft_moving_kurtosis_shift(ts)
+    print("kurtosis diff", np.nanmax(res))
+
+    res = MFETSLocalStats.ft_moving_gmean_shift(ts)
+    print("gmean diff", res)
+
+    res = MFETSLocalStats.ft_moving_sd_shift(ts)
+    print("sd shift", res)
+
+    res = MFETSLocalStats.ft_moving_acf_shift(ts)
+    print("acf diff", res)
+
+    res = MFETSLocalStats.ft_moving_kldiv_shift(ts)
     print(res)
     exit(1)
 
@@ -372,27 +621,26 @@ def _test() -> None:
     res = MFETSLocalStats.ft_stability(ts)
     print("stability", np.var(res))
 
-    res = MFETSLocalStats.ft_moving_var(ts, ts_period)
+    res = MFETSLocalStats.ft_moving_var(ts)
     print(np.nanmax(res))
 
-    res = MFETSLocalStats.ft_moving_skewness(ts, ts_period)
+    res = MFETSLocalStats.ft_moving_skewness(ts)
     print("skewness diff", np.nanmax(res))
 
-    res = MFETSLocalStats.ft_moving_kurtosis(ts, ts_period)
+    res = MFETSLocalStats.ft_moving_kurtosis(ts)
     print("kurtosis diff", np.nanmax(res))
 
-    res = MFETSLocalStats.ft_moving_gmean(ts, ts_period)
+    res = MFETSLocalStats.ft_moving_gmean(ts)
     print("gmean diff", res)
 
-    res = MFETSLocalStats.ft_moving_sd(ts, ts_period)
+    res = MFETSLocalStats.ft_moving_sd(ts)
     print(np.nanmax(res))
 
-    res = MFETSLocalStats.ft_moving_acf(ts, ts_period)
+    res = MFETSLocalStats.ft_moving_acf(ts)
     print("acf diff", res)
 
-    res = MFETSLocalStats.ft_moving_kldiv(ts, ts_period)
+    res = MFETSLocalStats.ft_moving_kldiv(ts)
     print(res)
-    print(np.nanmax(res))
 
     res = MFETSLocalStats.ft_local_extrema(ts)
     print("LocalStats extrema", res)
