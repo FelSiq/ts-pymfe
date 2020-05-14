@@ -246,6 +246,28 @@ class MFETSLocalStats:
         return rolling_stat_shift
 
     @classmethod
+    def ft_rand_samp_std(
+            cls,
+            ts: np.ndarray,
+            num_samples: int = 64,
+            sample_size_frac: float = 0.1,
+            ddof: int = 1,
+            random_state: t.Optional[int] = None,
+            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        sample_std = _utils.apply_on_ts_samples(
+            ts=ts_scaled,
+            func=np.std,
+            num_samples=num_samples,
+            sample_size_frac=sample_size_frac,
+            random_state=random_state,
+            ddof=ddof)
+
+        return sample_std
+
+    @classmethod
     def ft_moving_skewness(
         cls,
         ts: np.ndarray,
@@ -639,6 +661,10 @@ def _test() -> None:
     ts_period = _period.ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts)
     ts = ts.to_numpy()
+
+    res = MFETSLocalStats.ft_rand_samp_std(ts)
+    print(res)
+    exit(1)
 
     res = MFETSLocalStats.ft_moving_approx_ent(ts)
     print(res)
