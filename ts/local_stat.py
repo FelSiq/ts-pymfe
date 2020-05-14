@@ -69,6 +69,9 @@ class MFETSLocalStats:
         if abs_value:
             rolling_stat = np.abs(rolling_stat)
 
+        if isinstance(rolling_stat, np.ndarray):
+            return rolling_stat
+
         return rolling_stat.values
 
     @classmethod
@@ -89,6 +92,33 @@ class MFETSLocalStats:
         rolling_stat = ts_rol_win.mean()
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
+
+    @classmethod
+    def ft_moving_avg_shift(
+        cls,
+        ts: np.ndarray,
+        window_size: int,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        rolling_stat = cls.ft_moving_avg(ts=ts,
+                                         window_size=window_size,
+                                         remove_nan=remove_nan,
+                                         ts_scaled=ts_scaled,
+                                         ts_rol_win=ts_rol_win)
+
+        rolling_stat_shifts = cls._rol_stat_postprocess(rolling_stat,
+                                                        remove_nan=False,
+                                                        diff_order=diff_order,
+                                                        diff_lag=diff_lag,
+                                                        abs_value=abs_value)
+
+        return rolling_stat_shifts
 
     @classmethod
     def ft_moving_var(
@@ -219,12 +249,12 @@ class MFETSLocalStats:
 
     @classmethod
     def ft_moving_kldiv(
-            cls,
-            ts: np.ndarray,
-            window_size: int,
-            remove_inf: bool = True,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: int,
+        remove_inf: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """TODO."""
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
@@ -326,6 +356,13 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts)
     ts = ts.to_numpy()
 
+    res = MFETSLocalStats.ft_moving_avg(ts, ts_period)
+    print(res)
+
+    res = MFETSLocalStats.ft_moving_avg_shift(ts, ts_period)
+    print(res)
+    exit(1)
+
     res = MFETSLocalStats.ft_spikiness(ts_residuals)
     print(np.var(res))
 
@@ -334,9 +371,6 @@ def _test() -> None:
 
     res = MFETSLocalStats.ft_stability(ts)
     print("stability", np.var(res))
-
-    res = MFETSLocalStats.ft_moving_avg(ts, ts_period)
-    print(np.nanmax(res))
 
     res = MFETSLocalStats.ft_moving_var(ts, ts_period)
     print(np.nanmax(res))
