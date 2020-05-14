@@ -203,6 +203,23 @@ class MFETSStatTests:
 
         return res.stat
 
+    @classmethod
+    def ft_test_lilliefors(cls,
+                           ts: np.ndarray,
+                           dist: str = "norm",
+                           return_pval: bool = False) -> float:
+        """Lilliefors test.
+
+        TODO.
+        """
+        stat, pvalue = statsmodels.stats.diagnostic.lilliefors(
+            ts, dist=dist, pvalmethod="approx")
+
+        if return_pval:
+            return pvalue
+
+        return stat
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -210,6 +227,10 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy().astype(float)
+
+    res = MFETSStatTests.ft_test_lilliefors(ts_residuals)
+    print(res)
+    exit(1)
 
     res = MFETSStatTests.ft_test_lb(ts_residuals)
     print(res)

@@ -5,6 +5,7 @@ import scipy.stats
 import numpy as np
 import pymfe.statistical
 
+import stat_tests
 import autocorr
 import _period
 import _detrend
@@ -506,6 +507,29 @@ class MFETSLocalStats:
         return rolling_stat_shifts
 
     @classmethod
+    def ft_moving_lilliefors(
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        dist: str = "norm",
+        return_pval: bool = False,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        if ts_rol_win is None or (window_size != ts_rol_win.window):
+            ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                                   window_size=window_size,
+                                                   ts_scaled=ts_scaled)
+
+        rolling_stat = ts_rol_win.apply(
+            stat_tests.MFETSStatTests.ft_test_lilliefors,
+            kwargs=dict(dist=dist, return_pval=return_pval))
+
+        return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
+
+    @classmethod
     def ft_lumpiness(cls,
                      ts: np.ndarray,
                      num_tiles: int = 16,
@@ -583,6 +607,10 @@ def _test() -> None:
     ts_period = _period.ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts)
     ts = ts.to_numpy()
+
+    res = MFETSLocalStats.ft_moving_lilliefors(ts)
+    print(res)
+    exit(1)
 
     res = MFETSLocalStats.ft_moving_avg(ts)
     print(res)
