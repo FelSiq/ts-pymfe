@@ -67,6 +67,7 @@ def get_rolling_window(
     ts: np.ndarray,
     window_size: t.Union[float, int],
     center: bool = True,
+    scale: bool = True,
     ts_scaled: t.Optional[np.ndarray] = None,
 ) -> pd.core.window.rolling.Rolling:
     """Apply a function on time-series rolling (overlapping) windows.
@@ -74,11 +75,12 @@ def get_rolling_window(
     If ``center`` is True, then each rolling window is centered at the
     central instance rather than the initial instance.
     """
-    ts_scaled = standardize_ts(ts=ts, ts_scaled=ts_scaled)
+    if scale:
+        ts = standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-    window_size = process_window_size(ts=ts_scaled, window_size=window_size)
+    window_size = process_window_size(ts=ts, window_size=window_size)
 
-    return pd.Series(ts_scaled).rolling(window_size, center=center)
+    return pd.Series(ts).rolling(window_size, center=center)
 
 
 def smape(arr_a: np.ndarray,
