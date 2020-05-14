@@ -189,16 +189,19 @@ class MFETSGeneral:
 
     @classmethod
     def ft_pred(cls,
-                ts_embedded: np.ndarray,
+                ts: np.ndarray,
+                embed_dim: int = 2,
                 param_1: t.Union[int, float] = 3,
                 param_2: t.Union[int, float] = 4,
                 metric: str = "minkowski",
                 p: t.Union[int, float] = 2,
-                ddof: int = 1) -> float:
+                ddof: int = 1,
+                ts_scaled: t.Optional[np.ndarray] = None) -> float:
         """https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4736930/"""
-        dist_mat = scipy.spatial.distance.pdist(ts_embedded,
-                                                metric=metric,
-                                                p=p)
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+        ts_embed = _embed.embed_ts(ts_scaled, dim=embed_dim)
+
+        dist_mat = scipy.spatial.distance.pdist(ts_embed, metric=metric, p=p)
 
         dist_mean = np.mean(dist_mat)
         dist_std = np.std(dist_mat, ddof=ddof)
@@ -217,10 +220,9 @@ class MFETSGeneral:
 
             for neigh_inds in neighbors:
                 if np.sum(neigh_inds) > ddof:
-                    var_sets[i] += np.var(ts_embedded[neigh_inds, :],
-                                          ddof=ddof)
+                    var_sets[i] += np.var(ts_embed[neigh_inds, :], ddof=ddof)
 
-        var_sets /= ts_embedded.shape[0] * np.var(ts_embedded, ddof=ddof)
+        var_sets /= ts_embed.shape[0]
 
         return 1.0 / (1.0 + var_sets)
 
@@ -406,7 +408,7 @@ class MFETSGeneral:
 
 def _test() -> None:
     import matplotlib.pyplot as plt
-    ts = _get_data.load_data(2)
+    ts = _get_data.load_data(3)
 
     ts_period = _period.ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
@@ -414,9 +416,12 @@ def _test() -> None:
     ts = ts.to_numpy()
     print("TS period:", ts_period)
 
-    res = MFETSGeneral.ft_moving_threshold(ts, relative=True)
+    res = MFETSGeneral.ft_pred(ts)
     print(res)
     exit(1)
+
+    res = MFETSGeneral.ft_moving_threshold(ts, relative=True)
+    print(res)
 
     res = MFETSGeneral.ft_turning_points(ts)
     print(np.mean(res))
@@ -430,16 +435,10 @@ def _test() -> None:
     res = MFETSGeneral.ft_step_changes_trend(ts_trend)
     print(np.mean(res))
 
-    exit(1)
-
     res = MFETSGeneral.ft_embed_in_sphere(ts)
     print(res)
 
     res = MFETSGeneral.ft_length(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_pred(
-        _embed.embed_ts(ts, dim=int(np.ceil(np.log10(ts.size)))))
     print(res)
 
     res = MFETSGeneral.ft_frac_cp(ts)
