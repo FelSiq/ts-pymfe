@@ -28,16 +28,16 @@ class MFETSLandmarking:
     """TODO."""
     @classmethod
     def _standard_pipeline_sklearn(
-        cls,
-        y: np.ndarray,
-        model: t.Any,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        X: t.Optional[np.ndarray] = None,
-        args_fit: t.Optional[t.Dict[str, t.Any]] = None,
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        scale_range: t.Optional[t.Tuple[int, int]] = (0, 1),
+            cls,
+            y: np.ndarray,
+            model: t.Any,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            X: t.Optional[np.ndarray] = None,
+            args_fit: t.Optional[t.Dict[str, t.Any]] = None,
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            scale_range: t.Optional[t.Tuple[int, int]] = (0, 1),
     ) -> np.ndarray:
         """TODO."""
         if tskf is None:
@@ -82,16 +82,16 @@ class MFETSLandmarking:
 
     @classmethod
     def _standard_pipeline_statsmodels(
-        cls,
-        ts: np.ndarray,
-        model_callable: t.Any,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        args_inst: t.Optional[t.Dict[str, t.Any]] = None,
-        args_fit: t.Optional[t.Dict[str, t.Any]] = None,
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        scale_range: t.Optional[t.Tuple[int, int]] = (0, 1),
+            cls,
+            ts: np.ndarray,
+            model_callable: t.Any,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            args_inst: t.Optional[t.Dict[str, t.Any]] = None,
+            args_fit: t.Optional[t.Dict[str, t.Any]] = None,
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            scale_range: t.Optional[t.Tuple[int, int]] = (0, 1),
     ) -> np.ndarray:
         """TODO."""
         if args_inst is None:
@@ -184,12 +184,12 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_mean(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model_callable = statsmodels.tsa.arima_model.ARIMA
@@ -215,13 +215,13 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_loc_mean(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            loc_prop: float = 0.25,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        loc_prop: float = 0.25,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model = _models.TSLocalMean(train_prop=loc_prop)
@@ -237,13 +237,13 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_loc_median(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            loc_prop: float = 0.25,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        loc_prop: float = 0.25,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model = _models.TSLocalMedian(train_prop=loc_prop)
@@ -259,14 +259,14 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_gaussian(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            n_components: int = 2,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            random_state: t.Optional[int] = None,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        n_components: int = 2,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        random_state: t.Optional[int] = None,
     ) -> np.ndarray:
         """TODO."""
         model = sklearn.mixture.GaussianMixture(n_components=n_components,
@@ -283,12 +283,12 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_linear(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model = sklearn.linear_model.LinearRegression()
@@ -304,21 +304,21 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_linear_embed_lag_1(
-            cls,
-            ts: np.ndarray,
-            ts_period: int,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        ts_period: int,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model = sklearn.linear_model.LinearRegression()
 
         X = _embed.embed_ts(ts=ts, dim=ts_period, lag=1)
 
-        res = cls._standard_pipeline_sklearn(y=ts[ts_period:],
-                                             X=X,
+        res = cls._standard_pipeline_sklearn(y=X[:, 0],
+                                             X=X[:, 1:],
                                              model=model,
                                              score=score,
                                              tskf=tskf,
@@ -329,21 +329,21 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_linear_embed_lag_2(
-            cls,
-            ts: np.ndarray,
-            ts_period: int,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        ts_period: int,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model = sklearn.linear_model.LinearRegression()
 
         X = _embed.embed_ts(ts=ts, dim=ts_period, lag=2)
 
-        res = cls._standard_pipeline_sklearn(y=ts[ts_period:],
-                                             X=X,
+        res = cls._standard_pipeline_sklearn(y=X[:, 0],
+                                             X=X[:, 1:],
                                              model=model,
                                              score=score,
                                              tskf=tskf,
@@ -354,21 +354,21 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_linear_embed_lag_m(
-            cls,
-            ts: np.ndarray,
-            ts_period: int,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        ts_period: int,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model = sklearn.linear_model.LinearRegression()
 
         X = _embed.embed_ts(ts=ts, dim=3, lag=ts_period)
 
-        res = cls._standard_pipeline_sklearn(y=ts[ts_period:],
-                                             X=X,
+        res = cls._standard_pipeline_sklearn(y=X[:, 0],
+                                             X=X[:, 1:],
                                              model=model,
                                              score=score,
                                              tskf=tskf,
@@ -379,13 +379,13 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_linear_seasonal(
-            cls,
-            ts: np.ndarray,
-            ts_period: int,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        ts_period: int,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model = sklearn.linear_model.LinearRegression()
@@ -409,12 +409,12 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_naive(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model = _models.TSNaive()
@@ -430,12 +430,12 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_naive_drift(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model = _models.TSNaiveDrift()
@@ -451,13 +451,13 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_naive_seasonal(
-            cls,
-            ts: np.ndarray,
-            ts_period: int,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        ts_period: int,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model = _models.TSNaiveSeasonal(ts_period=ts_period)
@@ -473,14 +473,14 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_arima_100_c(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """TODO."""
         model_callable = statsmodels.tsa.arima_model.ARIMA
@@ -507,14 +507,14 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_arima_010_c(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """TODO."""
         model_callable = statsmodels.tsa.arima_model.ARIMA
@@ -541,14 +541,14 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_arima_110_c(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """TODO."""
         model_callable = statsmodels.tsa.arima_model.ARIMA
@@ -575,14 +575,14 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_arima_011_nc(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """TODO."""
         model_callable = statsmodels.tsa.arima_model.ARIMA
@@ -609,14 +609,14 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_arima_011_c(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """TODO."""
         model_callable = statsmodels.tsa.arima_model.ARIMA
@@ -643,14 +643,14 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_arima_022_nc(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """TODO."""
         model_callable = statsmodels.tsa.arima_model.ARIMA
@@ -677,14 +677,14 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_arima_112_c(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """TODO."""
         model_callable = statsmodels.tsa.arima_model.ARIMA
@@ -711,12 +711,12 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_ses(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model_callable = statsmodels.tsa.holtwinters.SimpleExpSmoothing
@@ -732,13 +732,13 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_hwes_ada(
-            cls,
-            ts: np.ndarray,
-            ts_period: int,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        ts_period: int,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model_callable = statsmodels.tsa.holtwinters.ExponentialSmoothing
@@ -750,10 +750,15 @@ class MFETSLandmarking:
             "damped": True,
         }
 
+        args_fit = {
+            "use_brute": False,
+        }
+
         res = cls._standard_pipeline_statsmodels(ts=ts,
                                                  model_callable=model_callable,
                                                  score=score,
                                                  args_inst=args_inst,
+                                                 args_fit=args_fit,
                                                  tskf=tskf,
                                                  num_cv_folds=num_cv_folds,
                                                  lm_sample_frac=lm_sample_frac)
@@ -762,13 +767,13 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_hwes_adm(
-            cls,
-            ts: np.ndarray,
-            ts_period: int,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        ts_period: int,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """TODO."""
         model_callable = statsmodels.tsa.holtwinters.ExponentialSmoothing
@@ -780,6 +785,10 @@ class MFETSLandmarking:
             "damped": True,
         }
 
+        args_fit = {
+            "use_brute": False,
+        }
+
         # Note: scaling time-series in [1, 2] interval rather than
         # [0, 1] because for Multiplicative Exponential Models,
         # the time-series values must be strictly positive.
@@ -787,6 +796,7 @@ class MFETSLandmarking:
                                                  model_callable=model_callable,
                                                  score=score,
                                                  args_inst=args_inst,
+                                                 args_fit=args_fit,
                                                  tskf=tskf,
                                                  num_cv_folds=num_cv_folds,
                                                  lm_sample_frac=lm_sample_frac,
@@ -796,13 +806,13 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_mean_first_acf_nonpos(
-            cls,
-            ts: np.ndarray,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            unbiased: bool = True,
-            max_nlags: t.Optional[int] = None,
+        cls,
+        ts: np.ndarray,
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        unbiased: bool = True,
+        max_nlags: t.Optional[int] = None,
     ) -> np.ndarray:
         """TODO."""
         acf_first_nonpos_mean = cls._model_first_acf_nonpos(
@@ -818,13 +828,13 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_linear_first_acf_nonpos(
-            cls,
-            ts: np.ndarray,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            unbiased: bool = True,
-            max_nlags: t.Optional[int] = None,
+        cls,
+        ts: np.ndarray,
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        unbiased: bool = True,
+        max_nlags: t.Optional[int] = None,
     ) -> np.ndarray:
         """TODO."""
         acf_first_nonpos_linear = cls._model_first_acf_nonpos(
@@ -857,15 +867,12 @@ def _test() -> None:
 
     res = MFETSLandmarking.ft_model_loc_median(ts, score=score)
     print(4, res)
-    exit(1)
 
     res = MFETSLandmarking.ft_model_loc_mean(ts, score=score)
     print(4, res)
-    exit(1)
 
     res = MFETSLandmarking.ft_model_gaussian(ts, score=score, random_state=16)
     print(4, res)
-    exit(1)
 
     res = MFETSLandmarking.ft_model_hwes_ada(ts, ts_period, score=score)
     print(4, res)
