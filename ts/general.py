@@ -302,28 +302,63 @@ class MFETSGeneral:
         return ind_trough
 
     @classmethod
-    def ft_walker_cross_frac(cls,
-                             ts: np.ndarray,
-                             step_size: float = 0.1,
-                             start_point: t.Optional[t.Union[int,
-                                                             float]] = None,
-                             normalize: bool = True) -> t.Union[int, float]:
+    def _ts_walker(
+            cls,
+            ts: np.ndarray,
+            step_size: float = 0.1,
+            start_point: t.Optional[t.Union[int, float]] = None) -> np.ndarray:
         """TODO."""
         if start_point is None:
             start_point = np.mean(ts)
 
-        walker_pos = np.zeros(ts.size, dtype=float)
-        walker_pos[0] = start_point
+        walker_path = np.zeros(ts.size, dtype=float)
+        walker_path[0] = start_point
 
-        for i in np.arange(2, ts.size):
-            diff = ts[i - 1] - walker_pos[i - 1]
-            walker_pos[i] = walker_pos[i - 1] + step_size * diff
+        for i in np.arange(1, ts.size):
+            diff = ts[i - 1] - walker_path[i - 1]
+            walker_path[i] = walker_path[i - 1] + step_size * diff
 
-        cross_num = np.sum((walker_pos[:-1] - ts[:-1]) *
-                           (walker_pos[1:] - ts[1:]) < 0)
+        return walker_path
+
+    @classmethod
+    def ft_walker_path(cls,
+                       ts: np.ndarray,
+                       step_size: float = 0.1,
+                       start_point: t.Optional[t.Union[int, float]] = None,
+                       walker_path: t.Optional[np.ndarray] = None,
+                       ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        if walker_path is None:
+            walker_path = cls._ts_walker(ts=ts_scaled,
+                                         step_size=step_size,
+                                         start_point=start_point)
+
+        return walker_path
+
+    @classmethod
+    def ft_walker_cross_frac(
+            cls,
+            ts: np.ndarray,
+            step_size: float = 0.1,
+            start_point: t.Optional[t.Union[int, float]] = None,
+            normalize: bool = True,
+            walker_path: t.Optional[np.ndarray] = None,
+            ts_scaled: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+        """TODO."""
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        if walker_path is None:
+            walker_path = cls._ts_walker(ts=ts_scaled,
+                                         step_size=step_size,
+                                         start_point=start_point)
+
+        cross_num = np.sum((walker_path[:-1] - ts_scaled[:-1]) *
+                           (walker_path[1:] - ts_scaled[1:]) < 0)
 
         if normalize:
-            cross_num /= walker_pos.size - 1
+            cross_num /= walker_path.size - 1
 
         return cross_num
 
@@ -386,7 +421,10 @@ class MFETSGeneral:
 
         if lag is None:
             lag = autocorr.MFETSAutocorr.ft_first_acf_nonpos(
-                ts=ts_scaled, ts_acfs=ts_acfs, max_nlags=max_nlags, unbiased=unbiased)
+                ts=ts_scaled,
+                ts_acfs=ts_acfs,
+                max_nlags=max_nlags,
+                unbiased=unbiased)
 
         # Note: embed is given by x(t) = [x(t-1), x(t-2), ..., x(t-m+1)]^T
         embed = _embed.embed_ts(ts_scaled, dim=embed_dim, lag=lag)
@@ -415,6 +453,13 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
     print("TS period:", ts_period)
+
+    res = MFETSGeneral.ft_walker_cross_frac(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_walker_path(ts)
+    print(res)
+    exit(1)
 
     res = MFETSGeneral.ft_embed_in_sphere(ts)
     print(res)
@@ -446,9 +491,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_fs_len(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_walker_cross_frac(ts)
     print(res)
 
     res = MFETSGeneral.ft_binmean(ts)
