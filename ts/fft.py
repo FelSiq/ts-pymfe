@@ -11,19 +11,22 @@ import _get_data
 
 class MFETSFreqDomain:
     @classmethod
-    def _calc_ps_residuals(cls, ts_residuals: np.ndarray) -> np.ndarray:
+    def _calc_ps_residuals(cls,
+                           ts_residuals: np.ndarray,
+                           window: str = "hamming") -> np.ndarray:
         """Calculate the positive side power spectrum of a fourier signal."""
         _, ps = scipy.signal.periodogram(ts_residuals,
                                          detrend=None,
+                                         window=window,
                                          scaling="spectrum",
                                          return_onesided=True)
         return ps
 
     @classmethod
     def ft_ps_residuals(
-            cls,
-            ts_residuals: np.ndarray,
-            ps_residuals: t.Optional[np.ndarray] = None,
+        cls,
+        ts_residuals: np.ndarray,
+        ps_residuals: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Power spectrum frequency of the given time-series residuals.
         
@@ -51,10 +54,10 @@ class MFETSFreqDomain:
 
     @classmethod
     def ft_ps_freqs(
-            cls,
-            ts_residuals: np.ndarray,
-            freq_num: t.Union[int, float] = 0.05,
-            ps_residuals: t.Optional[np.ndarray] = None,
+        cls,
+        ts_residuals: np.ndarray,
+        freq_num: t.Union[int, float] = 0.05,
+        ps_residuals: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Largest power spectrum frequencies of the given time-series.
         
@@ -93,10 +96,10 @@ class MFETSFreqDomain:
 
     @classmethod
     def ft_ps_peaks(
-            cls,
-            ts_residuals: np.ndarray,
-            factor: float = 0.6,
-            ps_residuals: t.Optional[np.ndarray] = None,
+        cls,
+        ts_residuals: np.ndarray,
+        factor: float = 0.6,
+        ps_residuals: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Number of significative power spectrum frequencies.
 
@@ -142,11 +145,11 @@ class MFETSFreqDomain:
 
     @classmethod
     def ft_ps_entropy(
-            cls,
-            ts_residuals: np.ndarray,
-            normalize: bool = True,
-            ps_residuals: t.Optional[np.ndarray] = None,
-            base: int = 2,
+        cls,
+        ts_residuals: np.ndarray,
+        normalize: bool = True,
+        ps_residuals: t.Optional[np.ndarray] = None,
+        base: int = 2,
     ) -> float:
         """Spectral entropy.
 
