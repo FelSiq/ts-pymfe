@@ -26,24 +26,12 @@ def apply_on_tiles(ts: np.ndarray, num_tiles: int,
     return res
 
 
-def get_rolling_window(
-    ts: np.ndarray,
-    window_size: t.Union[float, int],
-    center: bool = True,
-    ts_scaled: t.Optional[np.ndarray] = None,
-) -> pd.core.window.rolling.Rolling:
-    """Apply a function on time-series rolling (overlapping) windows.
-
-    If ``center`` is True, then each rolling window is centered at the
-    central instance rather than the initial instance.
-    """
+def process_window_size(ts: np.ndarray, window_size: t.Union[float,
+                                                             int]) -> int:
+    """TODO."""
     if window_size <= 0:
         raise ValueError("'window_size' must be positive (got {})."
                          "".format(window_size))
-
-    if ts_scaled is None:
-        ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
-            ts.reshape(-1, 1)).ravel()
 
     if 0 < window_size < 1:
         window_size = max(1, int(np.ceil(window_size * ts.size)))
@@ -56,6 +44,26 @@ def get_rolling_window(
         # reference value be exactly on the window center (and avoid
         # possibility of bias towards the larger tail)
         window_size -= 1
+
+    return window_size
+
+
+def get_rolling_window(
+    ts: np.ndarray,
+    window_size: t.Union[float, int],
+    center: bool = True,
+    ts_scaled: t.Optional[np.ndarray] = None,
+) -> pd.core.window.rolling.Rolling:
+    """Apply a function on time-series rolling (overlapping) windows.
+
+    If ``center`` is True, then each rolling window is centered at the
+    central instance rather than the initial instance.
+    """
+    if ts_scaled is None:
+        ts_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
+            ts.reshape(-1, 1)).ravel()
+
+    window_size = process_window_size(ts=ts, window_size=window_size)
 
     return pd.Series(ts_scaled).rolling(window_size, center=center)
 
