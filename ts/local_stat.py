@@ -7,6 +7,7 @@ import pymfe.statistical
 
 import stat_tests
 import autocorr
+import info_theory
 import _period
 import _detrend
 import _get_data
@@ -530,6 +531,37 @@ class MFETSLocalStats:
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
     @classmethod
+    def ft_moving_approx_ent(
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        embed_dim: int = 2,
+        embed_lag: int = 1,
+        threshold: float = 0.2,
+        metric: str = "chebyshev",
+        p: t.Union[int, float] = 2,
+        return_pval: bool = False,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+    ) -> np.ndarray:
+        """TODO."""
+        if ts_rol_win is None or (window_size != ts_rol_win.window):
+            ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                                   window_size=window_size,
+                                                   ts_scaled=ts_scaled)
+
+        rolling_stat = ts_rol_win.apply(
+            info_theory.MFETSInfoTheory.ft_approx_entropy,
+            kwargs=dict(embed_dim=embed_dim,
+                        embed_lag=embed_lag,
+                        threshold=threshold,
+                        metric=metric,
+                        p=p))
+
+        return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
+
+    @classmethod
     def ft_lumpiness(cls,
                      ts: np.ndarray,
                      num_tiles: int = 16,
@@ -608,9 +640,13 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts)
     ts = ts.to_numpy()
 
+    res = MFETSLocalStats.ft_moving_approx_ent(ts)
+    print(res)
+
+    exit(1)
+
     res = MFETSLocalStats.ft_moving_lilliefors(ts)
     print(res)
-    exit(1)
 
     res = MFETSLocalStats.ft_moving_avg(ts)
     print(res)
