@@ -1,4 +1,5 @@
 import typing as t
+import warnings
 
 import numpy as np
 import pymfe.statistical
@@ -327,7 +328,14 @@ class MFETSGlobalStats:
     def ft_exp_max_lyap(cls, ts: np.ndarray, embed_dim: int,
                         lag: int) -> float:
         """TODO."""
-        return nolds.lyap_r(data=ts, lag=lag, emb_dim=embed_dim)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore",
+                                    module="nolds",
+                                    category=RuntimeWarning)
+
+            max_lyap_exp = nolds.lyap_r(data=ts, lag=lag, emb_dim=embed_dim)
+
+        return max_lyap_exp
 
     @classmethod
     def ft_exp_hurst(cls, ts: np.ndarray) -> float:
