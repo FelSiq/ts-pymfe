@@ -281,7 +281,7 @@ def _test() -> None:
     print("kurtosis diff", np.nanmax(res))
 
     res = MFETSLocalStats.ft_mdiff_moving_gmean(ts, ts_period)
-    print("gmean diff", np.nanmax(res))
+    print("gmean diff", res)
 
     res = MFETSLocalStats.ft_mdiff_moving_sd(ts, ts_period)
     print(np.nanmax(res))
