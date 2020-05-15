@@ -309,7 +309,9 @@ class MFETSGeneral:
             start_point: t.Optional[t.Union[int, float]] = None) -> np.ndarray:
         """TODO."""
         if start_point is None:
-            start_point = np.mean(ts)
+            # Note: actually, it is used mean(ts) as starting point. However,
+            # we are using ts_scaled and, therefore, mean(ts_scaled) = 0.
+            start_point = 0.0
 
         walker_path = np.zeros(ts.size, dtype=float)
         walker_path[0] = start_point
@@ -447,6 +449,65 @@ class MFETSGeneral:
 
         return in_hypersphere
 
+    @classmethod
+    def ft_force_potential(
+            cls,
+            ts: np.ndarray,
+            potential: str = "sine",
+            params: t.Optional[t.Tuple[float, float, float]] = None,
+            start_point: t.Optional[t.Tuple[float, float]] = None,
+            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        DEF_PARAM = dict(
+            sine=((1, 1, 0.1), lambda x: np.sin(x / alpha) / alpha),
+            dblwell=((2, 0.1, 0.1), lambda x: alpha**2 * x - x**3),
+        )
+
+        if potential not in DEF_PARAM:
+            raise ValueError("'potential' must be in {} (got '{}')."
+                             "".format(DEF_PARAM.keys(), potential))
+
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        alpha, fric, dt = DEF_PARAM[potential][0] if params is None else params
+        f_force = DEF_PARAM[potential][1]
+
+        pos, vel = np.zeros((2, ts_scaled.size), dtype=float)
+
+        # Note: it is actually used (mean(ts), 0.0) as default start
+        # point, but mean(ts_scaled) = 0.
+        pos[0], vel[0] = (0.0, 0.0) if start_point is None else start_point
+
+        for t_prev in np.arange(ts_scaled.size - 1):
+            aux = f_force(pos[t_prev]) + ts_scaled[t_prev] - fric * vel[t_prev]
+            pos[t_prev + 1] = pos[t_prev] + dt * vel[t_prev] + dt**2 * aux
+            vel[t_prev + 1] = vel[t_prev] + dt * aux
+
+        if not np.isfinite(pos[-1]):
+            raise ValueError("Potential trajectory diverged.")
+
+        return pos
+
+    @classmethod
+    def ft_stick_angles(
+            cls,
+            ts: np.ndarray,
+            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        def calc_angles(inds: np.ndarray) -> np.ndarray:
+            """TODO."""
+            return np.arctan(np.diff(ts_scaled[inds]) / np.diff(inds))
+
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        aux = ts_scaled >= 0
+        ts_ang_pos = calc_angles(inds=np.flatnonzero(aux))
+        ts_ang_neg = calc_angles(inds=np.flatnonzero(~aux))
+
+        angles = np.hstack((ts_ang_pos, ts_ang_neg))
+
+        return angles
+
 
 def _test() -> None:
     import matplotlib.pyplot as plt
@@ -457,6 +518,21 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
     print("TS period:", ts_period)
+
+    res = MFETSGeneral.ft_stick_angles(ts)
+    print(res)
+    exit(1)
+
+    import matplotlib.pyplot as plt
+    res_a = MFETSGeneral.ft_force_potential(ts, potential="sine")
+    res_b = MFETSGeneral.ft_force_potential(ts, potential="dblwell")
+    time = np.arange(ts.size)
+    plt.plot(time, _utils.standardize_ts(ts), label="series")
+    plt.plot(time, res_a, color="red", label="sine")
+    plt.plot(time, res_b, color="purple", label="dbwell")
+    plt.legend()
+    plt.show()
+    exit(1)
 
     res = MFETSGeneral.ft_walker_cross_frac(ts)
     print(res)
