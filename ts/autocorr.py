@@ -9,6 +9,7 @@ import _utils
 import _detrend
 import _period
 import _get_data
+import _surrogates
 
 
 class MFETSAutocorr:
@@ -269,7 +270,9 @@ class MFETSAutocorr:
     @classmethod
     def ft_trev(cls,
                 ts: np.ndarray,
-                lag: int = 1,
+                lag: t.Optional[int] = None,
+                unbiased: bool = True,
+                max_nlags: t.Optional[int] = None,
                 only_numerator: bool = False) -> float:
         """TODO.
 
@@ -277,6 +280,12 @@ class MFETSAutocorr:
 
         https://github.com/benfulcher/hctsa/blob/master/Operations/CO_trev.m
         """
+        if lag is None:
+            _aux = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
+                                                     unbiased=unbiased,
+                                                     max_nlags=max_nlags)
+            lag = 1 if np.isnan(_aux) else _aux
+
         diff = ts[lag:] - ts[:-lag]
 
         numen = np.mean(np.power(diff, 3))
@@ -290,10 +299,44 @@ class MFETSAutocorr:
         return trev
 
     @classmethod
+    def ft_trev_surr(cls,
+                     ts: np.ndarray,
+                     surrogate_num: int = 32,
+                     max_iter: int = 128,
+                     relative: bool = True,
+                     lag: t.Optional[int] = None,
+                     only_numerator: bool = False,
+                     unbiased: bool = True,
+                     max_nlags: t.Optional[int] = None,
+                     random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        if lag is None:
+            _aux = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
+                                                     unbiased=unbiased,
+                                                     max_nlags=max_nlags)
+            lag = 1 if np.isnan(_aux) else _aux
+
+        surr_trev = _surrogates.apply_on_surrogates(
+            ts=ts,
+            surrogate_num=surrogate_num,
+            func=cls.ft_trev,
+            max_iter=max_iter,
+            random_state=random_state,
+            only_numerator=only_numerator,
+            lag=lag)
+
+        if relative:
+            surr_trev /= cls.ft_trev(ts=ts,
+                                     lag=lag,
+                                     only_numerator=only_numerator)
+
+        return surr_trev
+
+    @classmethod
     def ft_tc3(cls,
                ts: np.ndarray,
                lag: t.Optional[int] = None,
-               only_numerator: bool = True,
+               only_numerator: bool = False,
                unbiased: bool = True,
                max_nlags: t.Optional[int] = None) -> float:
         """TODO."""
@@ -318,6 +361,40 @@ class MFETSAutocorr:
         tc3 = numen / denom
 
         return tc3
+
+    @classmethod
+    def ft_tc3_surr(cls,
+                    ts: np.ndarray,
+                    surrogate_num: int = 32,
+                    max_iter: int = 128,
+                    relative: bool = True,
+                    lag: t.Optional[int] = None,
+                    only_numerator: bool = False,
+                    unbiased: bool = True,
+                    max_nlags: t.Optional[int] = None,
+                    random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        if lag is None:
+            _aux = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
+                                                     unbiased=unbiased,
+                                                     max_nlags=max_nlags)
+            lag = 1 if np.isnan(_aux) else _aux
+
+        surr_tc3 = _surrogates.apply_on_surrogates(
+            ts=ts,
+            surrogate_num=surrogate_num,
+            func=cls.ft_tc3,
+            max_iter=max_iter,
+            random_state=random_state,
+            only_numerator=only_numerator,
+            lag=lag)
+
+        if relative:
+            surr_tc3 /= cls.ft_tc3(ts=ts,
+                                   lag=lag,
+                                   only_numerator=only_numerator)
+
+        return surr_tc3
 
     @classmethod
     def ft_gen_autocorr(cls,
@@ -486,6 +563,20 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
+    res = MFETSAutocorr.ft_tc3_surr(ts)
+    print(res)
+
+    res = MFETSAutocorr.ft_trev_surr(ts)
+    print(res)
+
+    res = MFETSAutocorr.ft_trev(ts, only_numerator=False)
+    print(res)
+
+    res = MFETSAutocorr.ft_tc3(ts, only_numerator=False)
+    print(res)
+
+    exit(1)
+
     res = MFETSAutocorr.ft_autocorr_out_dist(ts)
     print(res)
 
@@ -508,9 +599,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSAutocorr.ft_gen_autocorr(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_tc3(ts, only_numerator=False)
     print(res)
 
     res = MFETSAutocorr.ft_first_acf_nonpos(ts)
@@ -556,9 +644,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSAutocorr.ft_pacf_diff(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_trev(ts, only_numerator=True)
     print(res)
 
 
