@@ -247,8 +247,10 @@ class MFETSGeneral:
     @classmethod
     def ft_fs_len(cls, ts: np.ndarray, num_bins: int = 10) -> np.ndarray:
         """TODO."""
-        ts_disc = np.digitize(ts, np.linspace(np.min(ts), np.max(ts),
-                                              num_bins))
+        ts_disc = _utils.discretize(ts=ts,
+                                    num_bins=num_bins,
+                                    strategy="equal-width")
+
         i = 1
         counter = 1
         fs_len = []  # type: t.List[int]
@@ -407,10 +409,10 @@ class MFETSGeneral:
         return threshold
 
     @classmethod
-    def ft_embed_in_sphere(
+    def ft_embed_in_shell(
             cls,
             ts: np.ndarray,
-            radius: t.Union[int, float] = 1,
+            radii: t.Tuple[float, float] = (0.0, 1.0),
             embed_dim: int = 2,
             lag: t.Optional[int] = None,
             normalize: bool = True,
@@ -419,9 +421,15 @@ class MFETSGeneral:
             unbiased: bool = True,
             ts_scaled: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
-        if radius <= 0:
-            raise ValueError(
-                "'radius' must be positive (got {}).".format(radius))
+        radius_inner, radius_outer = radii
+
+        if radius_inner < 0:
+            raise ValueError("Inner radius must be non-negative (got {})."
+                             "".format(radius_inner))
+
+        if radius_outer <= 0:
+            raise ValueError("Outer radius must be positive (got {})."
+                             "".format(radius_outer))
 
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
@@ -432,7 +440,7 @@ class MFETSGeneral:
                 max_nlags=max_nlags,
                 unbiased=unbiased)
 
-        # Note: embed is given by x(t) = [x(t-1), x(t-2), ..., x(t-m+1)]^T
+        # Note: embed is given by x(t) = [x(t), x(t-1), ..., x(t-m+1)]^T
         embed = _embed.embed_ts(ts_scaled, dim=embed_dim, lag=lag)
 
         # Note: here we supposed that every embed forms a zero-centered
@@ -441,13 +449,15 @@ class MFETSGeneral:
         embed_radius = np.linalg.norm(embed, ord=2, axis=1)
 
         # Note: we can check if every embed is in the same zero-centered
-        # hypersphere because all hypersphere embeds are also zero-centered.
-        in_hypersphere = np.sum(embed_radius <= radius)
+        # hypershell because all hyperspheres embeds are also zero-centered.
+        in_shape_num = np.sum(
+            np.logical_and(radius_inner <= embed_radius,
+                           embed_radius <= radius_outer))
 
         if normalize:
-            in_hypersphere /= embed_radius.size
+            in_shape_num /= embed_radius.size
 
-        return in_hypersphere
+        return in_shape_num
 
     @classmethod
     def ft_force_potential(
@@ -519,6 +529,10 @@ def _test() -> None:
     ts = ts.to_numpy()
     print("TS period:", ts_period)
 
+    res = MFETSGeneral.ft_embed_in_shell(ts)
+    print(res)
+    exit(1)
+
     res = MFETSGeneral.ft_stick_angles(ts)
     print(res)
     exit(1)
@@ -538,10 +552,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_walker_path(ts)
-    print(res)
-    exit(1)
-
-    res = MFETSGeneral.ft_embed_in_sphere(ts)
     print(res)
     exit(1)
 
