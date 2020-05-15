@@ -43,6 +43,28 @@ def iaaft(ts: np.ndarray,
     return ts_sur
 
 
+def apply_on_surrogates(ts: np.ndarray,
+                        surrogate_num: int,
+                        func: t.Callable[[np.ndarray], float],
+                        max_iter: int = 128,
+                        atol: float = 1e-8,
+                        rtol: float = 1e-10,
+                        random_state: t.Optional[np.ndarray] = None,
+                        **kwargs) -> np.ndarray:
+    """TODO."""
+    stats = np.zeros(surrogate_num, dtype=float)
+
+    for ind in np.arange(surrogate_num):
+        if random_state is not None:
+            random_state += 1
+
+        ts_surr = iaaft(ts=ts, max_iter=max_iter, random_state=random_state)
+
+        stats[ind] = func(ts_surr, **kwargs)
+
+    return stats
+
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     np.random.seed(32)
