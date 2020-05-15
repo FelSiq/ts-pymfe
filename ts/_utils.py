@@ -308,7 +308,8 @@ def apply_on_ts_samples(ts: np.ndarray,
 
 def discretize(ts: np.ndarray,
                num_bins: int,
-               strategy: str = "equal-width") -> np.ndarray:
+               strategy: str = "equal-width",
+               dtype: t.Type = int) -> np.ndarray:
     """Discretize a time-series."""
     VALID_METHODS = {"equal-width", "equiprobable"}
 
@@ -324,7 +325,7 @@ def discretize(ts: np.ndarray,
 
     ts_disc = np.digitize(ts, bins)
 
-    return ts_disc
+    return ts_disc.astype(dtype)
 
 
 def _test() -> None:
