@@ -306,6 +306,27 @@ def apply_on_ts_samples(ts: np.ndarray,
     return res
 
 
+def discretize(ts: np.ndarray,
+               num_bins: int,
+               strategy: str = "equal-width") -> np.ndarray:
+    """Discretize a time-series."""
+    VALID_METHODS = {"equal-width", "equiprobable"}
+
+    if strategy not in VALID_METHODS:
+        raise ValueError("'strategy' must be in {} (got {})."
+                         "".format(VALID_METHODS, strategy))
+
+    if strategy == "equal-width":
+        bins = np.histogram(ts, num_bins)[1][:-1]
+
+    elif strategy == "equiprobable":
+        bins = np.quantile(ts, np.linspace(0, 1, num_bins + 1)[:-1])
+
+    ts_disc = np.digitize(ts, bins)
+
+    return ts_disc
+
+
 def _test() -> None:
     import matplotlib.pyplot as plt
     np.random.seed(16)
