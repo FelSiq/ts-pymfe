@@ -356,15 +356,35 @@ class MFETSInfoTheory:
 
         return surprise
 
-    @classmethod
-    def ft_lz_complexity(cls,
-                         ts: np.ndarray,
+    def ft_lz_complexity(ts: np.ndarray,
                          num_bins: int = 10,
                          normalize: bool = True) -> float:
         """TODO."""
-        ts_bin = _utils.discretize(ts=ts, num_bins=num_bins, strategy="equal-width")
+        ts_bin = tuple(
+            _utils.discretize(ts=ts,
+                              num_bins=num_bins,
+                              strategy="equal-width",
+                              dtype=int))
 
-        ind_start, ind_end = 0, 0
+        ind_start, ind_end = 0, 1
+        substrings = set()
+        _len = len(ts_bin)
+
+        while ind_end <= _len:
+            substring = ts_bin[ind_start:ind_end]
+
+            if substring not in substrings:
+                substrings.add(substring)
+                ind_start = ind_end
+
+            ind_end += 1
+
+        lz_comp = len(substrings)
+
+        if normalize:
+            lz_comp *= np.log(_len) / (_len * np.log(num_bins))
+
+        return lz_comp
 
 
 def _test() -> None:
@@ -375,6 +395,10 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
     print("TS period:", ts_period)
+
+    res = MFETSInfoTheory.ft_lz_complexity(ts)
+    print(res)
+    exit(1)
 
     res = MFETSInfoTheory.ft_sample_entropy(ts)
     print(res)
