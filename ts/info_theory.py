@@ -342,8 +342,9 @@ class MFETSInfoTheory:
 
         # Note: discretize time-series using an equiprobable histogram
         # (i.e. all bins have approximately the same number of instances).
-        ts_bin = np.digitize(ts_diff,
-                             np.quantile(ts_diff, np.linspace(0, 1, num_bins)))
+        ts_bin = _utils.discretize(ts=ts,
+                                   num_bins=num_bins,
+                                   strategy="equiprobable")
 
         probs = np.zeros(num_it, dtype=float)
 
@@ -354,6 +355,16 @@ class MFETSInfoTheory:
         surprise = -np.log(probs)
 
         return surprise
+
+    @classmethod
+    def ft_lz_complexity(cls,
+                         ts: np.ndarray,
+                         num_bins: int = 10,
+                         normalize: bool = True) -> float:
+        """TODO."""
+        ts_bin = _utils.discretize(ts=ts, num_bins=num_bins, strategy="equal-width")
+
+        ind_start, ind_end = 0, 0
 
 
 def _test() -> None:
@@ -374,7 +385,9 @@ def _test() -> None:
     res = MFETSInfoTheory.ft_control_entropy(ts)
     print(res)
 
-    res = MFETSInfoTheory.ft_surprise(ts, random_state=16, method="1-transition")
+    res = MFETSInfoTheory.ft_surprise(ts,
+                                      random_state=16,
+                                      method="1-transition")
     print(res)
     exit(1)
 
