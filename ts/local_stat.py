@@ -257,13 +257,12 @@ class MFETSLocalStats:
         """TODO."""
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        sample_std = _utils.apply_on_ts_samples(
-            ts=ts_scaled,
-            func=np.std,
-            num_samples=num_samples,
-            sample_size_frac=sample_size_frac,
-            random_state=random_state,
-            ddof=ddof)
+        sample_std = _utils.apply_on_samples(ts=ts_scaled,
+                                             func=np.std,
+                                             num_samples=num_samples,
+                                             sample_size_frac=sample_size_frac,
+                                             random_state=random_state,
+                                             ddof=ddof)
 
         return sample_std
 

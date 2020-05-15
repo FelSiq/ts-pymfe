@@ -235,7 +235,7 @@ class MFETSAutocorr:
             unbiased: bool = True,
             random_state: t.Optional[int] = None) -> np.ndarray:
         """TODO."""
-        sample_acf_nonpos = _utils.apply_on_ts_samples(
+        sample_acf_nonpos = _utils.apply_on_samples(
             ts=ts,
             func=cls.ft_first_acf_nonpos,
             num_samples=num_samples,
@@ -256,7 +256,7 @@ class MFETSAutocorr:
             unbiased: bool = True,
             random_state: t.Optional[int] = None) -> np.ndarray:
         """TODO."""
-        sample_acf_locmin = _utils.apply_on_ts_samples(
+        sample_acf_locmin = _utils.apply_on_samples(
             ts=ts,
             func=cls.ft_first_acf_locmin,
             num_samples=num_samples,

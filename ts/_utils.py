@@ -278,12 +278,12 @@ def calc_ioi_stats(ts: np.ndarray,
     return res
 
 
-def apply_on_ts_samples(ts: np.ndarray,
-                        func: t.Callable[[np.ndarray], float],
-                        num_samples: int = 128,
-                        sample_size_frac: float = 0.2,
-                        random_state: t.Optional[int] = None,
-                        **kwargs) -> np.ndarray:
+def apply_on_samples(ts: np.ndarray,
+                     func: t.Callable[[np.ndarray], float],
+                     num_samples: int = 128,
+                     sample_size_frac: float = 0.2,
+                     random_state: t.Optional[int] = None,
+                     **kwargs) -> np.ndarray:
     """TODO."""
     if not 0 < sample_size_frac < 1:
         raise ValueError("'sample_size_frac' must be in (0, 1) "
