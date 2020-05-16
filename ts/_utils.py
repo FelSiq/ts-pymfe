@@ -347,13 +347,62 @@ def nn(embed: np.ndarray,
     return nn_inds, dist_mat[nn_inds, np.arange(nn_inds.size)]
 
 
+def embed_dim_fnn(ts: np.ndarray,
+                  lag: int,
+                  dims: t.Union[int, t.Sequence[int]] = 16,
+                  rtol: t.Union[int, float] = 10,
+                  atol: t.Union[int, float] = 2,
+                  ts_scaled: t.Optional[np.ndarray] = None) -> int:
+    """TODO.
+
+    References
+    ----------
+    .. [1] Determining embedding dimension for phase-space reconstruction using
+        a geometrical construction, Kennel, Matthew B. and Brown, Reggie and
+        Abarbanel, Henry D. I., Phys. Rev. A, volume 45, 1992, American
+        Physical Society.
+    """
+    if lag <= 0:
+        raise ValueError("'lag' must be positive (got {}).".format(lag))
+
+    if np.isscalar(dims):
+        dims = np.arange(1, dims + 1)
+
+    ts_scaled = standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+    fnn_prop = np.zeros(len(dims), dtype=float)
+
+    ts_std = np.std(ts_std)
+
+    for ind, dim in enumerate(dims):
+        try:
+            emb_next = _embed.embed_ts(ts=ts_scaled, lag=lag, dim=dim + 1)
+            emb_cur = emb_next[:, 1:]
+
+        except ValueError:
+            # Note: no need to explore further since all embeds larger than
+            # the current dimension will also fail.
+            ed[ind:] = np.nan
+            ed_star[ind:] = np.nan
+            break
+
+        nn_inds, dist_cur = nn(embed=emb_cur)
+
+        emb_next_abs_diff = np.abs(emb_next[:, 0] - emb_next[nn_inds, 0])
+        dist_next = np.maximum(dist_cur, emb_next_abs_diff)
+
+        crit_1 = emb_next_abs_diff > rtol * dist_cur
+        crit_2 = dist_next > atol * ts_std
+
+        fnn_prop[ind] = np.mean(np.logical_or(crit_1, crit_2))
+
+    return fnn_prop
+
+
 def embed_dim_cao(ts: np.ndarray,
                   lag: int,
                   dims: t.Union[int, t.Sequence[int]] = 16,
-                  max_nlags: t.Optional[int] = None,
-                  unbiased: bool = True,
-                  ts_scaled: t.Optional[np.ndarray] = None,
-                  ts_acfs: t.Optional[np.ndarray] = None) -> int:
+                  ts_scaled: t.Optional[np.ndarray] = None) -> int:
     """TODO.
 
     References
@@ -386,9 +435,6 @@ def embed_dim_cao(ts: np.ndarray,
             break
 
         nn_inds, dist_cur = nn(embed=emb_cur)
-
-        emb_next_diff = emb_next - emb_next[nn_inds, :]
-        dist_next = np.linalg.norm(emb_next_diff, ord=np.inf, axis=1)
 
         emb_next_abs_diff = np.abs(emb_next[:, 0] - emb_next[nn_inds, 0])
         # Note: 'chebyshev'/'manhattan'/'L1'/max norm distance of X and Y,
