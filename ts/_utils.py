@@ -344,7 +344,7 @@ def nn(embed: np.ndarray,
 
     nn_inds = np.argmin(dist_mat, axis=1)
 
-    return nn_inds, dist_mat[nn_inds, :]
+    return nn_inds, dist_mat[nn_inds, np.arange(nn_inds.size)]
 
 
 def embed_dim_cao(ts: np.ndarray,
@@ -390,10 +390,20 @@ def embed_dim_cao(ts: np.ndarray,
         emb_next_diff = emb_next - emb_next[nn_inds, :]
         dist_next = np.linalg.norm(emb_next_diff, ord=np.inf, axis=1)
 
+        emb_next_abs_diff = np.abs(emb_next[:, 0] - emb_next[nn_inds, 0])
+        # Note: 'chebyshev'/'manhattan'/'L1'/max norm distance of X and Y,
+        # both in the embed of (d + 1) dimensions, can be defined in respect
+        # to one dimension less:
+        # L1(X_{d+1}, Y_{d+1}) = |X_{d+1}, Y_{d+1}|_{inf}
+        #   = max(|x_1 - y_1|, ..., |x_{d+1} - y_{d+1}|)
+        #   = max(max(|x_1 - y_1|, ..., |x_d - y_d|), |x_{d+1} - y_{d+1}|)
+        #   = max(L1(X_{d}, Y_{d}), |x_{d+1} - y_{d+1}|)
+        dist_next = np.maximum(dist_cur, emb_next_abs_diff)
+
         # Note: 'ed' and 'ed_star' refers to, respectively, E_{d} and
         # E^{*}_{d} from the Cao's paper.
         ed[ind] = np.mean(dist_next / dist_cur)
-        ed_star[ind] = np.mean(np.abs(emb_next_diff[:, 0]))
+        ed_star[ind] = np.mean(emb_next_abs_diff)
 
     # Note: the minimum embedding dimension is D such that e1[D]
     # is the first index where e1 stops changing significantly.
