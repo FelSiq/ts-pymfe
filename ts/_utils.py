@@ -5,6 +5,9 @@ import sklearn.preprocessing
 import sklearn.mixture
 import numpy as np
 import pandas as pd
+import scipy.spatial
+
+import _embed
 
 
 def apply_on_tiles(ts: np.ndarray, num_tiles: int,
@@ -326,6 +329,80 @@ def discretize(ts: np.ndarray,
     ts_disc = np.digitize(ts, bins)
 
     return ts_disc.astype(dtype)
+
+
+def nn(embed: np.ndarray,
+       metric: str = "chebyshev",
+       p: t.Union[int, float] = 2) -> np.ndarray:
+    """TODO."""
+    dist_mat = scipy.spatial.distance.cdist(embed, embed, metric=metric, p=p)
+
+    # Note: prevent nearest neighbor be the instance itself, and also
+    # be exact equal instances. We follow Cao's recommendation to pick
+    # the next nearest neighbor when this happens.
+    dist_mat[np.isclose(dist_mat, 0.0)] = np.inf
+
+    nn_inds = np.argmin(dist_mat, axis=1)
+
+    return nn_inds, dist_mat[nn_inds, :]
+
+
+def embed_dim_cao(ts: np.ndarray,
+                  lag: int,
+                  dims: t.Union[int, t.Sequence[int]] = 16,
+                  max_nlags: t.Optional[int] = None,
+                  unbiased: bool = True,
+                  ts_scaled: t.Optional[np.ndarray] = None,
+                  ts_acfs: t.Optional[np.ndarray] = None) -> int:
+    """TODO.
+
+    References
+    ----------
+    .. [1] Liangyue Cao, Practical method for determining the minimum
+        embedding dimension of a scalar time series, Physica D: Nonlinear
+        Phenomena, Volume 110, Issues 1–2, 1997, Pages 43-50,
+        ISSN 0167-2789, https://doi.org/10.1016/S0167-2789(97)00118-8.
+    """
+    if lag <= 0:
+        raise ValueError("'lag' must be positive (got {}).".format(lag))
+
+    if np.isscalar(dims):
+        dims = np.arange(1, dims + 1)
+
+    ts_scaled = standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+    ed = np.zeros(len(dims), dtype=float)
+    ed_star = np.zeros(len(dims), dtype=float)
+
+    for ind, dim in enumerate(dims):
+        try:
+            emb_cur = _embed.embed_ts(ts=ts_scaled[:-lag], lag=lag, dim=dim)
+            emb_next = _embed.embed_ts(ts=ts_scaled, lag=lag, dim=dim + 1)
+
+        except ValueError:
+            ed[ind] = np.nan
+            ed_star[ind] = np.nan
+            continue
+
+        nn_inds, dist_cur = nn(embed=emb_cur)
+
+        emb_diff = emb_next - emb_next[nn_inds, :]
+        dist_next = np.linalg.norm(emb_diff, ord=np.inf, axis=1)
+
+        ed[ind] = np.mean(dist_next / dist_cur)
+        ed_star[ind] = np.mean(np.abs(emb_diff[:, 0]))
+
+    # Note: the minimum embedding dimension is D such that e1[D]
+    # is the first index where e1 stops changing significantly.
+    e1 = ed[1:] / ed[:-1]
+
+    # Note: This is the E2(d) Cao's metric. Its purpose is to
+    # separate random time-series. For random-generated time-
+    # series, e2 will be 1 for any dimension. For deterministic
+    # data, however, e2 != 1 for some d.
+    e2 = ed_star[1:] / ed_star[:-1]
+
+    return e1, e2
 
 
 def _test() -> None:
