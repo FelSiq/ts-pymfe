@@ -371,26 +371,29 @@ def embed_dim_cao(ts: np.ndarray,
 
     ts_scaled = standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-    ed = np.zeros(len(dims), dtype=float)
-    ed_star = np.zeros(len(dims), dtype=float)
+    ed, ed_star = np.zeros((2, len(dims)), dtype=float)
 
     for ind, dim in enumerate(dims):
         try:
-            emb_cur = _embed.embed_ts(ts=ts_scaled[:-lag], lag=lag, dim=dim)
             emb_next = _embed.embed_ts(ts=ts_scaled, lag=lag, dim=dim + 1)
+            emb_cur = emb_next[:, 1:]
 
         except ValueError:
+            # Note: no need to explore further since all embeds larger than
+            # the current dimension will also fail.
             ed[ind:] = np.nan
             ed_star[ind:] = np.nan
             break
 
         nn_inds, dist_cur = nn(embed=emb_cur)
 
-        emb_diff = emb_next - emb_next[nn_inds, :]
-        dist_next = np.linalg.norm(emb_diff, ord=np.inf, axis=1)
+        emb_next_diff = emb_next - emb_next[nn_inds, :]
+        dist_next = np.linalg.norm(emb_next_diff, ord=np.inf, axis=1)
 
+        # Note: 'ed' and 'ed_star' refers to, respectively, E_{d} and
+        # E^{*}_{d} from the Cao's paper.
         ed[ind] = np.mean(dist_next / dist_cur)
-        ed_star[ind] = np.mean(np.abs(emb_diff[:, 0]))
+        ed_star[ind] = np.mean(np.abs(emb_next_diff[:, 0]))
 
     # Note: the minimum embedding dimension is D such that e1[D]
     # is the first index where e1 stops changing significantly.
