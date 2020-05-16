@@ -372,7 +372,7 @@ def embed_dim_fnn(ts: np.ndarray,
 
     fnn_prop = np.zeros(len(dims), dtype=float)
 
-    ts_std = np.std(ts_std)
+    ts_std = np.std(ts)
 
     for ind, dim in enumerate(dims):
         try:

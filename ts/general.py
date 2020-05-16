@@ -35,6 +35,27 @@ class MFETSGeneral:
         return mode_inds[0] + 1
 
     @classmethod
+    def _ts_walker(
+            cls,
+            ts: np.ndarray,
+            step_size: float = 0.1,
+            start_point: t.Optional[t.Union[int, float]] = None) -> np.ndarray:
+        """TODO."""
+        if start_point is None:
+            # Note: actually, it is used mean(ts) as starting point. However,
+            # we are using ts_scaled and, therefore, mean(ts_scaled) = 0.
+            start_point = 0.0
+
+        walker_path = np.zeros(ts.size, dtype=float)
+        walker_path[0] = start_point
+
+        for i in np.arange(1, ts.size):
+            diff = ts[i - 1] - walker_path[i - 1]
+            walker_path[i] = walker_path[i - 1] + step_size * diff
+
+        return walker_path
+
+    @classmethod
     def ft_length(cls, ts: np.ndarray) -> int:
         """Length of the time-series.
 
@@ -302,27 +323,6 @@ class MFETSGeneral:
             ind_trough /= ts_period  # type: ignore
 
         return ind_trough
-
-    @classmethod
-    def _ts_walker(
-            cls,
-            ts: np.ndarray,
-            step_size: float = 0.1,
-            start_point: t.Optional[t.Union[int, float]] = None) -> np.ndarray:
-        """TODO."""
-        if start_point is None:
-            # Note: actually, it is used mean(ts) as starting point. However,
-            # we are using ts_scaled and, therefore, mean(ts_scaled) = 0.
-            start_point = 0.0
-
-        walker_path = np.zeros(ts.size, dtype=float)
-        walker_path[0] = start_point
-
-        for i in np.arange(1, ts.size):
-            diff = ts[i - 1] - walker_path[i - 1]
-            walker_path[i] = walker_path[i - 1] + step_size * diff
-
-        return walker_path
 
     @classmethod
     def ft_walker_path(cls,
@@ -640,6 +640,43 @@ class MFETSGeneral:
 
         return emb_dim_cao_e2
 
+    @classmethod
+    def ft_fnn_prop(cls,
+                    ts: np.ndarray,
+                    dims: t.Union[int, t.Sequence[int]] = 16,
+                    lag: t.Optional[int] = None,
+                    max_nlags: t.Optional[int] = None,
+                    unbiased: bool = True,
+                    ts_scaled: t.Optional[np.ndarray] = None,
+                    ts_acfs: t.Optional[np.ndarray] = None,
+                    fnn_prop: t.Optional[np.ndarray] = None) -> int:
+        """TODO.
+
+        References
+        ----------
+        .. [1] Determining embedding dimension for phase-space reconstruction using
+            a geometrical construction, Kennel, Matthew B. and Brown, Reggie and
+            Abarbanel, Henry D. I., Phys. Rev. A, volume 45, 1992, American
+            Physical Society.
+        """
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        if lag is None:
+            lag = autocorr.MFETSAutocorr.ft_first_acf_nonpos(
+                ts=ts_scaled,
+                ts_acfs=ts_acfs,
+                max_nlags=max_nlags,
+                unbiased=unbiased)
+            lag = 1 if np.isnan(lag) else lag
+
+        if fnn_prop is None:
+            fnn_prop = _utils.embed_dim_fnn(ts=ts,
+                                            ts_scaled=ts_scaled,
+                                            dims=dims,
+                                            lag=lag)
+
+        return fnn_prop
+
 
 def _test() -> None:
     import matplotlib.pyplot as plt
@@ -674,22 +711,18 @@ def _test() -> None:
         return x
 
     ts_a = ikeda_map(size=100)
-    ts_b = ikeda_map(size=10000)
+    ts_b = ikeda_map(size=1000)
     # ts_a = random_ts(size=100)
     # ts_b = random_ts(size=100)
 
     print("Finished generating ts")
-    res_a_dim = MFETSGeneral.ft_emb_dim_cao(ts_a, lag=1)
-    res_b_dim = MFETSGeneral.ft_emb_dim_cao(ts_b, lag=1)
+    res_a_dim = MFETSGeneral.ft_fnn_prop(ts_a, lag=1)
+    res_b_dim = MFETSGeneral.ft_fnn_prop(ts_b, lag=1)
     print(res_a_dim, res_b_dim)
 
-    res_a_e1 = MFETSGeneral.ft_cao_e1(ts_a, lag=1)
-    res_b_e1 = MFETSGeneral.ft_cao_e1(ts_b, lag=1)
-    print(res_a_e1, res_b_e1)
-
-    res_a_e2 = MFETSGeneral.ft_cao_e2(ts_a, lag=1)
-    res_b_e2 = MFETSGeneral.ft_cao_e2(ts_b, lag=1)
-    print(res_a_e2, res_b_e2, np.mean(res_a_e2), np.mean(res_b_e2))
+    res_fnn_a = MFETSGeneral.ft_fnn_prop(ts_a, lag=1)
+    res_fnn_b = MFETSGeneral.ft_fnn_prop(ts_b, lag=1)
+    print(res_fnn_a, res_fnn_b)
 
     plt.subplot(221)
     plt.plot(ts_a, label="10^3 ts")
@@ -698,12 +731,10 @@ def _test() -> None:
     plt.plot(ts_b, label="10^4 ts")
 
     plt.subplot(223)
-    plt.plot(res_a_e1, label="10^3 E1")
-    plt.plot(res_a_e2, label="10^3 E2")
+    plt.plot(res_fnn_a, label="10^3 fnn")
 
     plt.subplot(224)
-    plt.plot(res_b_e1, label="10^4 E1")
-    plt.plot(res_b_e2, label="10^4 E2")
+    plt.plot(res_fnn_b, label="10^4 fnn")
 
     plt.show()
 
