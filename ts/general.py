@@ -556,14 +556,16 @@ class MFETSGeneral:
                                                      unbiased=unbiased,
                                                      ts_acfs=ts_acfs)
 
-        emb_dim_abs_diff = np.abs(np.diff(emb_dim_cao_e1))
+        max_points = _utils.find_crit_pt(emb_dim_cao_e1, type_="max")
+        first_max_ind = 0
 
-        if np.all(np.isnan(emb_dim_cao_e1)):
-            return 1
+        try:
+            first_max_ind = np.flatnonzero(max_points)[0]
 
-        diff_under_mean = emb_dim_abs_diff <= np.nanmean(emb_dim_abs_diff)
+        except IndexError:
+            pass
 
-        return np.flatnonzero(diff_under_mean)[0] + 1
+        return first_max_ind + 1
 
     @classmethod
     def ft_cao_e1(cls,
@@ -656,14 +658,59 @@ def _test() -> None:
     ts = ts.to_numpy()
     print("TS period:", ts_period)
 
-    res = MFETSGeneral.ft_emb_dim_cao(ts, lag=None)
-    print(res)
+    def ikeda_map(size: int) -> np.ndarray:
+        x, y = np.zeros((2, size), dtype=float)
+        p = 1
+        mu = 0.9
 
-    res = MFETSGeneral.ft_cao_e1(ts, lag=None)
-    print(res)
+        for i in np.arange(size - 1):
+            t = 0.4 - 6 / (1 + x[i]**2 + y[i]**2)
+            sin_t = np.sin(t)
+            cos_t = np.cos(t)
+            x[i + 1] = p + mu * (x[i] * cos_t - y[i] * sin_t)
+            y[i + 1] = mu * (x[i] * sin_t + y[i] * cos_t)
 
-    res = MFETSGeneral.ft_cao_e2(ts, lag=None)
-    print(res)
+        return x
+
+    def random_ts(size: int) -> np.ndarray:
+        x = np.zeros(size, dtype=float)
+        y = np.random.randn(size)
+        for i in np.arange(1, size):
+            x[i] = 0.95 * x[i - 1] + y[i]
+
+        return x
+
+    ts_a = ikeda_map(size=100)
+    ts_b = ikeda_map(size=1000)
+
+    res_a_dim = MFETSGeneral.ft_emb_dim_cao(ts_a, lag=1)
+    res_b_dim = MFETSGeneral.ft_emb_dim_cao(ts_b, lag=1)
+    print(res_a_dim, res_b_dim)
+
+    res_a_e1 = MFETSGeneral.ft_cao_e1(ts_a, lag=1)
+    res_b_e1 = MFETSGeneral.ft_cao_e1(ts_b, lag=1)
+    print(res_a_e1, res_b_e1)
+
+    res_a_e2 = MFETSGeneral.ft_cao_e2(ts_a, lag=1)
+    res_b_e2 = MFETSGeneral.ft_cao_e2(ts_b, lag=1)
+    print(res_a_e2, res_b_e2, np.mean(res_a_e2), np.mean(res_b_e2))
+
+    plt.subplot(221)
+    plt.plot(ts_a, label="10^3 ts")
+
+    plt.subplot(222)
+    plt.plot(ts_b, label="10^4 ts")
+
+    plt.subplot(223)
+    plt.plot(res_a_e1, label="10^3 E1")
+    plt.plot(res_a_e2, label="10^3 E2")
+
+    plt.subplot(224)
+    plt.plot(res_b_e1, label="10^4 E1")
+    plt.plot(res_b_e2, label="10^4 E2")
+
+    plt.show()
+
     exit(1)
 
     res = MFETSGeneral.ft_embed_in_shell(ts)
@@ -674,7 +721,6 @@ def _test() -> None:
     print(res)
     exit(1)
 
-    import matplotlib.pyplot as plt
     res_a = MFETSGeneral.ft_force_potential(ts, potential="sine")
     res_b = MFETSGeneral.ft_force_potential(ts, potential="dblwell")
     time = np.arange(ts.size)
