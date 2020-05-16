@@ -183,9 +183,10 @@ class MFETSAutocorr:
                              unbiased=unbiased)
 
     @classmethod
-    def ft_first_acf_nonpos(
+    def _first_acf_below_threshold(
             cls,
             ts: np.ndarray,
+            threshold: float,
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
             ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
@@ -195,13 +196,45 @@ class MFETSAutocorr:
                                     nlags=max_nlags,
                                     unbiased=unbiased)
 
-        nonpos_acfs = np.flatnonzero(ts_acfs <= 0)
+        nonpos_acfs = np.flatnonzero(ts_acfs <= threshold)
 
         try:
             return nonpos_acfs[0] + 1
 
         except IndexError:
             return np.nan
+
+    @classmethod
+    def ft_first_acf_zero(
+            cls,
+            ts: np.ndarray,
+            max_nlags: t.Optional[int] = None,
+            unbiased: bool = True,
+            ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+        """TODO."""
+        threshold = 1.96 / np.sqrt(ts.size)
+
+        res = cls._first_acf_below_threshold(ts=ts,
+                                             threshold=threshold,
+                                             max_nlags=max_nlags,
+                                             unbiased=unbiased,
+                                             ts_acfs=ts_acfs)
+        return res
+
+    @classmethod
+    def ft_first_acf_nonpos(
+            cls,
+            ts: np.ndarray,
+            max_nlags: t.Optional[int] = None,
+            unbiased: bool = True,
+            ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+        """TODO."""
+        res = cls._first_acf_below_threshold(ts=ts,
+                                             threshold=0,
+                                             max_nlags=max_nlags,
+                                             unbiased=unbiased,
+                                             ts_acfs=ts_acfs)
+        return res
 
     @classmethod
     def ft_first_acf_locmin(
@@ -562,6 +595,13 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSAutocorr.ft_first_acf_zero(ts)
+    print(res)
+
+    res = MFETSAutocorr.ft_first_acf_nonpos(ts)
+    print(res)
+    exit(1)
 
     res = MFETSAutocorr.ft_tc3_surr(ts)
     print(res)
