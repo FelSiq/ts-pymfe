@@ -187,6 +187,7 @@ class MFETSAutocorr:
             cls,
             ts: np.ndarray,
             threshold: float,
+            abs_acf_vals: bool = False,
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
             ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
@@ -195,6 +196,9 @@ class MFETSAutocorr:
             ts_acfs = cls._calc_acf(data=ts,
                                     nlags=max_nlags,
                                     unbiased=unbiased)
+
+        if abs_acf_vals:
+            ts_acfs = np.abs(ts_acfs)
 
         nonpos_acfs = np.flatnonzero(ts_acfs <= threshold)
 
@@ -216,6 +220,7 @@ class MFETSAutocorr:
 
         res = cls._first_acf_below_threshold(ts=ts,
                                              threshold=threshold,
+                                             abs_acf_vals=True,
                                              max_nlags=max_nlags,
                                              unbiased=unbiased,
                                              ts_acfs=ts_acfs)
@@ -231,6 +236,7 @@ class MFETSAutocorr:
         """TODO."""
         res = cls._first_acf_below_threshold(ts=ts,
                                              threshold=0,
+                                             abs_acf_vals=False,
                                              max_nlags=max_nlags,
                                              unbiased=unbiased,
                                              ts_acfs=ts_acfs)
