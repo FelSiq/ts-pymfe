@@ -356,6 +356,14 @@ class MFETSGlobalStats:
         return fluct
 
     @classmethod
+    def ft_corr_dim(cls,
+                    ts: np.ndarray,
+                    emb_dim: int = 1) -> t.Union[np.ndarray, float]:
+        """TODO."""
+        corr_dim = nolds.corr_dim(ts, emb_dim=emb_dim)
+        return corr_dim
+
+    @classmethod
     def ft_opt_boxcox_coef(cls,
                            ts: np.ndarray,
                            epsilon: float = 1.0e-4,
@@ -377,6 +385,10 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSGlobalStats.ft_corr_dim(ts)
+    print("corr_dim", res)
+    exit(1)
 
     res = MFETSGlobalStats.ft_ioi_tdelta_mean(ts)
     print(res)
