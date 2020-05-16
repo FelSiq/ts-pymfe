@@ -518,6 +518,93 @@ class MFETSGeneral:
 
         return angles
 
+    @classmethod
+    def ft_emb_dim_cao(cls,
+                       ts: np.ndarray,
+                       dims: t.Union[int, t.Sequence[int]] = 16,
+                       lag: t.Optional[int] = None,
+                       max_nlags: t.Optional[int] = None,
+                       unbiased: bool = True,
+                       ts_scaled: t.Optional[np.ndarray] = None,
+                       ts_acfs: t.Optional[np.ndarray] = None,
+                       emb_dim_cao_e1: t.Optional[np.ndarray] = None) -> int:
+        """TODO.
+
+        References
+        ----------
+        .. [1] Liangyue Cao, Practical method for determining the minimum
+            embedding dimension of a scalar time series, Physica D: Nonlinear
+            Phenomena, Volume 110, Issues 1–2, 1997, Pages 43-50,
+            ISSN 0167-2789, https://doi.org/10.1016/S0167-2789(97)00118-8.
+        """
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        if lag is None:
+            lag = autocorr.MFETSAutocorr.ft_first_acf_nonpos(
+                ts=ts_scaled,
+                ts_acfs=ts_acfs,
+                max_nlags=max_nlags,
+                unbiased=unbiased)
+            lag = 1 if np.isnan(lag) else lag
+
+        if emb_dim_cao_e1 is None:
+            emb_dim_cao_e1, _ = _utils.embed_dim_cao(ts=ts,
+                                                     ts_scaled=ts_scaled,
+                                                     dims=dims,
+                                                     lag=lag,
+                                                     max_nlags=max_nlags,
+                                                     unbiased=unbiased,
+                                                     ts_acfs=ts_acfs)
+
+        emb_dim_abs_diff = np.abs(np.diff(emb_dim_cao_e1))
+        diff_under_mean = emb_dim_abs_diff <= np.nanmean(emb_dim_abs_diff)
+
+        try:
+            return np.flatnonzero(diff_under_mean)[0] + 1
+
+        except IndexError:
+            return 1
+
+    @classmethod
+    def ft_cao_e2(cls,
+                  ts: np.ndarray,
+                  dims: t.Union[int, t.Sequence[int]] = 16,
+                  lag: t.Optional[int] = None,
+                  max_nlags: t.Optional[int] = None,
+                  unbiased: bool = True,
+                  ts_scaled: t.Optional[np.ndarray] = None,
+                  ts_acfs: t.Optional[np.ndarray] = None,
+                  emb_dim_cao_e2: t.Optional[np.ndarray] = None) -> int:
+        """TODO.
+
+        References
+        ----------
+        .. [1] Liangyue Cao, Practical method for determining the minimum
+            embedding dimension of a scalar time series, Physica D: Nonlinear
+            Phenomena, Volume 110, Issues 1–2, 1997, Pages 43-50,
+            ISSN 0167-2789, https://doi.org/10.1016/S0167-2789(97)00118-8.
+        """
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        if lag is None:
+            lag = autocorr.MFETSAutocorr.ft_first_acf_nonpos(
+                ts=ts_scaled,
+                ts_acfs=ts_acfs,
+                max_nlags=max_nlags,
+                unbiased=unbiased)
+            lag = 1 if np.isnan(lag) else lag
+
+        if emb_dim_cao_e2 is None:
+            _, emb_dim_cao_e2 = _utils.embed_dim_cao(ts=ts,
+                                                     ts_scaled=ts_scaled,
+                                                     dims=dims,
+                                                     lag=lag,
+                                                     max_nlags=max_nlags,
+                                                     unbiased=unbiased,
+                                                     ts_acfs=ts_acfs)
+
+        return emb_dim_cao_e2
+
 
 def _test() -> None:
     import matplotlib.pyplot as plt
@@ -528,6 +615,13 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
     print("TS period:", ts_period)
+
+    res = MFETSGeneral.ft_emb_dim_cao(ts)
+    print(res)
+
+    res = MFETSGeneral.ft_cao_e2(ts)
+    print(res)
+    exit(1)
 
     res = MFETSGeneral.ft_embed_in_shell(ts)
     print(res)
