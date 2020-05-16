@@ -380,9 +380,9 @@ def embed_dim_cao(ts: np.ndarray,
             emb_next = _embed.embed_ts(ts=ts_scaled, lag=lag, dim=dim + 1)
 
         except ValueError:
-            ed[ind] = np.nan
-            ed_star[ind] = np.nan
-            continue
+            ed[ind:] = np.nan
+            ed_star[ind:] = np.nan
+            break
 
         nn_inds, dist_cur = nn(embed=emb_cur)
 
