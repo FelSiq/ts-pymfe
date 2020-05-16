@@ -552,10 +552,7 @@ class MFETSGeneral:
             emb_dim_cao_e1, _ = _utils.embed_dim_cao(ts=ts,
                                                      ts_scaled=ts_scaled,
                                                      dims=dims,
-                                                     lag=lag,
-                                                     max_nlags=max_nlags,
-                                                     unbiased=unbiased,
-                                                     ts_acfs=ts_acfs)
+                                                     lag=lag)
 
         e1_abs_diff = np.abs(np.diff(emb_dim_cao_e1))
 
@@ -602,10 +599,7 @@ class MFETSGeneral:
             emb_dim_cao_e1, _ = _utils.embed_dim_cao(ts=ts,
                                                      ts_scaled=ts_scaled,
                                                      dims=dims,
-                                                     lag=lag,
-                                                     max_nlags=max_nlags,
-                                                     unbiased=unbiased,
-                                                     ts_acfs=ts_acfs)
+                                                     lag=lag)
 
         return emb_dim_cao_e1
 
@@ -642,10 +636,7 @@ class MFETSGeneral:
             _, emb_dim_cao_e2 = _utils.embed_dim_cao(ts=ts,
                                                      ts_scaled=ts_scaled,
                                                      dims=dims,
-                                                     lag=lag,
-                                                     max_nlags=max_nlags,
-                                                     unbiased=unbiased,
-                                                     ts_acfs=ts_acfs)
+                                                     lag=lag)
 
         return emb_dim_cao_e2
 
