@@ -198,6 +198,8 @@ class MFETSAutocorr:
                                     unbiased=unbiased)
 
         if abs_acf_vals:
+            # Note: in this case, we are testing if
+            # -threshold <= acf <= threshold.
             ts_acfs = np.abs(ts_acfs)
 
         nonpos_acfs = np.flatnonzero(ts_acfs <= threshold)
