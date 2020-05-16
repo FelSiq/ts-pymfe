@@ -523,6 +523,7 @@ class MFETSGeneral:
                        ts: np.ndarray,
                        dims: t.Union[int, t.Sequence[int]] = 16,
                        lag: t.Optional[int] = None,
+                       tol_threshold: float = 0.05,
                        max_nlags: t.Optional[int] = None,
                        unbiased: bool = True,
                        ts_scaled: t.Optional[np.ndarray] = None,
@@ -556,11 +557,12 @@ class MFETSGeneral:
                                                      unbiased=unbiased,
                                                      ts_acfs=ts_acfs)
 
-        max_points = _utils.find_crit_pt(emb_dim_cao_e1, type_="max")
+        e1_abs_diff = np.abs(np.diff(emb_dim_cao_e1))
+
         first_max_ind = 0
 
         try:
-            first_max_ind = np.flatnonzero(max_points)[0]
+            first_max_ind = np.flatnonzero(e1_abs_diff <= tol_threshold)[0]
 
         except IndexError:
             pass
@@ -681,8 +683,11 @@ def _test() -> None:
         return x
 
     ts_a = ikeda_map(size=100)
-    ts_b = ikeda_map(size=1000)
+    ts_b = ikeda_map(size=10000)
+    # ts_a = random_ts(size=100)
+    # ts_b = random_ts(size=100)
 
+    print("Finished generating ts")
     res_a_dim = MFETSGeneral.ft_emb_dim_cao(ts_a, lag=1)
     res_b_dim = MFETSGeneral.ft_emb_dim_cao(ts_b, lag=1)
     print(res_a_dim, res_b_dim)
