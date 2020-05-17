@@ -77,6 +77,11 @@ class MFETSGeneral:
         return ts.size
 
     @classmethod
+    def ft_diff(cls, ts: np.ndarray) -> np.ndarray:
+        """TODO."""
+        return np.diff(ts)
+
+    @classmethod
     def ft_period(cls,
                   ts: np.ndarray,
                   ts_period: t.Optional[int] = None) -> int:
@@ -706,6 +711,10 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
     print("TS period:", ts_period)
+
+    res = MFETSGeneral.ft_fs_len(ts, num_bins=2)
+    print(res)
+    exit(1)
 
     res = MFETSGeneral.ft_wavelet_transf(ts)
     print(res)
