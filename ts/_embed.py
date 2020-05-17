@@ -118,8 +118,7 @@ def embed_dim_fnn(ts: np.ndarray,
         except ValueError:
             # Note: no need to explore further since all embeds larger than
             # the current dimension will also fail.
-            ed[ind:] = np.nan
-            ed_star[ind:] = np.nan
+            fnn_prop[ind:] = np.nan
             break
 
         nn_inds, dist_cur = nn(embed=emb_cur)
@@ -215,7 +214,7 @@ def embed_lag(ts: np.ndarray,
     }
 
     if lag is None:
-        lag = "ami"
+        lag = "acf-nonsig"
 
     if isinstance(lag, str):
         if lag not in VALID_OPTIONS:

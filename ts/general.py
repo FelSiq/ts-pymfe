@@ -714,55 +714,8 @@ def _test() -> None:
     ts = ts.to_numpy()
     print("TS period:", ts_period)
 
-    # def ikeda_map(size: int) -> np.ndarray:
-    #     x, y = np.zeros((2, size), dtype=float)
-    #     p = 1
-    #     mu = 0.9
-
-    #     for i in np.arange(size - 1):
-    #         t = 0.4 - 6 / (1 + x[i]**2 + y[i]**2)
-    #         sin_t = np.sin(t)
-    #         cos_t = np.cos(t)
-    #         x[i + 1] = p + mu * (x[i] * cos_t - y[i] * sin_t)
-    #         y[i + 1] = mu * (x[i] * sin_t + y[i] * cos_t)
-
-    #     return x
-
-    # def random_ts(size: int) -> np.ndarray:
-    #     x = np.zeros(size, dtype=float)
-    #     y = np.random.randn(size)
-    #     for i in np.arange(1, size):
-    #         x[i] = 0.95 * x[i - 1] + y[i]
-
-    #     return x
-
-    # ts_a = ikeda_map(size=100)
-    # ts_b = ikeda_map(size=1000)
-    # ts_a = random_ts(size=100)
-    # ts_b = random_ts(size=100)
-
-    print("Finished generating ts")
-    res_a_dim = MFETSGeneral.ft_fnn_prop(ts_a)
-    res_b_dim = MFETSGeneral.ft_fnn_prop(ts_b)
-    print(res_a_dim, res_b_dim)
-
-    res_fnn_a = MFETSGeneral.ft_fnn_prop(ts_a)
-    res_fnn_b = MFETSGeneral.ft_fnn_prop(ts_b)
-    print(res_fnn_a, res_fnn_b)
-
-    # plt.subplot(221)
-    # plt.plot(ts_a, label="10^3 ts")
-
-    # plt.subplot(222)
-    # plt.plot(ts_b, label="10^4 ts")
-
-    # plt.subplot(223)
-    # plt.plot(res_fnn_a, label="10^3 fnn")
-
-    # plt.subplot(224)
-    # plt.plot(res_fnn_b, label="10^4 fnn")
-
-    # plt.show()
+    res = MFETSGeneral.ft_fnn_prop(ts)
+    print(res)
 
     res = MFETSGeneral.ft_embed_in_shell(ts)
     print(res)
@@ -770,14 +723,8 @@ def _test() -> None:
     res = MFETSGeneral.ft_stick_angles(ts)
     print(res)
 
-    res_a = MFETSGeneral.ft_force_potential(ts, potential="sine")
-    res_b = MFETSGeneral.ft_force_potential(ts, potential="dblwell")
-    time = np.arange(ts.size)
-    # plt.plot(time, _utils.standardize_ts(ts), label="series")
-    # plt.plot(time, res_a, color="red", label="sine")
-    # plt.plot(time, res_b, color="purple", label="dbwell")
-    # plt.legend()
-    # plt.show()
+    res = MFETSGeneral.ft_force_potential(ts, potential="sine")
+    print(res)
 
     res = MFETSGeneral.ft_walker_cross_frac(ts)
     print(res)
