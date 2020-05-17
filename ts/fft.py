@@ -11,15 +11,23 @@ import _get_data
 
 class MFETSFreqDomain:
     @classmethod
-    def _calc_ps_residuals(cls,
-                           ts_residuals: np.ndarray,
-                           window: str = "hamming") -> np.ndarray:
+    def _calc_ps_residuals(
+        cls,
+        ts_residuals: np.ndarray,
+        window: str = "hamming",
+        scaling: str = "spectrum",
+        return_freqs: bool = False
+    ) -> t.Union[np.ndarray, t.Tuple[np.ndarray, np.ndarray]]:
         """Calculate the positive side power spectrum of a fourier signal."""
-        _, ps = scipy.signal.periodogram(ts_residuals,
-                                         detrend=None,
-                                         window=window,
-                                         scaling="spectrum",
-                                         return_onesided=True)
+        freqs, ps = scipy.signal.periodogram(ts_residuals,
+                                             detrend=None,
+                                             window=window,
+                                             scaling=scaling,
+                                             return_onesided=True)
+
+        if return_freqs:
+            return freqs, ps
+
         return ps
 
     @classmethod
@@ -176,12 +184,33 @@ class MFETSFreqDomain:
 
         return ps_ent
 
+    @classmethod
+    def ft_low_freq_power(cls,
+                          ts_residuals: np.ndarray,
+                          threshold: float = 0.04) -> float:
+        """TODO."""
+        freqs, hann_ps = cls._calc_ps_residuals(ts_residuals=ts_residuals,
+                                                window="hann",
+                                                return_freqs=True)
+        # Note: scale frequencies to the range [0, pi] (originally in [0, 0.5])
+        # in order to be consistent with the Ben Fulcher code used as reference.
+        freqs *= 2 * np.pi
+
+        # Note: no need to multiply both numerator and denominator by
+        # freqs[1] - freqs[0], because these factor will cancel each other.
+        low_freq_prop = np.sum(hann_ps[freqs <= threshold]) / np.sum(hann_ps)
+
+        return low_freq_prop
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
     ts_period = _period.ts_period(ts=ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
+
+    res = MFETSFreqDomain.ft_low_freq_power(ts)
+    print(res)
 
     res = MFETSFreqDomain.ft_ps_residuals(ts_residuals)
     print(res)
