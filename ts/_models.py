@@ -106,3 +106,44 @@ class TSLocalMedian(_TSLocalStat):
     """TODO."""
     def __init__(self, train_prop: float = 0.25):
         super().__init__(stat_func=np.median, train_prop=train_prop)
+
+
+class ModelSine:
+    """TODO."""
+    def __init__(self, random_state: t.Optional[int] = None):
+        """TODO."""
+        self._func = lambda t, A, w, p, c: A * np.sin(w * t + p) + c
+        self._fit_func = lambda t: self.A * np.sin(self.w * t + self.p
+                                                   ) + self.c
+
+        self.A, self.w, self.p, self.c = 4 * [None]
+
+        self.random_state = random_state
+
+    def fit(self,
+            X: np.ndarray,
+            y: np.ndarray,
+            opt_guess: bool = True) -> "_ModelSine":
+        """TODO."""
+        if self.random_state is not None:
+            np.random.seed(self.random_state)
+
+        if opt_guess:
+            # Note: based on: https://stackoverflow.com/a/42322656
+            freqs = np.fft.fftfreq(y.size, X[1] - X[0])
+            Fyy = np.abs(np.fft.rfft(y))[1:]
+            w_0 = 2 * np.pi * np.abs(freqs[1 + np.argmax(Fyy)])
+            A_0 = np.std(y) * np.sqrt(2)
+            c_0 = np.mean(y)
+            guess = np.asarray([A_0, w_0, 0.0, c_0], dtype=float)
+
+        else:
+            guess = np.std(y) * np.random.randn(4)
+
+        popt, _ = scipy.optimize.curve_fit(self._func, X, y, p0=guess)
+        self.A, self.w, self.p, self.c = popt
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """TODO."""
+        return self._fit_func(X)
