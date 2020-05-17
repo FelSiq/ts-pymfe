@@ -549,7 +549,7 @@ class MFETSGeneral:
             lag = 1 if np.isnan(lag) else lag
 
         if emb_dim_cao_e1 is None:
-            emb_dim_cao_e1, _ = _utils.embed_dim_cao(ts=ts,
+            emb_dim_cao_e1, _ = _embed.embed_dim_cao(ts=ts,
                                                      ts_scaled=ts_scaled,
                                                      dims=dims,
                                                      lag=lag)
@@ -596,7 +596,7 @@ class MFETSGeneral:
             lag = 1 if np.isnan(lag) else lag
 
         if emb_dim_cao_e1 is None:
-            emb_dim_cao_e1, _ = _utils.embed_dim_cao(ts=ts,
+            emb_dim_cao_e1, _ = _embed.embed_dim_cao(ts=ts,
                                                      ts_scaled=ts_scaled,
                                                      dims=dims,
                                                      lag=lag)
@@ -633,7 +633,7 @@ class MFETSGeneral:
             lag = 1 if np.isnan(lag) else lag
 
         if emb_dim_cao_e2 is None:
-            _, emb_dim_cao_e2 = _utils.embed_dim_cao(ts=ts,
+            _, emb_dim_cao_e2 = _embed.embed_dim_cao(ts=ts,
                                                      ts_scaled=ts_scaled,
                                                      dims=dims,
                                                      lag=lag)
@@ -670,7 +670,7 @@ class MFETSGeneral:
             lag = 1 if np.isnan(lag) else lag
 
         if fnn_prop is None:
-            fnn_prop = _utils.embed_dim_fnn(ts=ts,
+            fnn_prop = _embed.embed_dim_fnn(ts=ts,
                                             ts_scaled=ts_scaled,
                                             dims=dims,
                                             lag=lag)
