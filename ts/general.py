@@ -78,12 +78,18 @@ class MFETSGeneral:
     @classmethod
     def ft_period(cls,
                   ts: np.ndarray,
-                  ts_period: t.Optional[int] = None) -> int:
+                  ts_period: t.Optional[int] = None,
+                  max_nlags: t.Optional[int] = None,
+                  ts_acfs: t.Optional[np.ndarray] = None,
+                  ts_ami: t.Optional[np.ndarray] = None) -> int:
         """TODO."""
-        if ts_period is not None:
-            return ts_period
+        ts_period = _embed.embed_lag(ts=ts,
+                                     lag=ts_period,
+                                     max_nlags=max_nlags,
+                                     ts_acfs=ts_acfs,
+                                     ts_ami=ts_ami)
 
-        return _period.ts_period(ts)
+        return ts_period
 
     @classmethod
     def ft_turning_points(cls, ts: np.ndarray) -> np.ndarray:
@@ -217,10 +223,19 @@ class MFETSGeneral:
                 metric: str = "minkowski",
                 p: t.Union[int, float] = 2,
                 ddof: int = 1,
+                max_nlags: t.Optional[int] = None,
+                lag: t.Optional[t.Union[int, str]] = None,
+                ts_acfs: t.Optional[np.ndarray] = None,
+                ts_ami: t.Optional[np.ndarray] = None,
                 ts_scaled: t.Optional[np.ndarray] = None) -> float:
         """https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4736930/"""
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-        ts_embed = _embed.embed_ts(ts_scaled, dim=embed_dim)
+        lag = _embed.embed_lag(ts=ts_scaled,
+                               lag=lag,
+                               max_nlags=max_nlags,
+                               ts_acfs=ts_acfs,
+                               ts_ami=ts_ami)
+        ts_embed = _embed.embed_ts(ts_scaled, lag=lag, dim=embed_dim)
 
         dist_mat = scipy.spatial.distance.pdist(ts_embed, metric=metric, p=p)
 
@@ -289,11 +304,21 @@ class MFETSGeneral:
         return np.asarray(fs_len, dtype=float)
 
     @classmethod
-    def ft_peak_frac(cls,
-                     ts_season: np.ndarray,
-                     ts_period: int,
-                     normalize: bool = True) -> t.Union[int, float]:
+    def ft_peak_frac(
+            cls,
+            ts_season: np.ndarray,
+            ts_period: t.Optional[t.Union[int, str]] = None,
+            normalize: bool = True,
+            max_nlags: t.Optional[int] = None,
+            ts_acfs: t.Optional[np.ndarray] = None,
+            ts_ami: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
+        ts_period = _embed.embed_lag(ts=ts_season,
+                                     lag=ts_period,
+                                     max_nlags=max_nlags,
+                                     ts_acfs=ts_acfs,
+                                     ts_ami=ts_ami)
+
         if ts_period <= 1:
             return np.nan
 
@@ -307,11 +332,21 @@ class MFETSGeneral:
         return ind_peak
 
     @classmethod
-    def ft_trough_frac(cls,
-                       ts_season: np.ndarray,
-                       ts_period: int,
-                       normalize: bool = True) -> t.Union[int, float]:
+    def ft_trough_frac(
+            cls,
+            ts_season: np.ndarray,
+            ts_period: t.Optional[t.Union[int, str]] = None,
+            normalize: bool = True,
+            max_nlags: t.Optional[int] = None,
+            ts_acfs: t.Optional[np.ndarray] = None,
+            ts_ami: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
+        ts_period = _embed.embed_lag(ts=ts_season,
+                                     lag=ts_period,
+                                     max_nlags=max_nlags,
+                                     ts_acfs=ts_acfs,
+                                     ts_ami=ts_ami)
+
         if ts_period <= 1:
             return np.nan
 
@@ -679,55 +714,55 @@ def _test() -> None:
     ts = ts.to_numpy()
     print("TS period:", ts_period)
 
-    def ikeda_map(size: int) -> np.ndarray:
-        x, y = np.zeros((2, size), dtype=float)
-        p = 1
-        mu = 0.9
+    # def ikeda_map(size: int) -> np.ndarray:
+    #     x, y = np.zeros((2, size), dtype=float)
+    #     p = 1
+    #     mu = 0.9
 
-        for i in np.arange(size - 1):
-            t = 0.4 - 6 / (1 + x[i]**2 + y[i]**2)
-            sin_t = np.sin(t)
-            cos_t = np.cos(t)
-            x[i + 1] = p + mu * (x[i] * cos_t - y[i] * sin_t)
-            y[i + 1] = mu * (x[i] * sin_t + y[i] * cos_t)
+    #     for i in np.arange(size - 1):
+    #         t = 0.4 - 6 / (1 + x[i]**2 + y[i]**2)
+    #         sin_t = np.sin(t)
+    #         cos_t = np.cos(t)
+    #         x[i + 1] = p + mu * (x[i] * cos_t - y[i] * sin_t)
+    #         y[i + 1] = mu * (x[i] * sin_t + y[i] * cos_t)
 
-        return x
+    #     return x
 
-    def random_ts(size: int) -> np.ndarray:
-        x = np.zeros(size, dtype=float)
-        y = np.random.randn(size)
-        for i in np.arange(1, size):
-            x[i] = 0.95 * x[i - 1] + y[i]
+    # def random_ts(size: int) -> np.ndarray:
+    #     x = np.zeros(size, dtype=float)
+    #     y = np.random.randn(size)
+    #     for i in np.arange(1, size):
+    #         x[i] = 0.95 * x[i - 1] + y[i]
 
-        return x
+    #     return x
 
-    ts_a = ikeda_map(size=100)
-    ts_b = ikeda_map(size=1000)
+    # ts_a = ikeda_map(size=100)
+    # ts_b = ikeda_map(size=1000)
     # ts_a = random_ts(size=100)
     # ts_b = random_ts(size=100)
 
     print("Finished generating ts")
-    res_a_dim = MFETSGeneral.ft_fnn_prop(ts_a, lag=1)
-    res_b_dim = MFETSGeneral.ft_fnn_prop(ts_b, lag=1)
+    res_a_dim = MFETSGeneral.ft_fnn_prop(ts_a)
+    res_b_dim = MFETSGeneral.ft_fnn_prop(ts_b)
     print(res_a_dim, res_b_dim)
 
-    res_fnn_a = MFETSGeneral.ft_fnn_prop(ts_a, lag=1)
-    res_fnn_b = MFETSGeneral.ft_fnn_prop(ts_b, lag=1)
+    res_fnn_a = MFETSGeneral.ft_fnn_prop(ts_a)
+    res_fnn_b = MFETSGeneral.ft_fnn_prop(ts_b)
     print(res_fnn_a, res_fnn_b)
 
-    plt.subplot(221)
-    plt.plot(ts_a, label="10^3 ts")
+    # plt.subplot(221)
+    # plt.plot(ts_a, label="10^3 ts")
 
-    plt.subplot(222)
-    plt.plot(ts_b, label="10^4 ts")
+    # plt.subplot(222)
+    # plt.plot(ts_b, label="10^4 ts")
 
-    plt.subplot(223)
-    plt.plot(res_fnn_a, label="10^3 fnn")
+    # plt.subplot(223)
+    # plt.plot(res_fnn_a, label="10^3 fnn")
 
-    plt.subplot(224)
-    plt.plot(res_fnn_b, label="10^4 fnn")
+    # plt.subplot(224)
+    # plt.plot(res_fnn_b, label="10^4 fnn")
 
-    plt.show()
+    # plt.show()
 
     res = MFETSGeneral.ft_embed_in_shell(ts)
     print(res)
@@ -738,11 +773,11 @@ def _test() -> None:
     res_a = MFETSGeneral.ft_force_potential(ts, potential="sine")
     res_b = MFETSGeneral.ft_force_potential(ts, potential="dblwell")
     time = np.arange(ts.size)
-    plt.plot(time, _utils.standardize_ts(ts), label="series")
-    plt.plot(time, res_a, color="red", label="sine")
-    plt.plot(time, res_b, color="purple", label="dbwell")
-    plt.legend()
-    plt.show()
+    # plt.plot(time, _utils.standardize_ts(ts), label="series")
+    # plt.plot(time, res_a, color="red", label="sine")
+    # plt.plot(time, res_b, color="purple", label="dbwell")
+    # plt.legend()
+    # plt.show()
 
     res = MFETSGeneral.ft_walker_cross_frac(ts)
     print(res)
@@ -783,10 +818,10 @@ def _test() -> None:
     res = MFETSGeneral.ft_period(ts)
     print(res)
 
-    res = MFETSGeneral.ft_peak_frac(ts_season, ts_period=ts_period)
+    res = MFETSGeneral.ft_peak_frac(ts_season)
     print(res)
 
-    res = MFETSGeneral.ft_trough_frac(ts_season, ts_period=ts_period)
+    res = MFETSGeneral.ft_trough_frac(ts_season)
     print(res)
 
 

@@ -19,7 +19,7 @@ class MFETSInfoTheory:
                           ts: np.ndarray,
                           num_bins: int = 64,
                           max_nlags: t.Optional[int] = None,
-                          return_dist: bool = True,
+                          return_dist: bool = False,
                           unbiased: bool = True,
                           **kwargs) -> t.Dict[str, np.ndarray]:
         """TODO."""
@@ -120,7 +120,7 @@ class MFETSInfoTheory:
                ts: np.ndarray,
                num_bins: int = 64,
                lags: t.Optional[t.Sequence[int]] = None,
-               return_dist: bool = True,
+               return_dist: bool = False,
                max_nlags: t.Optional[int] = None,
                ts_acfs: t.Optional[np.ndarray] = None,
                ts_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
@@ -153,10 +153,13 @@ class MFETSInfoTheory:
             cls,
             ts: np.ndarray,
             num_bins: int = 64,
-            max_nlags: int = 64,
-            return_dist: bool = True,
+            max_nlags: t.Optional[int] = None,
+            return_dist: bool = False,
             ts_ami: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
+        if max_nlags is None:
+            max_nlags = max(64, ts.size // 2)
+
         if ts_ami is None:
             ts_ami = cls.ft_ami(ts=ts,
                                 num_bins=num_bins,

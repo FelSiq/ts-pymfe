@@ -215,7 +215,7 @@ def embed_lag(ts: np.ndarray,
     }
 
     if lag is None:
-        lag = "acf"
+        lag = "ami"
 
     if isinstance(lag, str):
         if lag not in VALID_OPTIONS:
