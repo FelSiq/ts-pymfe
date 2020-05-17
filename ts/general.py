@@ -416,9 +416,9 @@ class MFETSGeneral:
             embed_dim: int = 2,
             lag: t.Optional[int] = None,
             normalize: bool = True,
-            ts_acfs: t.Optional[np.ndarray] = None,
             max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
+            ts_acfs: t.Optional[np.ndarray] = None,
+            ts_ami: t.Optional[np.ndarray] = None,
             ts_scaled: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
         radius_inner, radius_outer = radii
@@ -433,12 +433,11 @@ class MFETSGeneral:
 
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        if lag is None:
-            lag = autocorr.MFETSAutocorr.ft_first_acf_nonpos(
-                ts=ts_scaled,
-                ts_acfs=ts_acfs,
-                max_nlags=max_nlags,
-                unbiased=unbiased)
+        lag = _embed.embed_lag(ts=ts_scaled,
+                               lag=lag,
+                               ts_acfs=ts_acfs,
+                               ts_ami=ts_ami,
+                               max_nlags=max_nlags)
 
         # Note: embed is given by x(t) = [x(t), x(t-1), ..., x(t-m+1)]^T
         embed = _embed.embed_ts(ts_scaled, dim=embed_dim, lag=lag)
@@ -525,9 +524,9 @@ class MFETSGeneral:
                        lag: t.Optional[int] = None,
                        tol_threshold: float = 0.05,
                        max_nlags: t.Optional[int] = None,
-                       unbiased: bool = True,
                        ts_scaled: t.Optional[np.ndarray] = None,
                        ts_acfs: t.Optional[np.ndarray] = None,
+                       ts_ami: t.Optional[np.ndarray] = None,
                        emb_dim_cao_e1: t.Optional[np.ndarray] = None) -> int:
         """TODO.
 
@@ -540,13 +539,11 @@ class MFETSGeneral:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        if lag is None:
-            lag = autocorr.MFETSAutocorr.ft_first_acf_nonpos(
-                ts=ts_scaled,
-                ts_acfs=ts_acfs,
-                max_nlags=max_nlags,
-                unbiased=unbiased)
-            lag = 1 if np.isnan(lag) else lag
+        lag = _embed.embed_lag(ts=ts_scaled,
+                               lag=lag,
+                               ts_acfs=ts_acfs,
+                               ts_ami=ts_ami,
+                               max_nlags=max_nlags)
 
         if emb_dim_cao_e1 is None:
             emb_dim_cao_e1, _ = _embed.embed_dim_cao(ts=ts,
@@ -572,9 +569,9 @@ class MFETSGeneral:
                   dims: t.Union[int, t.Sequence[int]] = 16,
                   lag: t.Optional[int] = None,
                   max_nlags: t.Optional[int] = None,
-                  unbiased: bool = True,
                   ts_scaled: t.Optional[np.ndarray] = None,
                   ts_acfs: t.Optional[np.ndarray] = None,
+                  ts_ami: t.Optional[np.ndarray] = None,
                   emb_dim_cao_e1: t.Optional[np.ndarray] = None) -> int:
         """TODO.
 
@@ -587,13 +584,11 @@ class MFETSGeneral:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        if lag is None:
-            lag = autocorr.MFETSAutocorr.ft_first_acf_nonpos(
-                ts=ts_scaled,
-                ts_acfs=ts_acfs,
-                max_nlags=max_nlags,
-                unbiased=unbiased)
-            lag = 1 if np.isnan(lag) else lag
+        lag = _embed.embed_lag(ts=ts_scaled,
+                               lag=lag,
+                               ts_acfs=ts_acfs,
+                               ts_ami=ts_ami,
+                               max_nlags=max_nlags)
 
         if emb_dim_cao_e1 is None:
             emb_dim_cao_e1, _ = _embed.embed_dim_cao(ts=ts,
@@ -609,9 +604,9 @@ class MFETSGeneral:
                   dims: t.Union[int, t.Sequence[int]] = 16,
                   lag: t.Optional[int] = None,
                   max_nlags: t.Optional[int] = None,
-                  unbiased: bool = True,
                   ts_scaled: t.Optional[np.ndarray] = None,
                   ts_acfs: t.Optional[np.ndarray] = None,
+                  ts_ami: t.Optional[np.ndarray] = None,
                   emb_dim_cao_e2: t.Optional[np.ndarray] = None) -> int:
         """TODO.
 
@@ -624,13 +619,11 @@ class MFETSGeneral:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        if lag is None:
-            lag = autocorr.MFETSAutocorr.ft_first_acf_nonpos(
-                ts=ts_scaled,
-                ts_acfs=ts_acfs,
-                max_nlags=max_nlags,
-                unbiased=unbiased)
-            lag = 1 if np.isnan(lag) else lag
+        lag = _embed.embed_lag(ts=ts_scaled,
+                               lag=lag,
+                               ts_acfs=ts_acfs,
+                               ts_ami=ts_ami,
+                               max_nlags=max_nlags)
 
         if emb_dim_cao_e2 is None:
             _, emb_dim_cao_e2 = _embed.embed_dim_cao(ts=ts,
@@ -646,9 +639,9 @@ class MFETSGeneral:
                     dims: t.Union[int, t.Sequence[int]] = 16,
                     lag: t.Optional[int] = None,
                     max_nlags: t.Optional[int] = None,
-                    unbiased: bool = True,
                     ts_scaled: t.Optional[np.ndarray] = None,
                     ts_acfs: t.Optional[np.ndarray] = None,
+                    ts_ami: t.Optional[np.ndarray] = None,
                     fnn_prop: t.Optional[np.ndarray] = None) -> int:
         """TODO.
 
@@ -661,13 +654,11 @@ class MFETSGeneral:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        if lag is None:
-            lag = autocorr.MFETSAutocorr.ft_first_acf_nonpos(
-                ts=ts_scaled,
-                ts_acfs=ts_acfs,
-                max_nlags=max_nlags,
-                unbiased=unbiased)
-            lag = 1 if np.isnan(lag) else lag
+        lag = _embed.embed_lag(ts=ts_scaled,
+                               lag=lag,
+                               ts_acfs=ts_acfs,
+                               ts_ami=ts_ami,
+                               max_nlags=max_nlags)
 
         if fnn_prop is None:
             fnn_prop = _embed.embed_dim_fnn(ts=ts,
@@ -738,15 +729,11 @@ def _test() -> None:
 
     plt.show()
 
-    exit(1)
-
     res = MFETSGeneral.ft_embed_in_shell(ts)
     print(res)
-    exit(1)
 
     res = MFETSGeneral.ft_stick_angles(ts)
     print(res)
-    exit(1)
 
     res_a = MFETSGeneral.ft_force_potential(ts, potential="sine")
     res_b = MFETSGeneral.ft_force_potential(ts, potential="dblwell")
@@ -756,18 +743,15 @@ def _test() -> None:
     plt.plot(time, res_b, color="purple", label="dbwell")
     plt.legend()
     plt.show()
-    exit(1)
 
     res = MFETSGeneral.ft_walker_cross_frac(ts)
     print(res)
 
     res = MFETSGeneral.ft_walker_path(ts)
     print(res)
-    exit(1)
 
     res = MFETSGeneral.ft_pred(ts)
     print(res)
-    exit(1)
 
     res = MFETSGeneral.ft_moving_threshold(ts, relative=True)
     print(res)
