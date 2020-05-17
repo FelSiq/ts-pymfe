@@ -1,8 +1,10 @@
 import typing as t
+import collections
 
 import numpy as np
 import scipy.signal
 import scipy.stats
+import statsmodels.tsa
 
 import _utils
 import _detrend
@@ -12,11 +14,47 @@ import _get_data
 
 class MFETSRandomize:
     @classmethod
+    def precompute_randomize_stats(cls,
+                                   ts: np.ndarray,
+                                   strategy: str = "dist-dynamic",
+                                   prop_rep: t.Union[int, float] = 2,
+                                   prop_interval: float = 0.1,
+                                   ts_scaled: t.Optional[np.ndarray] = None,
+                                   random_state: t.Optional[int] = None,
+                                   **kwargs) -> t.Dict[str, np.ndarray]:
+        """TODO."""
+        precomp_vals = {}  # type: t.Dict[str, np.ndarray]
+
+        stats = collections.OrderedDict((
+            ("mean", np.mean),
+            ("std", np.std),
+            ("acf", lambda arr: statsmodels.tsa.stattools.acf(
+                arr, nlags=1, fft=True)[1]),
+        ))
+
+        stat_names = list(map("rand_stat_{}".format, stats.keys()))
+
+        if not set(stat_names).issubset(kwargs):
+            stat_vals = cls._randomize_stat(ts=ts,
+                                            func_stats=stats.values(),
+                                            strategy=strategy,
+                                            prop_rep=prop_rep,
+                                            prop_interval=prop_interval,
+                                            random_state=random_state,
+                                            ts_scaled=ts_scaled)
+
+            precomp_vals.update(
+                {name: val
+                 for name, val in zip(stat_names, stat_vals)})
+
+        return precomp_vals
+
+    @classmethod
     def _randomize_stat(cls,
                         ts: np.ndarray,
                         func_stats: t.Sequence[t.Callable[[np.ndarray],
                                                           float]],
-                        strategy: str = "dist-static",
+                        strategy: str = "dist-dynamic",
                         prop_rep: t.Union[int, float] = 2,
                         prop_interval: float = 0.1,
                         ts_scaled: t.Optional[np.ndarray] = None,
@@ -108,13 +146,40 @@ class MFETSRandomize:
             prop_interval: float = 0.1,
             ts_scaled: t.Optional[np.ndarray] = None,
             random_state: t.Optional[int] = None,
-            rand_stat_mean: t.Optional[np.ndarray] = None) -> np.ndarray:
+            rand_stat_std: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
-        if rand_stat_mean is not None:
-            return rand_stat_mean
+        if rand_stat_std is not None:
+            return rand_stat_std
 
         res = cls._randomize_stat(ts=ts,
                                   func_stats=np.std,
+                                  strategy=strategy,
+                                  prop_rep=prop_rep,
+                                  prop_interval=prop_interval,
+                                  random_state=random_state,
+                                  ts_scaled=ts_scaled)
+
+        return res
+
+    @classmethod
+    def ft_randomize_acf(
+            cls,
+            ts: np.ndarray,
+            strategy: str = "dist-dynamic",
+            prop_rep: t.Union[int, float] = 2,
+            prop_interval: float = 0.1,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            random_state: t.Optional[int] = None,
+            rand_stat_acf: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        if rand_stat_acf is not None:
+            return rand_stat_acf
+
+        func_acf = lambda arr: statsmodels.tsa.stattools.acf(
+            arr, nlags=1, fft=True)[1]
+
+        res = cls._randomize_stat(ts=ts,
+                                  func_stats=func_acf,
                                   strategy=strategy,
                                   prop_rep=prop_rep,
                                   prop_interval=prop_interval,
@@ -130,10 +195,16 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
 
-    res = MFETSRandomize.ft_randomize_mean(ts)
+    res = MFETSRandomize.precompute_randomize_stats(ts, random_state=16)
     print(res)
 
-    res = MFETSRandomize.ft_randomize_sd(ts)
+    res = MFETSRandomize.ft_randomize_mean(ts, random_state=16)
+    print(res)
+
+    res = MFETSRandomize.ft_randomize_sd(ts, random_state=16)
+    print(res)
+
+    res = MFETSRandomize.ft_randomize_acf(ts, random_state=16)
     print(res)
 
 
