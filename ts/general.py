@@ -5,6 +5,7 @@ import numpy as np
 import scipy.spatial
 import scipy.odr
 import pandas as pd
+import scipy.signal
 
 import autocorr
 import _detrend
@@ -78,17 +79,9 @@ class MFETSGeneral:
     @classmethod
     def ft_period(cls,
                   ts: np.ndarray,
-                  ts_period: t.Optional[int] = None,
-                  max_nlags: t.Optional[int] = None,
-                  ts_acfs: t.Optional[np.ndarray] = None,
-                  ts_ami: t.Optional[np.ndarray] = None) -> int:
+                  ts_period: t.Optional[int] = None) -> int:
         """TODO."""
-        ts_period = _embed.embed_lag(ts=ts,
-                                     lag=ts_period,
-                                     max_nlags=max_nlags,
-                                     ts_acfs=ts_acfs,
-                                     ts_ami=ts_ami)
-
+        ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
         return ts_period
 
     @classmethod
@@ -313,11 +306,7 @@ class MFETSGeneral:
             ts_acfs: t.Optional[np.ndarray] = None,
             ts_ami: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
-        ts_period = _embed.embed_lag(ts=ts_season,
-                                     lag=ts_period,
-                                     max_nlags=max_nlags,
-                                     ts_acfs=ts_acfs,
-                                     ts_ami=ts_ami)
+        ts_period = _period.ts_period(ts=ts_season, ts_period=ts_period)
 
         if ts_period <= 1:
             return np.nan
@@ -341,11 +330,7 @@ class MFETSGeneral:
             ts_acfs: t.Optional[np.ndarray] = None,
             ts_ami: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
-        ts_period = _embed.embed_lag(ts=ts_season,
-                                     lag=ts_period,
-                                     max_nlags=max_nlags,
-                                     ts_acfs=ts_acfs,
-                                     ts_ami=ts_ami)
+        ts_period = _period.ts_period(ts=ts_season, ts_period=ts_period)
 
         if ts_period <= 1:
             return np.nan
@@ -703,6 +688,14 @@ class MFETSGeneral:
 
         return fnn_prop
 
+    @classmethod
+    def ft_wavelet_transf(cls, ts: np.ndarray) -> np.ndarray:
+        """TODO."""
+        widths = [1]
+        aux = scipy.signal.cwt(ts, scipy.signal.ricker, widths=widths)
+        print(aux)
+        return aux
+
 
 def _test() -> None:
     import matplotlib.pyplot as plt
@@ -713,6 +706,9 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
     print("TS period:", ts_period)
+
+    res = MFETSGeneral.ft_wavelet_transf(ts)
+    print(res)
 
     res = MFETSGeneral.ft_fnn_prop(ts)
     print(res)

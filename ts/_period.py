@@ -7,8 +7,12 @@ import _detrend
 
 
 def ts_period(ts: np.ndarray,
-              ts_detrended: t.Optional[np.ndarray] = None) -> int:
+              ts_detrended: t.Optional[np.ndarray] = None,
+              ts_period: t.Optional[int] = None) -> int:
     """TODO."""
+    if ts_period is not None:
+        return max(int(ts_period), 1)
+
     if ts_detrended is None:
         ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
 
