@@ -1,6 +1,7 @@
 import typing as t
 
 import numpy as np
+import scipy.optimize
 
 
 class TSNaive:
@@ -108,9 +109,11 @@ class TSLocalMedian(_TSLocalStat):
         super().__init__(stat_func=np.median, train_prop=train_prop)
 
 
-class ModelSine:
+class TSSine:
     """TODO."""
-    def __init__(self, random_state: t.Optional[int] = None):
+    def __init__(self,
+                 random_state: t.Optional[int] = None,
+                 opt_initial_guess: bool = True):
         """TODO."""
         self._func = lambda t, A, w, p, c: A * np.sin(w * t + p) + c
         self._fit_func = lambda t: self.A * np.sin(self.w * t + self.p
@@ -119,16 +122,18 @@ class ModelSine:
         self.A, self.w, self.p, self.c = 4 * [None]
 
         self.random_state = random_state
+        self.opt_initial_guess = opt_initial_guess
 
-    def fit(self,
-            X: np.ndarray,
-            y: np.ndarray,
-            opt_guess: bool = True) -> "_ModelSine":
+    def fit(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+    ) -> "_ModelSine":
         """TODO."""
         if self.random_state is not None:
             np.random.seed(self.random_state)
 
-        if opt_guess:
+        if self.opt_initial_guess:
             # Note: based on: https://stackoverflow.com/a/42322656
             freqs = np.fft.fftfreq(y.size, X[1] - X[0])
             Fyy = np.abs(np.fft.rfft(y))[1:]
@@ -140,10 +145,23 @@ class ModelSine:
         else:
             guess = np.std(y) * np.random.randn(4)
 
-        popt, _ = scipy.optimize.curve_fit(self._func, X, y, p0=guess)
-        self.A, self.w, self.p, self.c = popt
+        try:
+            popt, _ = scipy.optimize.curve_fit(self._func,
+                                               X.ravel(),
+                                               y,
+                                               p0=guess,
+                                               check_finite=False)
+
+            self.A, self.w, self.p, self.c = popt
+
+        except RuntimeError:
+            pass
+
         return self
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """TODO."""
+        if self.A is None:
+            return np.full(X.shape, fill_value=np.nan)
+
         return self._fit_func(X)

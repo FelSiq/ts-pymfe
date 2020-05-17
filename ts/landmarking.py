@@ -75,6 +75,12 @@ class MFETSLandmarking:
                 y_pred = model.predict(X_test).ravel()
                 res[ind_fold] = score(y_pred, y_test)
 
+                # import matplotlib.pyplot as plt
+                # plt.plot(X_train, y_train)
+                # plt.plot(X_test, y_test, label="test")
+                # plt.plot(X_test, y_pred, label="pred")
+                # plt.show()
+
             except TypeError:
                 res[ind_fold] = np.nan
 
@@ -247,6 +253,30 @@ class MFETSLandmarking:
     ) -> np.ndarray:
         """TODO."""
         model = _models.TSLocalMedian(train_prop=loc_prop)
+
+        res = cls._standard_pipeline_sklearn(y=ts,
+                                             model=model,
+                                             score=score,
+                                             tskf=tskf,
+                                             num_cv_folds=num_cv_folds,
+                                             lm_sample_frac=lm_sample_frac)
+
+        return res
+
+    @classmethod
+    def ft_model_sine(
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        opt_initial_guess: bool = True,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        random_state: t.Optional[int] = None,
+    ) -> np.ndarray:
+        """TODO."""
+        model = _models.TSSine(opt_initial_guess=opt_initial_guess,
+                               random_state=random_state)
 
         res = cls._standard_pipeline_sklearn(y=ts,
                                              model=model,
@@ -864,6 +894,10 @@ def _test() -> None:
 
     score = lambda *args: sklearn.metrics.mean_squared_error(*args,
                                                              squared=False)
+
+    res = MFETSLandmarking.ft_model_sine(ts - ts_trend, score=score)
+    print(4, res)
+    exit(1)
 
     res = MFETSLandmarking.ft_model_loc_median(ts, score=score)
     print(4, res)
