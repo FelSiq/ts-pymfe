@@ -5,6 +5,18 @@ import scipy.spatial
 
 import _utils
 
+try:
+    import autocorr
+
+except ImportError:
+    pass
+
+try:
+    import info_theory
+
+except ImportError:
+    pass
+
 
 def embed_ts(ts: np.ndarray,
              dim: int,
@@ -186,6 +198,55 @@ def embed_dim_cao(ts: np.ndarray,
     e2 = ed_star[1:] / ed_star[:-1]
 
     return e1, e2
+
+
+def embed_lag(ts: np.ndarray,
+              lag: t.Optional[t.Union[str, int]] = None,
+              default_lag: int = 1,
+              max_nlags: t.Optional[int] = None,
+              ts_acfs: t.Optional[np.ndarray] = None,
+              ts_ami: t.Optional[np.ndarray] = None,
+              **kwargs) -> int:
+    """TODO."""
+    VALID_OPTIONS = {
+        "ami": info_theory.MFETSInfoTheory.ft_ami_first_critpt,
+        "acf": autocorr.MFETSAutocorr.ft_acf_first_nonpos,
+        "acf-nonsig": autocorr.MFETSAutocorr.ft_acf_first_nonsig,
+    }
+
+    if lag is None:
+        lag = "acf"
+
+    if isinstance(lag, str):
+        if lag not in VALID_OPTIONS:
+            raise ValueError("'lag' must be in {} (got '{}')."
+                             "".format(VALID_OPTIONS.keys(), lag))
+
+        if max_nlags is None:
+            max_nlags = ts.size // 2
+
+        if lag == "ami":
+            kwargs["ts_ami"] = ts_ami
+
+        else:
+            kwargs["ts_acfs"] = ts_acfs
+
+        kwargs["max_nlags"] = max_nlags
+
+        lag = VALID_OPTIONS[lag](ts, **kwargs)
+
+        return default_lag if np.isnan(lag) else lag
+
+    if np.isscalar(lag):
+        lag = int(lag)
+
+        if lag <= 0:
+            raise ValueError("'lag' must be positive (got {}).".format(lag))
+
+        return lag
+
+    raise TypeError("'lag' type must be a scalar, a string or None (got {})."
+                    "".format(type(lag)))
 
 
 def _test() -> None:
