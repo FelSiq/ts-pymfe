@@ -654,12 +654,31 @@ class MFETSLocalStats:
 
         return tilled_extrema
 
+    @classmethod
+    def ft_local_range(
+            cls,
+            ts: np.ndarray,
+            num_tiles: int = 16,
+            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        tilled_range = _utils.apply_on_tiles(ts=ts_scaled,
+                                               num_tiles=num_tiles,
+                                               func=np.ptp)
+
+        return tilled_range
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
     ts_period = _period.ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts)
     ts = ts.to_numpy()
+
+    res = MFETSLocalStats.ft_moving_lilliefors(ts)
+    print(res)
+    exit(1)
 
     res = MFETSLocalStats.ft_rand_samp_std(ts)
     print(res)
