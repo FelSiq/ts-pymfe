@@ -15,13 +15,13 @@ import _get_data
 
 class MFETSInfoTheory:
     @classmethod
-    def precompute_auto_mut_info(cls,
-                                 ts: np.ndarray,
-                                 num_bins: int = 64,
-                                 max_nlags: t.Optional[int] = None,
-                                 return_dist: bool = True,
-                                 unbiased: bool = True,
-                                 **kwargs) -> t.Dict[str, np.ndarray]:
+    def precompute_ts_ami(cls,
+                          ts: np.ndarray,
+                          num_bins: int = 64,
+                          max_nlags: t.Optional[int] = None,
+                          return_dist: bool = True,
+                          unbiased: bool = True,
+                          **kwargs) -> t.Dict[str, np.ndarray]:
         """TODO."""
         precomp_vals = {}
 
@@ -37,23 +37,22 @@ class MFETSInfoTheory:
                                             unbiased=unbiased))
                 ts_acfs = kwargs["ts_acfs"]
 
-        if "auto_mut_info" in kwargs:
-            precomp_vals["auto_mut_info"] = cls.ft_auto_mut_info(
-                ts=ts,
-                num_bins=num_bins,
-                max_nlags=max_nlags,
-                return_dist=return_dist,
-                unbiased=unbiased,
-                ts_acfs=ts_acfs)
+        if "ts_ami" in kwargs:
+            precomp_vals["ts_ami"] = cls.ft_ami(ts=ts,
+                                                num_bins=num_bins,
+                                                max_nlags=max_nlags,
+                                                return_dist=return_dist,
+                                                unbiased=unbiased,
+                                                ts_acfs=ts_acfs)
 
         return precomp_vals
 
     @classmethod
-    def _auto_mut_info(cls,
-                       ts: np.ndarray,
-                       lag: int,
-                       num_bins: int = 64,
-                       return_dist: bool = False) -> float:
+    def _ts_ami(cls,
+                ts: np.ndarray,
+                lag: int,
+                num_bins: int = 64,
+                return_dist: bool = False) -> float:
         """TODO."""
         ts_x = ts[:-lag]
         ts_y = ts[lag:]
@@ -66,15 +65,15 @@ class MFETSInfoTheory:
         ent_ts_y = scipy.stats.entropy(ts_y_bin, base=2)
         ent_joint = scipy.stats.entropy(joint_prob.ravel(), base=2)
 
-        auto_info = ent_ts_x + ent_ts_y - ent_joint
+        ami = ent_ts_x + ent_ts_y - ent_joint
 
         if return_dist:
             # Note: this is the same as defining, right from the start,
-            # auto_info = (ent_ts_x + ent_ts_y) / ent_joint
+            # ami = (ent_ts_x + ent_ts_y) / ent_joint
             # However, here all steps are kept to make the code clearer.
-            auto_info = 1 - auto_info / ent_joint
+            ami = 1 - ami / ent_joint
 
-        return auto_info
+        return ami
 
     @classmethod
     def ft_hist_entropy(cls,
@@ -117,64 +116,64 @@ class MFETSInfoTheory:
         return entropy_diff
 
     @classmethod
-    def ft_first_crit_pt_ami(
+    def ft_ami(cls,
+               ts: np.ndarray,
+               num_bins: int = 64,
+               lags: t.Optional[t.Sequence[int]] = None,
+               return_dist: bool = True,
+               max_nlags: t.Optional[int] = None,
+               ts_acfs: t.Optional[np.ndarray] = None,
+               ts_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        if ts_ami is not None:
+            return ts_ami
+
+        if lags is None:
+            lags = _embed.embed_lag(ts=ts,
+                                    lag="acf",
+                                    max_nlags=max_nlags,
+                                    ts_acfs=ts_acfs)
+            lags = np.asarray([lags])
+
+        elif np.isscalar(lags):
+            lags = np.arange(1, 1 + lags)
+
+        ami = np.zeros(lags.size, dtype=float)
+
+        for ind, lag in enumerate(lags):
+            ami[ind] = cls._ts_ami(ts=ts,
+                                   lag=lag,
+                                   num_bins=num_bins,
+                                   return_dist=return_dist)
+
+        return ami
+
+    @classmethod
+    def ft_ami_first_critpt(
             cls,
             ts: np.ndarray,
             num_bins: int = 64,
             max_nlags: int = 64,
             return_dist: bool = True,
-            auto_mut_info: t.Optional[np.ndarray] = None
-    ) -> t.Union[int, float]:
+            ts_ami: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
-        if auto_mut_info is None:
-            auto_mut_info = cls.ft_auto_mut_info(ts=ts,
-                                                 num_bins=num_bins,
-                                                 lags=max_nlags,
-                                                 return_dist=return_dist)
+        if ts_ami is None:
+            ts_ami = cls.ft_ami(ts=ts,
+                                num_bins=num_bins,
+                                lags=max_nlags,
+                                return_dist=return_dist)
 
         # Note: if 'return_dist=True', return the first local maximum.
         # If otherwise, return the first local minimum.
         type_ = "max" if return_dist else "min"
 
-        crit_point = _utils.find_crit_pt(arr=auto_mut_info, type_=type_)
+        crit_point = _utils.find_crit_pt(arr=ts_ami, type_=type_)
 
         try:
             return np.flatnonzero(crit_point)[0] + 1
 
         except IndexError:
             return np.nan
-
-    @classmethod
-    def ft_auto_mut_info(
-            cls,
-            ts: np.ndarray,
-            num_bins: int = 64,
-            lags: t.Optional[t.Sequence[int]] = None,
-            return_dist: bool = True,
-            unbiased: bool = True,
-            ts_acfs: t.Optional[np.ndarray] = None,
-            auto_mut_info: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
-        if auto_mut_info is not None:
-            return auto_mut_info
-
-        if lags is None:
-            _aux = autocorr.MFETSAutocorr.ft_first_acf_nonpos(
-                ts=ts, unbiased=unbiased, ts_acfs=ts_acfs)
-            lags = np.asarray([1 if np.isnan(_aux) else _aux])
-
-        elif np.isscalar(lags):
-            lags = np.arange(1, 1 + lags)
-
-        auto_info = np.zeros(lags.size, dtype=float)
-
-        for ind, lag in enumerate(lags):
-            auto_info[ind] = cls._auto_mut_info(ts=ts,
-                                                lag=lag,
-                                                num_bins=num_bins,
-                                                return_dist=return_dist)
-
-        return auto_info
 
     @classmethod
     def ft_ami_curvature(
@@ -199,10 +198,9 @@ class MFETSInfoTheory:
         for ind, cur_std in enumerate(noise_std):
             ts_corrupted = ts_scaled + cur_std * gaussian_noise
 
-            ami[ind] = cls.ft_auto_mut_info(ts=ts_corrupted,
-                                            unbiased=True,
-                                            num_bins=32,
-                                            return_dist=False)
+            ami[ind] = cls.ft_ami(ts=ts_corrupted,
+                                  num_bins=32,
+                                  return_dist=False)
 
         model = sklearn.linear_model.LinearRegression().fit(
             X=noise_std.reshape(-1, 1), y=ami)
@@ -398,7 +396,6 @@ def _test() -> None:
 
     res = MFETSInfoTheory.ft_lz_complexity(ts)
     print(res)
-    exit(1)
 
     res = MFETSInfoTheory.ft_sample_entropy(ts)
     print(res)
@@ -413,15 +410,14 @@ def _test() -> None:
                                       random_state=16,
                                       method="1-transition")
     print(res)
-    exit(1)
 
     res = MFETSInfoTheory.ft_ami_curvature(ts, random_state=16)
     print(res)
 
-    res = MFETSInfoTheory.ft_first_crit_pt_ami(ts, return_dist=True)
+    res = MFETSInfoTheory.ft_ami_first_critpt(ts, return_dist=True)
     print(res)
 
-    res = MFETSInfoTheory.ft_auto_mut_info(ts, return_dist=True)
+    res = MFETSInfoTheory.ft_ami(ts, return_dist=True)
     print(res)
 
     res = MFETSInfoTheory.ft_hist_entropy(ts)
