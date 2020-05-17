@@ -57,12 +57,12 @@ class MFETSInfoTheory:
         ts_x = ts[:-lag]
         ts_y = ts[lag:]
 
-        ts_x_bin = np.histogram(ts_x, bins=num_bins)[0]
-        ts_y_bin = np.histogram(ts_y, bins=num_bins)[0]
+        ts_x_prob = np.histogram(ts_x, bins=num_bins, density=True)[0]
+        ts_y_prob = np.histogram(ts_y, bins=num_bins, density=True)[0]
         joint_prob = np.histogram2d(ts_x, ts_y, bins=num_bins, density=True)[0]
 
-        ent_ts_x = scipy.stats.entropy(ts_x_bin, base=2)
-        ent_ts_y = scipy.stats.entropy(ts_y_bin, base=2)
+        ent_ts_x = scipy.stats.entropy(ts_x_prob, base=2)
+        ent_ts_y = scipy.stats.entropy(ts_y_prob, base=2)
         ent_joint = scipy.stats.entropy(joint_prob.ravel(), base=2)
 
         ami = ent_ts_x + ent_ts_y - ent_joint
