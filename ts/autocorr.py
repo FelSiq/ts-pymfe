@@ -5,6 +5,7 @@ import numpy as np
 import sklearn.mixture
 
 import stat_tests
+import _embed
 import _utils
 import _detrend
 import _period
@@ -33,8 +34,12 @@ class MFETSAutocorr:
     def _calc_acf(cls,
                   data: np.ndarray,
                   nlags: t.Optional[int] = None,
-                  unbiased: bool = True) -> np.ndarray:
+                  unbiased: bool = True,
+                  ts_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
+        if ts_acfs is not None and (nlags is None or tc_acfs.size == nlags):
+            return ts_acfs
+
         if nlags is None:
             nlags = data.size // 2
 
@@ -124,10 +129,10 @@ class MFETSAutocorr:
                unbiased: bool = True,
                ts_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
-        if ts_acfs is not None and (nlags is None or ts_acfs.size == nlags):
-            return ts_acfs
-
-        return cls._calc_acf(data=ts, nlags=nlags, unbiased=unbiased)
+        return cls._calc_acf(data=ts,
+                             nlags=nlags,
+                             unbiased=unbiased,
+                             ts_acfs=ts_acfs)
 
     @classmethod
     def ft_acf_diff(cls,
@@ -192,10 +197,10 @@ class MFETSAutocorr:
             unbiased: bool = True,
             ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
-        if ts_acfs is None:
-            ts_acfs = cls._calc_acf(data=ts,
-                                    nlags=max_nlags,
-                                    unbiased=unbiased)
+        ts_acfs = cls._calc_acf(data=ts,
+                                nlags=max_nlags,
+                                unbiased=unbiased,
+                                ts_acfs=ts_acfs)
 
         if abs_acf_vals:
             # Note: in this case, we are testing if
@@ -211,7 +216,7 @@ class MFETSAutocorr:
             return np.nan
 
     @classmethod
-    def ft_first_acf_zero(
+    def ft_acf_first_nonsig(
             cls,
             ts: np.ndarray,
             max_nlags: t.Optional[int] = None,
@@ -229,7 +234,7 @@ class MFETSAutocorr:
         return res
 
     @classmethod
-    def ft_first_acf_nonpos(
+    def ft_acf_first_nonpos(
             cls,
             ts: np.ndarray,
             max_nlags: t.Optional[int] = None,
@@ -252,11 +257,10 @@ class MFETSAutocorr:
             unbiased: bool = True,
             ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
-        if (ts_acfs is None
-                or (max_nlags is not None and tc_acfs.size != max_nlags)):
-            ts_acfs = cls._calc_acf(data=ts,
-                                    nlags=max_nlags,
-                                    unbiased=unbiased)
+        ts_acfs = cls._calc_acf(data=ts,
+                                nlags=max_nlags,
+                                unbiased=unbiased,
+                                ts_acfs=ts_acfs)
 
         acfs_locmin = np.flatnonzero(_utils.find_crit_pt(ts_acfs, type_="min"))
 
@@ -278,7 +282,7 @@ class MFETSAutocorr:
         """TODO."""
         sample_acf_nonpos = _utils.apply_on_samples(
             ts=ts,
-            func=cls.ft_first_acf_nonpos,
+            func=cls.ft_acf_first_nonpos,
             num_samples=num_samples,
             sample_size_frac=sample_size_frac,
             random_state=random_state,
@@ -312,20 +316,21 @@ class MFETSAutocorr:
     def ft_trev(cls,
                 ts: np.ndarray,
                 lag: t.Optional[int] = None,
-                unbiased: bool = True,
+                only_numerator: bool = False,
                 max_nlags: t.Optional[int] = None,
-                only_numerator: bool = False) -> float:
+                ts_acfs: t.Optional[np.ndarray] = None,
+                ts_ami: t.Optional[np.ndarray] = None) -> float:
         """TODO.
 
         Normalized nonlinear autocorrelation.
 
         https://github.com/benfulcher/hctsa/blob/master/Operations/CO_trev.m
         """
-        if lag is None:
-            _aux = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
-                                                     unbiased=unbiased,
-                                                     max_nlags=max_nlags)
-            lag = 1 if np.isnan(_aux) else _aux
+        lag = _embed.embed_lag(ts=ts,
+                               lag=lag,
+                               max_nlags=max_nlags,
+                               ts_acfs=ts_acfs,
+                               ts_ami=ts_ami)
 
         diff = ts[lag:] - ts[:-lag]
 
@@ -347,15 +352,16 @@ class MFETSAutocorr:
                      relative: bool = True,
                      lag: t.Optional[int] = None,
                      only_numerator: bool = False,
-                     unbiased: bool = True,
+                     random_state: t.Optional[int] = None,
                      max_nlags: t.Optional[int] = None,
-                     random_state: t.Optional[int] = None) -> np.ndarray:
+                     ts_acfs: t.Optional[np.ndarray] = None,
+                     ts_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
-        if lag is None:
-            _aux = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
-                                                     unbiased=unbiased,
-                                                     max_nlags=max_nlags)
-            lag = 1 if np.isnan(_aux) else _aux
+        lag = _embed.embed_lag(ts=ts,
+                               lag=lag,
+                               max_nlags=max_nlags,
+                               ts_acfs=ts_acfs,
+                               ts_ami=ts_ami)
 
         surr_trev = _surrogates.apply_on_surrogates(
             ts=ts,
@@ -378,14 +384,15 @@ class MFETSAutocorr:
                ts: np.ndarray,
                lag: t.Optional[int] = None,
                only_numerator: bool = False,
-               unbiased: bool = True,
-               max_nlags: t.Optional[int] = None) -> float:
+               max_nlags: t.Optional[int] = None,
+               ts_acfs: t.Optional[np.ndarray] = None,
+               ts_ami: t.Optional[np.ndarray] = None) -> float:
         """TODO."""
-        if lag is None:
-            _aux = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
-                                                     unbiased=unbiased,
-                                                     max_nlags=max_nlags)
-            lag = 1 if np.isnan(_aux) else _aux
+        lag = _embed.embed_lag(ts=ts,
+                               lag=lag,
+                               max_nlags=max_nlags,
+                               ts_acfs=ts_acfs,
+                               ts_ami=ts_ami)
 
         ts_shift_1 = ts[:-2 * lag]
         ts_shift_2 = ts[lag:-lag]
@@ -411,15 +418,16 @@ class MFETSAutocorr:
                     relative: bool = True,
                     lag: t.Optional[int] = None,
                     only_numerator: bool = False,
-                    unbiased: bool = True,
+                    random_state: t.Optional[int] = None,
                     max_nlags: t.Optional[int] = None,
-                    random_state: t.Optional[int] = None) -> np.ndarray:
+                    ts_acfs: t.Optional[np.ndarray] = None,
+                    ts_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
-        if lag is None:
-            _aux = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
-                                                     unbiased=unbiased,
-                                                     max_nlags=max_nlags)
-            lag = 1 if np.isnan(_aux) else _aux
+        lag = _embed.embed_lag(ts=ts,
+                               lag=lag,
+                               max_nlags=max_nlags,
+                               ts_acfs=ts_acfs,
+                               ts_ami=ts_ami)
 
         surr_tc3 = _surrogates.apply_on_surrogates(
             ts=ts,
@@ -443,8 +451,9 @@ class MFETSAutocorr:
                         alpha: float = 1,
                         beta: float = 1,
                         lag: t.Optional[int] = None,
-                        unbiased: bool = True,
-                        max_nlags: t.Optional[int] = None) -> float:
+                        max_nlags: t.Optional[int] = None,
+                        ts_acfs: t.Optional[np.ndarray] = None,
+                        ts_ami: t.Optional[np.ndarray] = None) -> float:
         """TODO.
 
         References
@@ -465,11 +474,11 @@ class MFETSAutocorr:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
-        if lag is None:
-            _aux = MFETSAutocorr.ft_first_acf_nonpos(ts=ts,
-                                                     unbiased=unbiased,
-                                                     max_nlags=max_nlags)
-            lag = 1 if np.isnan(_aux) else _aux
+        lag = _embed.embed_lag(ts=ts,
+                               lag=lag,
+                               max_nlags=max_nlags,
+                               ts_acfs=ts_acfs,
+                               ts_ami=ts_ami)
 
         ts_abs = np.abs(ts)
         ts_sft_1 = ts_abs[:-lag]
@@ -498,11 +507,10 @@ class MFETSAutocorr:
             max_nlags: t.Optional[int] = None,
             ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """TODO."""
-        if (ts_acfs is None
-                or (max_nlags is not None and tc_acfs.size != max_nlags)):
-            ts_acfs = cls._calc_acf(data=ts,
-                                    nlags=max_nlags,
-                                    unbiased=unbiased)
+        ts_acfs = cls._calc_acf(data=ts,
+                                nlags=max_nlags,
+                                unbiased=unbiased,
+                                ts_acfs=ts_acfs)
 
         ac_shape = _utils.find_crit_pt(arr=ts_acfs, type_=crit_point_type)
 
@@ -579,11 +587,10 @@ class MFETSAutocorr:
             unbiased: bool = True,
             ts_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
-        if (ts_acfs is None
-                or (max_nlags is not None and tc_acfs.size != max_nlags)):
-            ts_acfs = cls._calc_acf(data=ts,
-                                    nlags=max_nlags,
-                                    unbiased=unbiased)
+        ts_acfs = cls._calc_acf(data=ts,
+                                nlags=max_nlags,
+                                unbiased=unbiased,
+                                ts_acfs=ts_acfs)
 
         ts_abs = np.abs(ts)
         ts_inliners = ts[ts_abs <= np.quantile(ts_abs, p)]
@@ -604,12 +611,14 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
-    res = MFETSAutocorr.ft_first_acf_zero(ts)
+    res = MFETSAutocorr.ft_trev(ts, only_numerator=False)
     print(res)
 
-    res = MFETSAutocorr.ft_first_acf_nonpos(ts)
+    res = MFETSAutocorr.ft_acf_first_nonsig(ts)
     print(res)
-    exit(1)
+
+    res = MFETSAutocorr.ft_acf_first_nonpos(ts)
+    print(res)
 
     res = MFETSAutocorr.ft_tc3_surr(ts)
     print(res)
@@ -617,13 +626,8 @@ def _test() -> None:
     res = MFETSAutocorr.ft_trev_surr(ts)
     print(res)
 
-    res = MFETSAutocorr.ft_trev(ts, only_numerator=False)
-    print(res)
-
     res = MFETSAutocorr.ft_tc3(ts, only_numerator=False)
     print(res)
-
-    exit(1)
 
     res = MFETSAutocorr.ft_autocorr_out_dist(ts)
     print(res)
@@ -649,7 +653,7 @@ def _test() -> None:
     res = MFETSAutocorr.ft_gen_autocorr(ts)
     print(res)
 
-    res = MFETSAutocorr.ft_first_acf_nonpos(ts)
+    res = MFETSAutocorr.ft_acf_first_nonpos(ts)
     print(res)
 
     res = MFETSAutocorr.ft_acf(ts)
