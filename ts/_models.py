@@ -128,7 +128,7 @@ class TSSine:
         self,
         X: np.ndarray,
         y: np.ndarray,
-    ) -> "_ModelSine":
+    ) -> "TSSine":
         """TODO."""
         if self.random_state is not None:
             np.random.seed(self.random_state)
@@ -162,6 +162,48 @@ class TSSine:
     def predict(self, X: np.ndarray) -> np.ndarray:
         """TODO."""
         if self.A is None:
+            return np.full(X.shape, fill_value=np.nan)
+
+        return self._fit_func(X)
+
+
+class TSExp:
+    """TODO."""
+    def __init__(self):
+        """TODO."""
+        self._func = lambda t, a, b, c: a * np.exp(b * t) + c
+        self._fit_func = lambda t: self.a * np.exp(self.b * t) + self.c
+
+        self.a, self.b, self.c = 3 * [None]
+
+    def fit(
+        self,
+        X: np.ndarray,
+        y: np.ndarray,
+    ) -> "TSExp":
+        """TODO."""
+        b_0 = y[-1] / y[-2]
+        a_0 = 0.1
+        c_0 = 0
+        guess = np.asarray([a_0, b_0, c_0], dtype=float)
+
+        try:
+            popt, _ = scipy.optimize.curve_fit(self._func,
+                                               X.ravel(),
+                                               y,
+                                               p0=guess,
+                                               check_finite=False)
+
+            self.a, self.b, self.c = popt
+
+        except RuntimeError:
+            pass
+
+        return self
+
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """TODO."""
+        if self.a is None:
             return np.full(X.shape, fill_value=np.nan)
 
         return self._fit_func(X)
