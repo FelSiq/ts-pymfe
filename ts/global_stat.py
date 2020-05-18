@@ -346,14 +346,11 @@ class MFETSGlobalStats:
     def ft_dfa(cls,
                ts: np.ndarray,
                order: int = 1,
-               return_coeff: bool = True) -> t.Union[np.ndarray, float]:
+               overlap_windows: bool = True,
+               return_coeff: bool = True) -> float:
         """TODO."""
-        if return_coeff:
-            hurst_coeff = nolds.dfa(ts, order=order)
-            return hurst_coeff
-
-        _, (_, fluct, _) = nolds.dfa(ts, order=order, debug_data=True)
-        return fluct
+        hurst_coeff = nolds.dfa(ts, order=order, overlap=overlap_windows)
+        return hurst_coeff
 
     @classmethod
     def ft_corr_dim(cls,
@@ -385,6 +382,9 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSGlobalStats.ft_dfa(ts)
+    print(res)
 
     res = MFETSGlobalStats.ft_corr_dim(ts)
     print("corr_dim", res)
@@ -440,9 +440,6 @@ def _test() -> None:
 
     res = MFETSGlobalStats.ft_seasonality(ts_residuals,
                                           ts_season + ts_residuals)
-    print(res)
-
-    res = MFETSGlobalStats.ft_dfa(ts)
     print(res)
 
 
