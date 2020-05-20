@@ -693,14 +693,6 @@ class MFETSGeneral:
 
         return fnn_prop
 
-    @classmethod
-    def ft_wavelet_transf(cls, ts: np.ndarray) -> np.ndarray:
-        """TODO."""
-        widths = [1]
-        aux = scipy.signal.cwt(ts, scipy.signal.ricker, widths=widths)
-        print(aux)
-        return aux
-
 
 def _test() -> None:
     import matplotlib.pyplot as plt
@@ -713,10 +705,6 @@ def _test() -> None:
     print("TS period:", ts_period)
 
     res = MFETSGeneral.ft_fs_len(ts, num_bins=2)
-    print(res)
-    exit(1)
-
-    res = MFETSGeneral.ft_wavelet_transf(ts)
     print(res)
 
     res = MFETSGeneral.ft_fnn_prop(ts)
