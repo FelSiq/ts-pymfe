@@ -64,21 +64,25 @@ def standardize_ts(ts: np.ndarray,
 
 
 def get_rolling_window(
-    ts: np.ndarray,
-    window_size: t.Union[float, int],
-    center: bool = True,
-    scale: bool = True,
-    ts_scaled: t.Optional[np.ndarray] = None,
+        ts: np.ndarray,
+        window_size: t.Union[float, int],
+        center: bool = True,
+        scale: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
 ) -> pd.core.window.rolling.Rolling:
     """Apply a function on time-series rolling (overlapping) windows.
 
     If ``center`` is True, then each rolling window is centered at the
     central instance rather than the initial instance.
     """
+    window_size = process_window_size(ts=ts, window_size=window_size)
+
+    if ts_rol_win is not None and window_size == ts_rol_win.window:
+        return ts_rol_win
+
     if scale:
         ts = standardize_ts(ts=ts, ts_scaled=ts_scaled)
-
-    window_size = process_window_size(ts=ts, window_size=window_size)
 
     return pd.Series(ts).rolling(window_size, center=center)
 

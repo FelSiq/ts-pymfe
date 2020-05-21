@@ -1,3 +1,4 @@
+"""Module dedicated to localized statistical time-series meta-features."""
 import typing as t
 
 import pandas as pd
@@ -15,6 +16,59 @@ import _utils
 
 
 class MFETSLocalStats:
+    """Extract time-series meta-features from Local Statistics group."""
+    @classmethod
+    def precompute_ts_scaled(cls, ts: np.ndarray,
+                             **kwargs) -> t.Dict[str, np.ndarray]:
+        """Precompute a standardized time series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        kwargs:
+            Additional arguments and previous precomputed items. May
+            speed up this precomputation.
+
+        Returns
+        -------
+        dict
+            The following precomputed item is returned:
+                * ``ts_scaled`` (:obj:`np.ndarray`): standardized time-series
+                    values (z-score).
+        """
+        precomp_vals = {}  # type: t.Dict[str, np.ndarray]
+
+        if "ts_scaled" not in kwargs:
+            precomp_vals["ts_scaled"] = _utils.standardize_ts(ts=ts)
+
+        return precomp_vals
+
+    @classmethod
+    def precompute_rolling_window(
+            cls,
+            ts: np.ndarray,
+            window_size: t.Union[int, float] = 0.1,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            **kwargs) -> t.Dict[str, pd.core.window.rolling.Rolling]:
+        """TODO."""
+        precomp_vals = {}  # type: t.Dict[str, pd.core.window.rolling.Rolling]
+
+        if ts_scaled is None:
+            precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
+
+        ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])
+
+        if "ts_tol_win" not in kwargs:
+            ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                                   window_size=window_size,
+                                                   ts_scaled=ts_scaled)
+
+            precomp_vals["ts_tol_win"] = ts_rol_win
+
+        return precomp_vals
+
     @classmethod
     def _rol_stat_postprocess(cls,
                               rolling_stat: pd.Series,
@@ -89,7 +143,53 @@ class MFETSLocalStats:
                            ts_rol_win: t.Optional[
                                pd.core.window.rolling.Rolling] = None,
                            **kwargs) -> np.ndarray:
-        """TODO."""
+        """Calculate the n-lagged `m`th-order differenced of moving statistics.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        stat_func : callable
+            Function to extract the local statistics.
+
+        window_size : int or float, optional (default=0.1)
+            Size of the window. Must be strictly positive.
+            If int >= 1, this argument defines the window size.
+            If 0 < float < 1, this argument defines the fraction of the
+            time-series length used as the window size.
+
+        diff_order : int, optional (default=1)
+            Order of differentiation. If this argument get a value of 0 or
+            less, then no differentiation will be performed.
+
+        diff_lag : int, optional (default=1)
+            Lag of each differentiation (among the moving statistics). If
+            a value lower than 1 is given, then it is assumed lag 1.
+
+        abs_value : bool, optional (default=True)
+            If True, return the absolute value of the result.
+
+        remove_nan : bool, optional (default=True)
+            If True, remove `nan` values from the ``stat_func`` results
+            before any post-processing.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_rol_win : pd.core.window.rolling.Rolling, optional
+            Configured rolling window. Used to take advantage of
+            precomputations.
+
+        kwargs:
+            Additional arguments for the ``stat_func`` callable.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Post-processed rolling statistic values.
+        """
         rolling_stat = stat_func(ts=ts,
                                  window_size=window_size,
                                  remove_nan=remove_nan,
@@ -112,13 +212,13 @@ class MFETSLocalStats:
         window_size: t.Union[int, float] = 0.1,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
-        if ts_rol_win is None or (window_size != ts_rol_win.window):
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=window_size,
-                                                   ts_scaled=ts_scaled)
+        ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                               window_size=window_size,
+                                               ts_scaled=ts_scaled,
+                                               ts_rol_win=ts_rol_wind)
 
         rolling_stat = ts_rol_win.mean()
 
@@ -134,7 +234,7 @@ class MFETSLocalStats:
         abs_value: bool = True,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
         rolling_stat_shift = cls._moving_stat_shift(
@@ -158,13 +258,13 @@ class MFETSLocalStats:
         ddof: int = 1,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
-        if ts_rol_win is None or (window_size != ts_rol_win.window):
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=window_size,
-                                                   ts_scaled=ts_scaled)
+        ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                               window_size=window_size,
+                                               ts_scaled=ts_scaled,
+                                               ts_rol_win=ts_rol_wind)
 
         rolling_stat = ts_rol_win.var(ddof=ddof)
 
@@ -181,7 +281,7 @@ class MFETSLocalStats:
         abs_value: bool = True,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
         rolling_stat_shift = cls._moving_stat_shift(
@@ -206,13 +306,13 @@ class MFETSLocalStats:
         ddof: int = 1,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
-        if ts_rol_win is None or (window_size != ts_rol_win.window):
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=window_size,
-                                                   ts_scaled=ts_scaled)
+        ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                               window_size=window_size,
+                                               ts_scaled=ts_scaled,
+                                               ts_rol_win=ts_rol_wind)
 
         rolling_stat = ts_rol_win.std(ddof=ddof)
 
@@ -229,7 +329,7 @@ class MFETSLocalStats:
         abs_value: bool = True,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
         rolling_stat_shift = cls._moving_stat_shift(ts=ts,
@@ -275,13 +375,13 @@ class MFETSLocalStats:
         unbiased: bool = False,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
-        if ts_rol_win is None or (window_size != ts_rol_win.window):
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=window_size,
-                                                   ts_scaled=ts_scaled)
+        ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                               window_size=window_size,
+                                               ts_scaled=ts_scaled,
+                                               ts_rol_win=ts_rol_wind)
 
         rolling_stat = ts_rol_win.apply(
             pymfe.statistical.MFEStatistical.ft_skewness,
@@ -301,7 +401,7 @@ class MFETSLocalStats:
         abs_value: bool = True,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
         rolling_stat_shift = cls._moving_stat_shift(
@@ -328,13 +428,13 @@ class MFETSLocalStats:
         unbiased: bool = False,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
-        if ts_rol_win is None or (window_size != ts_rol_win.window):
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=window_size,
-                                                   ts_scaled=ts_scaled)
+        ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                               window_size=window_size,
+                                               ts_scaled=ts_scaled,
+                                               ts_rol_win=ts_rol_wind)
 
         rolling_stat = ts_rol_win.apply(
             pymfe.statistical.MFEStatistical.ft_kurtosis,
@@ -354,7 +454,7 @@ class MFETSLocalStats:
         abs_value: bool = True,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
         rolling_stat_shift = cls._moving_stat_shift(
@@ -380,13 +480,13 @@ class MFETSLocalStats:
         unbiased: bool = True,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
-        if ts_rol_win is None or (window_size != ts_rol_win.window):
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=window_size,
-                                                   ts_scaled=ts_scaled)
+        ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                               window_size=window_size,
+                                               ts_scaled=ts_scaled,
+                                               ts_rol_win=ts_rol_wind)
 
         rolling_stat = ts_rol_win.apply(autocorr.MFETSAutocorr.ft_acf,
                                         kwargs=dict(nlags=1,
@@ -405,7 +505,7 @@ class MFETSLocalStats:
         abs_value: bool = True,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
         rolling_stat_shift = cls._moving_stat_shift(
@@ -429,13 +529,13 @@ class MFETSLocalStats:
         window_size: t.Union[int, float] = 0.1,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
-        if ts_rol_win is None or (window_size != ts_rol_win.window):
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=window_size,
-                                                   ts_scaled=ts_scaled)
+        ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                               window_size=window_size,
+                                               ts_scaled=ts_scaled,
+                                               ts_rol_win=ts_rol_wind)
 
         rolling_stat = ts_rol_win.apply(scipy.stats.gmean)
 
@@ -451,7 +551,7 @@ class MFETSLocalStats:
         abs_value: bool = True,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
         rolling_stat_shift = cls._moving_stat_shift(
@@ -511,7 +611,7 @@ class MFETSLocalStats:
         remove_inf: bool = True,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
         rolling_stat = cls.ft_moving_kldiv(ts=ts,
@@ -537,13 +637,13 @@ class MFETSLocalStats:
         return_pval: bool = False,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
-        if ts_rol_win is None or (window_size != ts_rol_win.window):
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=window_size,
-                                                   ts_scaled=ts_scaled)
+        ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                               window_size=window_size,
+                                               ts_scaled=ts_scaled,
+                                               ts_rol_win=ts_rol_wind)
 
         rolling_stat = ts_rol_win.apply(
             stat_tests.MFETSStatTests.ft_test_lilliefors,
@@ -564,13 +664,13 @@ class MFETSLocalStats:
         return_pval: bool = False,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """TODO."""
-        if ts_rol_win is None or (window_size != ts_rol_win.window):
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=window_size,
-                                                   ts_scaled=ts_scaled)
+        ts_rol_win = _utils.get_rolling_window(ts=ts,
+                                               window_size=window_size,
+                                               ts_scaled=ts_scaled,
+                                               ts_rol_win=ts_rol_wind)
 
         rolling_stat = ts_rol_win.apply(
             info_theory.MFETSInfoTheory.ft_approx_entropy,

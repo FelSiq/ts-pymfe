@@ -167,7 +167,8 @@ class MFETSGeneral:
 
         if ts_scaled is None:
             precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
-            ts_scaled = precomp_vals["ts_scaled"]
+
+        ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])
 
         if lag is None or isinstance(lag, str):
             lag = _embed.embed_lag(ts=ts_scaled,
