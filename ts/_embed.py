@@ -1,9 +1,11 @@
+"""Time-series embedding functions."""
 import typing as t
 
 import numpy as np
 import scipy.spatial
 
 import _utils
+import _detrend
 
 try:
     import autocorr
@@ -200,13 +202,58 @@ def embed_dim_cao(ts: np.ndarray,
 
 
 def embed_lag(ts: np.ndarray,
+              ts_detrended: t.Optional[np.ndarray] = None,
               lag: t.Optional[t.Union[str, int]] = None,
               default_lag: int = 1,
               max_nlags: t.Optional[int] = None,
               ts_acfs: t.Optional[np.ndarray] = None,
               ts_ami: t.Optional[np.ndarray] = None,
               **kwargs) -> int:
-    """TODO."""
+    """Find the appropriate embedding lag using a given criteria.
+
+    Parameters
+    ----------
+    ts : :obj:`np.ndarray`
+        Unidimensional time-series values.
+
+    ts_detrended : :ob:`np.ndarray`, optional
+        Time-series detrended. If None, the given time-series will
+        be detrended using Friedman's Super Smoother. If you don't
+        want your time-series detrended for this procedure (not
+        recommended), simply use the original time-series in this
+        argument also.
+
+    lag : int or str, optional (default = None)
+        If scalar, return its own value casted to integer,
+
+        If string, it must be one value in {`ami`, `acf`, `acf-nonsig`},
+        which defines the strategy of defining the appropriate lag of
+        the embedding.
+            1. `ami`: uses the first minimum lag of the automutual information
+                of the time-series.
+            2. `acf`: uses the first negative lag of the autocorrelation of the
+                time-series.
+            3. `acf-nonsig` (default): uses the first non-significant lag of
+                the time-series autocorrelation function. The non-significant
+                value is defined as the first lag that has the absolute value
+                of is autocorrelation below the critical value defined as
+                1.96 / sqrt(ts.size).
+
+        If None, the lag will be searched will the 'acf-nonsig'
+        criteria.
+
+    max_nlags : int, optional (default = None)
+        Maximum lag while searching for the appropriate embedding lag.
+
+    ts_acfs : :obj:`np.ndarray` = None,
+        
+    ts_ami : t.Optional[np.ndarray] = None,
+
+    kwargs :
+
+    Returns
+    -------
+    """
     VALID_OPTIONS = {
         "ami": info_theory.MFETSInfoTheory.ft_ami_first_critpt,
         "acf": autocorr.MFETSAutocorr.ft_acf_first_nonpos,
@@ -232,7 +279,10 @@ def embed_lag(ts: np.ndarray,
 
         kwargs["max_nlags"] = max_nlags
 
-        lag = VALID_OPTIONS[lag](ts, **kwargs)
+        if ts_detrended is None:
+            ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
+
+        lag = VALID_OPTIONS[lag](ts_detrended, **kwargs)
 
         return default_lag if np.isnan(lag) else lag
 
