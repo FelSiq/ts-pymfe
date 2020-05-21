@@ -205,14 +205,14 @@ class MFETSStatTests:
     @classmethod
     def ft_test_lilliefors(cls,
                            ts: np.ndarray,
-                           dist: str = "norm",
+                           distribution: str = "norm",
                            return_pval: bool = False) -> float:
         """Lilliefors test.
 
         TODO.
         """
         stat, pvalue = statsmodels.stats.diagnostic.lilliefors(
-            ts, dist=dist, pvalmethod="approx")
+            ts, dist=distribution, pvalmethod="approx")
 
         if return_pval:
             return pvalue

@@ -210,7 +210,7 @@ class MFETSLocalStats:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_rol_win : pd.core.window.rolling.Rolling, optional
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
             Configured rolling window. Used to take advantage of
             precomputations.
 
@@ -246,7 +246,7 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """Moving average of non-overlapping windows.
+        """Moving average of overlapping windows.
 
         Parameters
         ----------
@@ -267,14 +267,14 @@ class MFETSLocalStats:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_rol_win : pd.core.window.rolling.Rolling, optional
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
             Configured rolling window. Used to take advantage of
             precomputations.
 
         Returns
         -------
         :obj:`np.ndarray`
-            Moving average from non-overlapping windows in time-series values.
+            Moving average from overlapping windows in time-series values.
         """
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
@@ -297,7 +297,7 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """Absolute differenced moving average of non-overlapping windows.
+        """Absolute differenced moving average of overlapping windows.
 
         Parameters
         ----------
@@ -329,14 +329,14 @@ class MFETSLocalStats:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_rol_win : pd.core.window.rolling.Rolling, optional
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
             Configured rolling window. Used to take advantage of
             precomputations.
 
         Returns
         -------
         :obj:`np.ndarray`
-            Post-processed moving average from non-overlapping windows in
+            Post-processed moving average from overlapping windows in
             time-series values.
         """
         rolling_stat_shift = cls._moving_stat_shift(
@@ -362,7 +362,7 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """Moving variance of non-overlapping windows.
+        """Moving variance of overlapping windows.
 
         Parameters
         ----------
@@ -386,14 +386,14 @@ class MFETSLocalStats:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_rol_win : pd.core.window.rolling.Rolling, optional
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
             Configured rolling window. Used to take advantage of
             precomputations.
 
         Returns
         -------
         :obj:`np.ndarray`
-            Moving variance from non-overlapping windows in time-series values.
+            Moving variance from overlapping windows in time-series values.
         """
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
@@ -417,7 +417,7 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """Absolute differenced moving variance of non-overlapping windows.
+        """Absolute differenced moving variance of overlapping windows.
 
         Parameters
         ----------
@@ -452,14 +452,14 @@ class MFETSLocalStats:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_rol_win : pd.core.window.rolling.Rolling, optional
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
             Configured rolling window. Used to take advantage of
             precomputations.
 
         Returns
         -------
         :obj:`np.ndarray`
-            Post-processed moving variance from non-overlapping windows in
+            Post-processed moving variance from overlapping windows in
             time-series values.
         """
         rolling_stat_shift = cls._moving_stat_shift(
@@ -486,7 +486,7 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """Moving standard deviation of non-overlapping windows.
+        """Moving standard deviation of overlapping windows.
 
         Parameters
         ----------
@@ -510,14 +510,14 @@ class MFETSLocalStats:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_rol_win : pd.core.window.rolling.Rolling, optional
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
             Configured rolling window. Used to take advantage of
             precomputations.
 
         Returns
         -------
         :obj:`np.ndarray`
-            Moving standard deviation from non-overlapping windows in
+            Moving standard deviation from overlapping windows in
             time-series values.
         """
         ts_rol_win = _utils.get_rolling_window(ts=ts,
@@ -542,7 +542,7 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """Abs. diff. moving standard deviation of non-overlapping windows.
+        """Abs. diff. moving standard deviation of overlapping windows.
 
         Parameters
         ----------
@@ -577,7 +577,7 @@ class MFETSLocalStats:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_rol_win : pd.core.window.rolling.Rolling, optional
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
             Configured rolling window. Used to take advantage of
             precomputations.
 
@@ -601,27 +601,6 @@ class MFETSLocalStats:
         return rolling_stat_shift
 
     @classmethod
-    def ft_rand_samp_std(
-            cls,
-            ts: np.ndarray,
-            num_samples: int = 64,
-            sample_size_frac: float = 0.1,
-            ddof: int = 1,
-            random_state: t.Optional[int] = None,
-            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
-        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-
-        sample_std = _utils.apply_on_samples(ts=ts_scaled,
-                                             func=np.std,
-                                             num_samples=num_samples,
-                                             sample_size_frac=sample_size_frac,
-                                             random_state=random_state,
-                                             ddof=ddof)
-
-        return sample_std
-
-    @classmethod
     def ft_moving_skewness(
         cls,
         ts: np.ndarray,
@@ -632,7 +611,7 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """Moving skewness of non-overlapping windows.
+        """Moving skewness of overlapping windows.
 
         Parameters
         ----------
@@ -661,9 +640,9 @@ class MFETSLocalStats:
             |3       | Skew_3 = m_3 / s**3 = Skew_1 ((n-1)/n)**(3/2) |
             +--------+-----------------------------------------------+
 
-            Where `n` is the number of instances in ``N``, `s` is the standard
-            deviation of each attribute in ``N``, and `m_i` is the ith
-            statistical momentum of each attribute in ``N``.
+            Where `n` is the number of instances in ``ts``, `s` is the standard
+            deviation of each attribute in ``ts``, and `m_i` is the ith
+            statistical momentum of each attribute in ``ts``.
 
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
@@ -679,14 +658,14 @@ class MFETSLocalStats:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_rol_win : pd.core.window.rolling.Rolling, optional
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
             Configured rolling window. Used to take advantage of
             precomputations.
 
         Returns
         -------
         :obj:`np.ndarray`
-            Moving skewness from non-overlapping windows in time-series values.
+            Moving skewness from overlapping windows in time-series values.
         """
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
@@ -713,7 +692,7 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """Absolute differenced moving skewness of non-overlapping windows.
+        """Absolute differenced moving skewness of overlapping windows.
 
         Parameters
         ----------
@@ -742,9 +721,9 @@ class MFETSLocalStats:
             |3       | Skew_3 = m_3 / s**3 = Skew_1 ((n-1)/n)**(3/2) |
             +--------+-----------------------------------------------+
 
-            Where `n` is the number of instances in ``N``, `s` is the standard
-            deviation of each attribute in ``N``, and `m_i` is the ith
-            statistical momentum of each attribute in ``N``.
+            Where `n` is the number of instances in ``ts``, `s` is the standard
+            deviation of each attribute in ``ts``, and `m_i` is the ith
+            statistical momentum of each attribute in ``ts``.
 
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
@@ -771,14 +750,14 @@ class MFETSLocalStats:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_rol_win : pd.core.window.rolling.Rolling, optional
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
             Configured rolling window. Used to take advantage of
             precomputations.
 
         Returns
         -------
         :obj:`np.ndarray`
-            Post-processed moving skewness from non-overlapping windows in
+            Post-processed moving skewness from overlapping windows in
             time-series values.
         """
         rolling_stat_shift = cls._moving_stat_shift(
@@ -807,7 +786,64 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Moving kurtosis of overlapping windows.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        window_size : int or float, optional (default=0.1)
+            Size of the window. Must be strictly positive.
+            If int >= 1, this argument defines the window size.
+            If 0 < float < 1, this argument defines the fraction of the
+            time-series length used as the window size.
+
+        method : int, optional (default=3)
+            Defines the strategy used for estimate data kurtosis. Used for
+            total compatibility with R package ``e1071``. This option must be
+            one of the following:
+
+            +--------+-----------------------------------------------+
+            |Method  | Formula                                       |
+            +--------+-----------------------------------------------+
+            |1       | Kurt_1 = (m_4 / m_2**2 - 3)                   |
+            |        | (default of `scipy.stats` package)            |
+            +--------+-----------------------------------------------+
+            |2       | Kurt_2 = (((n+1) * Kurt_1 + 6) * (n-1) / f_2),|
+            |        | f_2 = ((n-2)*(n-3))                           |
+            +--------+-----------------------------------------------+
+            |3       | Kurt_3 = (m_4 / s**4 - 3)                     |
+            |        |        = ((Kurt_1+3) * (1 - 1/n)**2 - 3)      |
+            +--------+-----------------------------------------------+
+
+            Where `n` is the number of instances in ``ts``, `s` is the standard
+            deviation of each attribute in ``ts``, and `m_i` is the ith
+            statistical momentum of each attribute in ``ts``.
+
+            Note that if the selected method is unable to be calculated due
+            to division by zero, then the first method is used instead.
+
+        unbiased : bool, optional
+            If True, then the calculations are corrected for statistical bias.
+
+        remove_nan : bool, optional (default=True)
+            If True, remove `nan` values from the ``stat_func`` results
+            before any post-processing.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
+            Configured rolling window. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Moving kurtosis from overlapping windows in time-series values.
+        """
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
@@ -833,7 +869,76 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Absolute differenced moving kurtosis of overlapping windows.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        window_size : int or float, optional (default=0.1)
+            Size of the window. Must be strictly positive.
+            If int >= 1, this argument defines the window size.
+            If 0 < float < 1, this argument defines the fraction of the
+            time-series length used as the window size.
+
+        method : int, optional (default=3)
+            Defines the strategy used for estimate data kurtosis. Used for
+            total compatibility with R package ``e1071``. This option must be
+            one of the following:
+
+            +--------+-----------------------------------------------+
+            |Method  | Formula                                       |
+            +--------+-----------------------------------------------+
+            |1       | Kurt_1 = (m_4 / m_2**2 - 3)                   |
+            |        | (default of `scipy.stats` package)            |
+            +--------+-----------------------------------------------+
+            |2       | Kurt_2 = (((n+1) * Kurt_1 + 6) * (n-1) / f_2),|
+            |        | f_2 = ((n-2)*(n-3))                           |
+            +--------+-----------------------------------------------+
+            |3       | Kurt_3 = (m_4 / s**4 - 3)                     |
+            |        |        = ((Kurt_1+3) * (1 - 1/n)**2 - 3)      |
+            +--------+-----------------------------------------------+
+
+            Where `n` is the number of instances in ``ts``, `s` is the standard
+            deviation of each attribute in ``ts``, and `m_i` is the ith
+            statistical momentum of each attribute in ``ts``.
+
+            Note that if the selected method is unable to be calculated due
+            to division by zero, then the first method is used instead.
+
+        unbiased : bool, optional
+            If True, then the calculations are corrected for statistical bias.
+
+        diff_order : int, optional (default=1)
+            Order of differentiation. If this argument get a value of 0 or
+            less, then no differentiation will be performed.
+
+        diff_lag : int, optional (default=1)
+            Lag of each differentiation (among the moving statistics). If
+            a value lower than 1 is given, then it is assumed lag 1.
+
+        abs_value : bool, optional (default=True)
+            If True, return the absolute value of the result.
+
+        remove_nan : bool, optional (default=True)
+            If True, remove `nan` values from the ``stat_func`` results
+            before any post-processing.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
+            Configured rolling window. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Post-processed moving kurtosis from overlapping windows in
+            time-series values.
+        """
         rolling_stat_shift = cls._moving_stat_shift(
             ts=ts,
             stat_func=cls.ft_moving_kurtosis,
@@ -859,7 +964,40 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Moving autocorrelation of overlapping windows.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        window_size : int or float, optional (default=0.1)
+            Size of the window. Must be strictly positive.
+            If int >= 1, this argument defines the window size.
+            If 0 < float < 1, this argument defines the fraction of the
+            time-series length used as the window size.
+
+        unbiased : bool, optional
+            If True, then the calculations are corrected for statistical bias.
+
+        remove_nan : bool, optional (default=True)
+            If True, remove `nan` values from the ``stat_func`` results
+            before any post-processing.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
+            Configured rolling window. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Moving autocorrelation from overlapping windows in time-series
+            values.
+        """
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
@@ -884,7 +1022,51 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Absolute differenced moving autocorrelation of overlapping windows.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        window_size : int or float, optional (default=0.1)
+            Size of the window. Must be strictly positive.
+            If int >= 1, this argument defines the window size.
+            If 0 < float < 1, this argument defines the fraction of the
+            time-series length used as the window size.
+
+        unbiased : bool, optional
+            If True, then the calculations are corrected for statistical bias.
+
+        diff_order : int, optional (default=1)
+            Order of differentiation. If this argument get a value of 0 or
+            less, then no differentiation will be performed.
+
+        diff_lag : int, optional (default=1)
+            Lag of each differentiation (among the moving statistics). If
+            a value lower than 1 is given, then it is assumed lag 1.
+
+        abs_value : bool, optional (default=True)
+            If True, return the absolute value of the result.
+
+        remove_nan : bool, optional (default=True)
+            If True, remove `nan` values from the ``stat_func`` results
+            before any post-processing.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
+            Configured rolling window. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Post-processed moving autocorrelation from overlapping windows in
+            time-series values.
+        """
         rolling_stat_shift = cls._moving_stat_shift(
             ts=ts,
             stat_func=cls.ft_moving_acf,
@@ -908,7 +1090,37 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Moving geometric mean of overlapping windows.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        window_size : int or float, optional (default=0.1)
+            Size of the window. Must be strictly positive.
+            If int >= 1, this argument defines the window size.
+            If 0 < float < 1, this argument defines the fraction of the
+            time-series length used as the window size.
+
+        remove_nan : bool, optional (default=True)
+            If True, remove `nan` values from the ``stat_func`` results
+            before any post-processing.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
+            Configured rolling window. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Moving geometric mean from overlapping windows in time-series
+            values.
+        """
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
@@ -930,7 +1142,48 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Absolute differenced moving geometric mean of overlapping windows.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        window_size : int or float, optional (default=0.1)
+            Size of the window. Must be strictly positive.
+            If int >= 1, this argument defines the window size.
+            If 0 < float < 1, this argument defines the fraction of the
+            time-series length used as the window size.
+
+        diff_order : int, optional (default=1)
+            Order of differentiation. If this argument get a value of 0 or
+            less, then no differentiation will be performed.
+
+        diff_lag : int, optional (default=1)
+            Lag of each differentiation (among the moving statistics). If
+            a value lower than 1 is given, then it is assumed lag 1.
+
+        abs_value : bool, optional (default=True)
+            If True, return the absolute value of the result.
+
+        remove_nan : bool, optional (default=True)
+            If True, remove `nan` values from the ``stat_func`` results
+            before any post-processing.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
+            Configured rolling window. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Post-processed moving geometric mean from overlapping windows in
+            time-series values.
+        """
         rolling_stat_shift = cls._moving_stat_shift(
             ts=ts,
             stat_func=cls.ft_moving_gmean,
@@ -953,7 +1206,42 @@ class MFETSLocalStats:
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Moving Kullback-Leibler divergence of overlapping windows.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        window_size : int or float, optional (default=0.1)
+            Size of the window. Must be strictly positive.
+            If int >= 1, this argument defines the window size.
+            If 0 < float < 1, this argument defines the fraction of the
+            time-series length used as the window size.
+
+        remove_inf : bool, optional (default=True)
+            If True, remove infinities that may be possibly generated during
+            the Kullback-Leibler divergence calculation, before any other
+            post-processing.
+
+        remove_nan : bool, optional (default=True)
+            If True, remove `nan` values from the ``stat_func`` results
+            before any post-processing.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
+            Configured rolling window. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Moving Kullback-Leibler divergence from overlapping windows in
+            time-series values.
+        """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         window_size = _utils.process_window_size(ts=ts_scaled,
@@ -990,7 +1278,53 @@ class MFETSLocalStats:
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Abs. diff. mov. Kullback-Leibler divergence of overlapping windows.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        window_size : int or float, optional (default=0.1)
+            Size of the window. Must be strictly positive.
+            If int >= 1, this argument defines the window size.
+            If 0 < float < 1, this argument defines the fraction of the
+            time-series length used as the window size.
+
+        diff_order : int, optional (default=1)
+            Order of differentiation. If this argument get a value of 0 or
+            less, then no differentiation will be performed.
+
+        diff_lag : int, optional (default=1)
+            Lag of each differentiation (among the moving statistics). If
+            a value lower than 1 is given, then it is assumed lag 1.
+
+        abs_value : bool, optional (default=True)
+            If True, return the absolute value of the result.
+
+        remove_inf : bool, optional (default=True)
+            If True, remove infinities that may be possibly generated during
+            the Kullback-Leibler divergence calculation, before any other
+            post-processing.
+
+        remove_nan : bool, optional (default=True)
+            If True, remove `nan` values from the ``stat_func`` results
+            before any post-processing.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
+            Configured rolling window. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Post-processed moving Kullback-Leibler divergence from overlapping
+            windows in time-series values.
+        """
         rolling_stat = cls.ft_moving_kldiv(ts=ts,
                                            window_size=window_size,
                                            remove_nan=remove_nan,
@@ -1010,13 +1344,53 @@ class MFETSLocalStats:
         cls,
         ts: np.ndarray,
         window_size: t.Union[int, float] = 0.1,
-        dist: str = "norm",
+        distribution: str = "norm",
         return_pval: bool = False,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Moving Lilliefors test of overlapping windows.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        window_size : int or float, optional (default=0.1)
+            Size of the window. Must be strictly positive.
+            If int >= 1, this argument defines the window size.
+            If 0 < float < 1, this argument defines the fraction of the
+            time-series length used as the window size.
+
+        distribution : {`norm`, `exp`}, optional (default="norm")
+            Distribution assumed by the Lilliefors test. Must be either
+            `norm` (normal/gaussian distribution) or `exp` (exponential
+            distribution).
+
+        return_pval : bool, optional (default=False)
+            If True, return the Lilliefors test p-value instead of the
+            statistic value.
+
+        remove_nan : bool, optional (default=True)
+            If True, remove `nan` values from the ``stat_func`` results
+            before any post-processing.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
+            Configured rolling window. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            If `return_pval` is False, moving Lilliefors test from overlapping
+            windows in time-series values. If `return_pval` is True, each test
+            statistic is replaced by its correspondent p-value.
+        """
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
@@ -1024,7 +1398,7 @@ class MFETSLocalStats:
 
         rolling_stat = ts_rol_win.apply(
             stat_tests.MFETSStatTests.ft_test_lilliefors,
-            kwargs=dict(dist=dist, return_pval=return_pval))
+            kwargs=dict(distribution=distribution, return_pval=return_pval))
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
@@ -1153,10 +1527,6 @@ def _test() -> None:
     ts = ts.to_numpy()
 
     res = MFETSLocalStats.ft_moving_lilliefors(ts)
-    print(res)
-    exit(1)
-
-    res = MFETSLocalStats.ft_rand_samp_std(ts)
     print(res)
     exit(1)
 

@@ -184,9 +184,9 @@ class MFETSGlobalStats:
             |3       | Skew_3 = m_3 / s**3 = Skew_1 ((n-1)/n)**(3/2) |
             +--------+-----------------------------------------------+
 
-            Where `n` is the number of instances in ``N``, `s` is the standard
-            deviation of each attribute in ``N``, and `m_i` is the ith
-            statistical momentum of each attribute in ``N``.
+            Where `n` is the number of instances in ``ts``, `s` is the standard
+            deviation of each attribute in ``ts``, and `m_i` is the ith
+            statistical momentum of each attribute in ``ts``.
 
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
@@ -269,9 +269,9 @@ class MFETSGlobalStats:
             |        |        = ((Kurt_1+3) * (1 - 1/n)**2 - 3)      |
             +--------+-----------------------------------------------+
 
-            Where `n` is the number of instances in ``N``, `s` is the standard
-            deviation of each attribute in ``N``, and `m_i` is the ith
-            statistical momentum of each attribute in ``N``.
+            Where `n` is the number of instances in ``ts``, `s` is the standard
+            deviation of each attribute in ``ts``, and `m_i` is the ith
+            statistical momentum of each attribute in ``ts``.
 
             Note that if the selected method is unable to be calculated due
             to division by zero, then the first method is used instead.

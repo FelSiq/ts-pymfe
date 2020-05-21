@@ -188,6 +188,27 @@ class MFETSRandomize:
 
         return res
 
+    @classmethod
+    def ft_rand_samp_std(
+            cls,
+            ts: np.ndarray,
+            num_samples: int = 64,
+            sample_size_frac: float = 0.1,
+            ddof: int = 1,
+            random_state: t.Optional[int] = None,
+            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        sample_std = _utils.apply_on_samples(ts=ts_scaled,
+                                             func=np.std,
+                                             num_samples=num_samples,
+                                             sample_size_frac=sample_size_frac,
+                                             random_state=random_state,
+                                             ddof=ddof)
+
+        return sample_std
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
@@ -205,6 +226,9 @@ def _test() -> None:
     print(res)
 
     res = MFETSRandomize.ft_randomize_acf(ts, random_state=16)
+    print(res)
+
+    res = MFETSRandomize.ft_rand_samp_std(ts, random_state=16)
     print(res)
 
 
