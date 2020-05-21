@@ -260,8 +260,8 @@ class MFETSLocalStats:
             time-series length used as the window size.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -322,8 +322,8 @@ class MFETSLocalStats:
             If True, return the absolute value of the result.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -338,6 +338,22 @@ class MFETSLocalStats:
         :obj:`np.ndarray`
             Post-processed moving average from overlapping windows in
             time-series values.
+
+        References
+        ----------
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
         rolling_stat_shift = cls._moving_stat_shift(
             ts=ts,
@@ -379,8 +395,8 @@ class MFETSLocalStats:
             Degrees of freedom for the variance calculation.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -394,6 +410,22 @@ class MFETSLocalStats:
         -------
         :obj:`np.ndarray`
             Moving variance from overlapping windows in time-series values.
+
+        References
+        ----------
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
@@ -445,8 +477,8 @@ class MFETSLocalStats:
             If True, return the absolute value of the result.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -461,6 +493,22 @@ class MFETSLocalStats:
         :obj:`np.ndarray`
             Post-processed moving variance from overlapping windows in
             time-series values.
+
+        References
+        ----------
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
         rolling_stat_shift = cls._moving_stat_shift(
             ts=ts,
@@ -503,8 +551,8 @@ class MFETSLocalStats:
             Degrees of freedom for the standard deviation calculation.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -570,8 +618,8 @@ class MFETSLocalStats:
             If True, return the absolute value of the result.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -651,8 +699,8 @@ class MFETSLocalStats:
             If True, then the calculations are corrected for statistical bias.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -743,8 +791,8 @@ class MFETSLocalStats:
             If True, return the absolute value of the result.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -828,8 +876,8 @@ class MFETSLocalStats:
             If True, then the calculations are corrected for statistical bias.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -922,8 +970,8 @@ class MFETSLocalStats:
             If True, return the absolute value of the result.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -981,8 +1029,8 @@ class MFETSLocalStats:
             If True, then the calculations are corrected for statistical bias.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -1050,8 +1098,8 @@ class MFETSLocalStats:
             If True, return the absolute value of the result.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -1104,8 +1152,8 @@ class MFETSLocalStats:
             time-series length used as the window size.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -1167,8 +1215,8 @@ class MFETSLocalStats:
             If True, return the absolute value of the result.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -1225,8 +1273,8 @@ class MFETSLocalStats:
             post-processing.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -1241,6 +1289,22 @@ class MFETSLocalStats:
         :obj:`np.ndarray`
             Moving Kullback-Leibler divergence from overlapping windows in
             time-series values.
+
+        References
+        ----------
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
@@ -1308,8 +1372,8 @@ class MFETSLocalStats:
             post-processing.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -1324,6 +1388,22 @@ class MFETSLocalStats:
         :obj:`np.ndarray`
             Post-processed moving Kullback-Leibler divergence from overlapping
             windows in time-series values.
+
+        References
+        ----------
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
         rolling_stat = cls.ft_moving_kldiv(ts=ts,
                                            window_size=window_size,
@@ -1373,8 +1453,8 @@ class MFETSLocalStats:
             statistic value.
 
         remove_nan : bool, optional (default=True)
-            If True, remove `nan` values from the ``stat_func`` results
-            before any post-processing.
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
 
         ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
@@ -1390,6 +1470,18 @@ class MFETSLocalStats:
             If `return_pval` is False, moving Lilliefors test from overlapping
             windows in time-series values. If `return_pval` is True, each test
             statistic is replaced by its correspondent p-value.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
         """
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
@@ -1412,12 +1504,73 @@ class MFETSLocalStats:
         threshold: float = 0.2,
         metric: str = "chebyshev",
         p: t.Union[int, float] = 2,
-        return_pval: bool = False,
         remove_nan: bool = True,
         ts_scaled: t.Optional[np.ndarray] = None,
         ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Moving approximate entropy of overlapping windows.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        window_size : int or float, optional (default=0.1)
+            Size of the window. Must be strictly positive.
+            If int >= 1, this argument defines the window size.
+            If 0 < float < 1, this argument defines the fraction of the
+            time-series length used as the window size.
+
+        embed_dim : int, optional (default=2)
+            Embedding dimension to calculate the approximate entropy.
+
+        embed_lag : int, optional (default=1)
+            Embedding lag to calculate the approximate entropy.
+
+        threshold : float, optional (default=0.2)
+            Threshold for the radius nearest neighbors while calculating
+            the approximate entropy.
+
+        metric : str, optional (default="chebyshev")
+            Metric used in the radius nearest neighbors of the approximate
+            entropy. Check `scipy.spatial.distance.pdist` documentation for
+            the complete list of available distance metrics.
+
+        p : int or float, optional (default=2)
+            Power argument for the Minkowski metric (used only if metric is
+            `minkowski`).
+
+        remove_nan : bool, optional (default=True)
+            If True, remove `nan` values that may be generated while collecting
+            the rolling statistics before any post-processing.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_rol_win : :obj:`pd.core.window.rolling.Rolling`, optional
+            Configured rolling window. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            If `return_pval` is False, moving approximate entropy from overlapping
+            windows in time-series values. If `return_pval` is True, each test
+            statistic is replaced by its correspondent p-value.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
@@ -1439,7 +1592,49 @@ class MFETSLocalStats:
                      num_tiles: int = 16,
                      ddof: int = 1,
                      ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Lumpiness (the non-overlapping rolling variance) of the time-series.
+
+        Originally, this meta-feature is calculated using the variance of the
+        value returned by this method. However, to enable other types of
+        summarization, here we return all the tilled statistic values.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_tiles : int, optional (default=16)
+            Number of non-overlapping windows in the time-series to extract
+            the local statistic.
+
+        ddof : int, optional (default=1)
+            Degrees of freedom for the local variances.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Non-overlapping rolling variance of time-series.
+
+        References
+        ----------
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
+        """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         tilled_vars = _utils.apply_on_tiles(ts=ts_scaled,
@@ -1457,7 +1652,41 @@ class MFETSLocalStats:
                      ts: np.ndarray,
                      num_tiles: int = 16,
                      ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Stability (the non-overlapping rolling mean) of the time-series.
+
+        Originally, this meta-feature is calculated using the variance of the
+        value returned by this method. However, to enable other types of
+        summarization, here we return all the tilled statistic values.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_tiles : int, optional (default=16)
+            Number of non-overlapping windows in the time-series to extract
+            the local statistic.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Non-overlapping rolling mean of time-series.
+
+        References
+        ----------
+        .. [1] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+
+        .. [2] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
+        """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         tilled_means = _utils.apply_on_tiles(ts=ts_scaled,
@@ -1473,12 +1702,46 @@ class MFETSLocalStats:
     def ft_spikiness(cls,
                      ts_residuals: np.ndarray,
                      ddof: int = 1) -> np.ndarray:
-        """TODO."""
+        """Spikiness of the time-series residuals.
+
+        The spikiness of the time-series residuals is the variance of the
+        variance with jackknife resampling (leave-one-out) on the residuals.
+        Here, in order to enable other times of summarization, we return all
+        the `jackknifed` variances.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        ddof : int, optional (default=1)
+            Degrees of freedom to calculate the variances.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Spikiness of the time-series residuals.
+
+        References
+        ----------
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
+        """
         vars_ = np.array([
             np.var(np.delete(ts_residuals, i), ddof=ddof)
             for i in np.arange(ts_residuals.size)
-        ],
-                         dtype=float)
+        ])
 
         # Note: on the original reference paper, the spikiness is calculated
         # as the variance of the 'vars_'. However, to enable summarization,
@@ -1491,7 +1754,42 @@ class MFETSLocalStats:
             ts: np.ndarray,
             num_tiles: int = 16,
             ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Non-overlapping rolling windows local extrema of the time-series.
+
+        The local extrema is the more extreme observation within a window, and
+        it could be either the local minimum or local maximum (whichever have
+        the largest absolute value).
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_tiles : int, optional (default=16)
+            Number of non-overlapping windows in the time-series to extract
+            the local statistic.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Non-overlapping rolling local extrema of time-series.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         def get_extreme_val(tile: np.ndarray) -> float:
@@ -1510,7 +1808,40 @@ class MFETSLocalStats:
                        ts: np.ndarray,
                        num_tiles: int = 16,
                        ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Non-overlapping rolling windows range of the time-series.
+
+        The local range is the local maximum minus the local minimum.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_tiles : int, optional (default=16)
+            Number of non-overlapping windows in the time-series to extract
+            the local statistic.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Non-overlapping rolling range of time-series.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         tilled_range = _utils.apply_on_tiles(ts=ts_scaled,

@@ -692,7 +692,15 @@ class MFETSGeneral:
 
         References
         ----------
-        .. [1] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
             1, 2020, Pages 86-92, ISSN 0169-2070,
@@ -771,7 +779,10 @@ class MFETSGeneral:
 
         References
         ----------
-        .. [1] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+        .. [1] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+
+        .. [2] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
             1, 2020, Pages 86-92, ISSN 0169-2070,
@@ -837,7 +848,15 @@ class MFETSGeneral:
 
         References
         ----------
-        .. [1] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
             1, 2020, Pages 86-92, ISSN 0169-2070,
@@ -897,7 +916,15 @@ class MFETSGeneral:
 
         References
         ----------
-        .. [1] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
             1, 2020, Pages 86-92, ISSN 0169-2070,
