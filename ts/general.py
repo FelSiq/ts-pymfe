@@ -111,7 +111,7 @@ class MFETSGeneral:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        ts_period : int, optional (default = None)
+        ts_period : int, optional
             Time-series period. Used to take advantage of precomputations.
 
         Returns
@@ -254,8 +254,8 @@ class MFETSGeneral:
                 metric: str = "minkowski",
                 p: t.Union[int, float] = 2,
                 ddof: int = 1,
-                max_nlags: t.Optional[int] = None,
                 lag: t.Optional[t.Union[int, str]] = None,
+                max_nlags: t.Optional[int] = None,
                 ts_acfs: t.Optional[np.ndarray] = None,
                 ts_ami: t.Optional[np.ndarray] = None,
                 ts_scaled: t.Optional[np.ndarray] = None) -> float:
@@ -294,12 +294,7 @@ class MFETSGeneral:
             of the implemented meta-feature. Check references for in-depth
             information.)
 
-        max_nlags : int, (default = None)
-            If ``lag`` is not a numeric value, than it will be estimated using
-            either the time-series autocorrelation or mutual information
-            function estimated up to this argument value.
-
-        lag : int or str, (default = None)
+        lag : int or str,
             Lag of the time-series embedding. It must be a strictly positive
             value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
             last two type of options, the lag is estimated within this method
@@ -313,20 +308,25 @@ class MFETSGeneral:
                 3. `ami`: lag corresponds to the first local minimum of the
                     time-series automutual information function.
 
-        ts_acfs : :obj:`np.ndarray`, (default = None)
+        max_nlags : int,
+            If ``lag`` is not a numeric value, than it will be estimated using
+            either the time-series autocorrelation or mutual information
+            function estimated up to this argument value.
+
+        ts_acfs : :obj:`np.ndarray`,
             Array of time-series autocorrelation function (for distinct ordered
             lags). Used only if ``lag`` is either `acf`, `acf-nonsig` or None.
             If this argument is not given and the previous condiditon is meet,
             the autocorrelation function will be calculated inside this method
             up to ``max_nlags``.
 
-        ts_ami : :obj:`np.ndarray`, (default = None)
+        ts_ami : :obj:`np.ndarray`,
             Array of time-series automutual information function (for distinct
             ordered lags). Used only if ``lag`` is `ami`. If not given and the
             previous condiditon is meet, the automutual information function
             will be calculated inside this method up to ``max_nlags``.
 
-        ts_scaled : :obj:`np.ndarray`, (default = None)
+        ts_scaled : :obj:`np.ndarray`,
             Standardized time-series values. Used to take advantage of
             precomputations.
 
@@ -343,7 +343,7 @@ class MFETSGeneral:
             New York, NY: John Wiley & Sons, Ltd.
         .. [2] Gautama T, Mandic DP, Hulle MMV. 2004. The delay vector variance
             method for detecting determinism and nonlinearity in time series.
-            Physica D 190, 167–176. 
+            Physica D 190, 167–176.
         .. [3] Gautama T, Hulle MMV, Mandic DP. 2004. On the characterisation
             of the deterministic/stochastic and linear/nonlinear nature of time
             series. Technical Report DPM-04-05. Imperial College London.
@@ -415,7 +415,7 @@ class MFETSGeneral:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        threshold : int or float, optional (default = None)
+        threshold : int or float, optional
             Threshold to define the horizontal line in the form y = threshold.
             If None, the threshold will default to the time-series median.
 
@@ -423,7 +423,7 @@ class MFETSGeneral:
             If True, return the fraction of actual crosses over all possible
             crosses. If False, return the number of crosses.
 
-        ts_scaled : :obj:`np.ndarray`, (default = None)
+        ts_scaled : :obj:`np.ndarray`,
             Standardized time-series values. Used to take advantage of
             precomputations.
 
@@ -459,7 +459,7 @@ class MFETSGeneral:
         Returns
         -------
         :obj:`np.ndarray`
-            Binary array with the time-series length, marking with `1` 
+            Binary array with the time-series length, marking with `1`
             observations above or equal the mean value, and `0` otherwise.
         """
         return (ts >= np.mean(ts)).astype(int)
@@ -535,7 +535,7 @@ class MFETSGeneral:
         ts_season : :obj:`np.ndarray`
             One-dimensional time-series seasonal component values.
 
-        ts_period : int, optional (default = None)
+        ts_period : int, optional
             Period of the time series. If None, the period will be estimated
             as the lag corresponding to the absolute maximum of the time-series
             autocorrelation function.
@@ -587,7 +587,7 @@ class MFETSGeneral:
         ts_season : :obj:`np.ndarray`
             One-dimensional time-series seasonal component values.
 
-        ts_period : int, optional (default = None)
+        ts_period : int, optional
             Period of the time series. If None, the period will be estimated
             as the lag corresponding to the absolute maximum of the time-series
             autocorrelation function.
@@ -625,7 +625,47 @@ class MFETSGeneral:
                        relative_dist: bool = True,
                        walker_path: t.Optional[np.ndarray] = None,
                        ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Path of a particle attracted by the time-series values.
+
+        Simulate a particle, starting from ``start_point``, which follows the
+        current time-series value with ``step_size`` attractive strength.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        step_size : float, optional (default = 0.1)
+            Strength of the attractive force. In each time step, the particle
+            position will be a weighted average of its previous position, with
+            weight (1 - ``step_size``), and the current time-series value, with
+            weight ``step_size``.
+
+        start_point : int or float, optional
+            Particle starting position. If None, will start at `0` (which is
+            the mean value of the standardized time-series values).
+
+        relative_dist : bool, optional (default = True)
+            If True, return the distance of the particle to the current value
+            of the time-series for each time-step. If False, then return the
+            particle position in each time step.
+
+        walker_path : :obj:`np.ndarray`, optional
+            The position of a particle attracted by the current time-series
+            value. Used to take advantage of precomputations.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            If `relative_dist` is True, the distance of the particle to the
+            current value of the time-series for each time-step. Otherwise, if
+            `relative_dist` is False, then return the particle position in each
+            time step.
+        """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         if walker_path is None:
@@ -647,7 +687,49 @@ class MFETSGeneral:
             normalize: bool = True,
             walker_path: t.Optional[np.ndarray] = None,
             ts_scaled: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
-        """TODO."""
+        """Fraction of crosses by a particle attracted by the time-series.
+
+        Simulate a particle, starting from ``start_point``, which follows the
+        current time-series value with ``step_size`` attractive strength, and
+        then return the fraction of crosses between the particle position
+        transitions and the time-series values transitions.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        step_size : float, optional (default = 0.1)
+            Strength of the attractive force. In each time step, the particle
+            position will be a weighted average of its previous position, with
+            weight (1 - ``step_size``), and the current time-series value, with
+            weight ``step_size``.
+
+        start_point : int or float, optional
+            Particle starting position. If None, will start at `0` (which is
+            the mean value of the standardized time-series values).
+
+        normalize : bool, optional (default = True)
+            If True, normalize the number of crosses by the maximum possible
+            number of crosses (len(ts) - 1). If false, return the number of
+            crosses.
+
+        walker_path : :obj:`np.ndarray`, optional
+            The position of a particle attracted by the current time-series
+            value. Used to take advantage of precomputations.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            If `normalize` is True, return the fraction of crosses between
+            the time-series values transitions and the particle position
+            transitions over the total possible crosses. If `normalize` is
+            False, then return the crosses number.
+        """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         if walker_path is None:
@@ -664,13 +746,52 @@ class MFETSGeneral:
         return cross_num
 
     @classmethod
-    def ft_moving_threshold(cls,
-                            ts: np.ndarray,
-                            rate_absorption: float = 0.1,
-                            rate_decay: float = 0.1,
-                            ts_scaled: t.Optional[np.ndarray] = None,
-                            relative: bool = False) -> np.ndarray:
-        """TODO."""
+    def ft_moving_threshold(
+            cls,
+            ts: np.ndarray,
+            rate_absorption: float = 0.1,
+            rate_decay: float = 0.1,
+            relative: bool = False,
+            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """Simulate a dynamic threshold based on the time-series values.
+
+        The threshold is run over the absolute values of the standardize
+        time-series T. Each time the current value of T surpasses the current
+        threshold value V, it absorbs a fraction (``rate_absorption``) of the
+        current T value. Otherwise, T decays at ``rate_decay``.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        rate_absorption : float, optional (default = 0.1)
+            Rate of absorption of the current time-series absolute value
+            when it surpasses the current threshold value. Must be a value
+            in (0, 1) range.
+
+        rate_decay : float, optional (default = 0.1)
+            Rate of decay of the threshold when the current time-series
+            absolute value is not higher than the current threshold value.
+            Must be a value in (0, 1) range.
+
+        relative : bool, optional (default = False)
+            If True, this method will return the threshold values subtracted by
+            the current scaled time-series absolute values. Therefore, the
+            return value is the threshold value relative to the time-series
+            (absolute) value.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            If `relative` is False, return the obtained threshold values for
+            each time step. If `relative` is True, return the threshold values
+            with the time-series absolute values subtracted.
+        """
         if not 0 < rate_decay < 1:
             raise ValueError("'rate_decay' must be in (0, 1) (got {})."
                              "".format(rate_decay))
@@ -713,7 +834,74 @@ class MFETSGeneral:
             ts_acfs: t.Optional[np.ndarray] = None,
             ts_ami: t.Optional[np.ndarray] = None,
             ts_scaled: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
-        """TODO."""
+        """Fraction of embedded time-series observations inside a hypershell.
+
+        The hypershell is defined as the region between (and including the
+        surface of) a hypersphere of radius R and a second hypersphere of
+        radius r (also including its surface region), R > r.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        radii : tuple of floats, optional (default = (0, 1))
+            Tuple with the radii of both hyperspheres, in the form `(r, R)`
+            with `r` being the radius of the inner (smaller) hypersphere and
+            `R` being the radius of the outer (larger) hypersphere. `R` must
+            be stricly positive while `r` must be non-negative. Also, `R`
+            must be strictly larger than `r`.
+
+        embed_dim : int, optional (default = 2)
+            The embedding dimension.
+
+        lag : int or str,
+            Lag of the time-series embedding. It must be a strictly positive
+            value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
+            last two type of options, the lag is estimated within this method
+            using the given strategy method (or, if None, it is used the
+            strategy `acf-nonsig` by default) up to ``max_nlags``.
+                1. `acf`: the lag corresponds to the first non-positive value
+                    in the autocorrelation function.
+                2. `acf-nonsig`: lag corresponds to the first non-significant
+                    value in the autocorrelation function (absolute value below
+                    the critical value of 1.96 / sqrt(ts.size)).
+                3. `ami`: lag corresponds to the first local minimum of the
+                    time-series automutual information function.
+
+        normalize : bool, optional (default = True)
+            If True, return the fraction of the points inside the hypershell.
+            If False, return the number of points inside the hypershell.
+
+        max_nlags : int,
+            If ``lag`` is not a numeric value, than it will be estimated using
+            either the time-series autocorrelation or mutual information
+            function estimated up to this argument value.
+
+        ts_acfs : :obj:`np.ndarray`,
+            Array of time-series autocorrelation function (for distinct ordered
+            lags). Used only if ``lag`` is either `acf`, `acf-nonsig` or None.
+            If this argument is not given and the previous condiditon is meet,
+            the autocorrelation function will be calculated inside this method
+            up to ``max_nlags``.
+
+        ts_ami : :obj:`np.ndarray`,
+            Array of time-series automutual information function (for distinct
+            ordered lags). Used only if ``lag`` is `ami`. If not given and the
+            previous condiditon is meet, the automutual information function
+            will be calculated inside this method up to ``max_nlags``.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        int or float
+            if `normalize` is True, return the fraction of the points inside
+            the hypershell. If `normalize` is False, return the number of
+            points inside the hypershell.
+        """
         radius_inner, radius_outer = radii
 
         if radius_inner < 0:
@@ -723,6 +911,10 @@ class MFETSGeneral:
         if radius_outer <= 0:
             raise ValueError("Outer radius must be positive (got {})."
                              "".format(radius_outer))
+
+        if radius_outer <= radius_inner:
+            raise ValueError("Outer radius ({}) must be higher than the inner "
+                             "radius ({}).".format(radius_outer, radius_inner))
 
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
