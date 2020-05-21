@@ -147,14 +147,17 @@ class MFETSGeneral:
         -------
         dict
             The following precomputed items are returned:
-                * ``ts_scaled`` (:obj:`np.ndarray`): standardized time-series
-                    values (z-score).
-                * ``lag`` (int): estimative of the adequate embedding lag of
-                    the time-series values.
                 * ``emb_dim_cao_e1`` (:obj:`np.ndarray`): E1 values of the
                     Cao's method for all given dimensions.
                 * ``emb_dim_cao_e2`` (:obj:`np.ndarray`): E2 values of the
                     Cao's method for all given dimensions.
+
+            The following items are necessary and, therefore, also precomputed
+            if necessary:
+                * ``ts_scaled`` (:obj:`np.ndarray`): standardized time-series
+                    values (z-score).
+                * ``lag`` (int): estimative of the adequate embedding lag of
+                    the time-series values.
 
         References
         ----------
