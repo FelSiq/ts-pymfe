@@ -1,3 +1,4 @@
+"""Utility functions used ubiquitously over this library source code."""
 import typing as t
 import operator
 
@@ -28,7 +29,17 @@ def apply_on_tiles(ts: np.ndarray, num_tiles: int,
 
 def process_window_size(ts: np.ndarray, window_size: t.Union[float,
                                                              int]) -> int:
-    """TODO."""
+    """Standardize rolling window sizes.
+
+    The following steps are made in this method:
+        1. Check if window size is stricly positive (otherwise, raise a
+            ValueError exception).
+        2. If 0 < window_size < 1, transform it to the corresponding integer
+            size, based on the ``ts`` length. Otherwise, set window_size to
+            min(len(ts), window_size).
+        3. Force window_size be an odd value, to keep the reference window
+            value at the center of the window.
+    """
     if window_size <= 0:
         raise ValueError("'window_size' must be positive (got {})."
                          "".format(window_size))
@@ -73,8 +84,11 @@ def get_rolling_window(
 ) -> pd.core.window.rolling.Rolling:
     """Apply a function on time-series rolling (overlapping) windows.
 
-    If ``center`` is True, then each rolling window is centered at the
-    central instance rather than the initial instance.
+    If ``center`` is True, then each rolling window is centered at the central
+    instance rather than the initial instance.
+
+    If ``scaled`` is True, the time-series will be standardized before the
+    rolling window is built (or ``ts_scaled`` will be used, if not None).
     """
     window_size = process_window_size(ts=ts, window_size=window_size)
 
@@ -130,7 +144,12 @@ def smape(arr_a: np.ndarray,
 def sample_data(ts: np.ndarray,
                 lm_sample_frac: float,
                 X: t.Optional[np.ndarray] = None) -> np.ndarray:
-    """Select ``lm_sample_frac`` percent of data from ``ts``."""
+    """Select ``lm_sample_frac`` percent of data from ``ts``.
+
+    ``X`` is any array of values associated to each ``ts`` observation, and
+    will be sampled alongside it (mantaining the index correspondence) if
+    given. Tipically, ``X`` is the timestamps of each ``ts`` observation.
+    """
     threshold = int(np.ceil(ts.size * lm_sample_frac))
 
     if threshold >= ts.size:
@@ -140,14 +159,19 @@ def sample_data(ts: np.ndarray,
         return ts
 
     if X is not None:
-        return ts[:threshold], X[:threshold, :]
+        return ts[:threshold], X[:threshold]
 
     return ts[:threshold]
 
 
 def find_plateau_pt(arr: np.ndarray,
                     arr_diff: t.Optional[np.ndarray] = None) -> np.ndarray:
-    """Find plateau points in array."""
+    """Find plateau points in array.
+
+    ``arr_diff`` is the first-order differenced ``arr``, which can be
+    passed to speed up this computation since this value is needed within
+    this function.
+    """
     if arr_diff is None:
         arr_diff = np.diff(arr)
 
@@ -338,7 +362,41 @@ def apply_on_samples(ts: np.ndarray,
                      sample_size_frac: float = 0.2,
                      random_state: t.Optional[int] = None,
                      **kwargs) -> np.ndarray:
-    """TODO."""
+    """Apply ``func`` on time-series random samples.
+
+    The samples are ``num_samples`` consecutive observations from the
+    time-series, starting from random positions.
+
+    Parameters
+    ----------
+    ts : :obj:`np.ndarray`
+        One-dimensional time-series values.
+
+    func : callable
+        Function to apply on each sample. Must receive an list of numeric
+        values as argument and return a single numeric valud.
+
+    num_samples : int, optional (default=128)
+        Number of samples. If zero or less, a empty array will be returned.
+
+    sample_size_frac : float, optional (default=0.2)
+        Size of each sample as a fraction of the size of the original
+        time-series. Must be in (0, 1) range.
+
+    random_state : int, optional
+        Random seed to ensure reproducibility.
+
+    kwargs:
+        Extra arguments to ``func``.
+
+    Returns
+    -------
+    :obj:`np.ndarray`
+        ``func`` values from each time-series sample.
+    """
+    if num_samples <= 0:
+        return np.empty(0)
+
     if not 0 < sample_size_frac < 1:
         raise ValueError("'sample_size_frac' must be in (0, 1) "
                          "range (got {}).".format(sample_size_frac))
@@ -351,12 +409,8 @@ def apply_on_samples(ts: np.ndarray,
 
     res = np.array([
         func(ts[s_ind:s_ind + sample_size], **kwargs) for s_ind in start_inds
-    ],
-                   dtype=float)
+    ])
 
-    # Note: the original metafeatures are the mean value of
-    # 'result'. However, to enable summarization,
-    # here we return all the values.
     return res
 
 
@@ -364,7 +418,29 @@ def discretize(ts: np.ndarray,
                num_bins: int,
                strategy: str = "equal-width",
                dtype: t.Type = int) -> np.ndarray:
-    """Discretize a time-series."""
+    """Discretize a time-series using a histogram.
+
+    Parameters
+    ----------
+    ts : :obj:`np.ndarray`
+        One-dimensional time-series values.
+
+    num_bins : int
+        Number of bins in the histogram.
+
+    strategy : {`equal-width`,`equiprobable`}, optional (default="equal-width")
+            Strategy used to define the histogram bins. Must be either
+            `equal-width` (bins with equal with) or `equiprobable` (bins
+            with the same amount of observations within).
+
+    dtype : type, optional (default=int)
+        Output type of the discretized time-series.
+
+    Returns
+    -------
+    :obj:`np.ndarray`
+        Discretized time-series with the selected strategy.
+    """
     VALID_METHODS = {"equal-width", "equiprobable"}
 
     if strategy not in VALID_METHODS:
