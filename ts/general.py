@@ -18,6 +18,92 @@ import _get_data
 
 class MFETSGeneral:
     """Extract time-series meta-features from General group."""
+    @classmethod
+    def precompute_ts_scaled(cls,
+                             ts: np.ndarray,
+                             ts_scaled: t.Optional[np.ndarray] = None,
+                             **kwargs) -> t.Dict[str, np.ndarray]:
+        """TODO."""
+        precomp_vals = {}  # type: t.Dict[str, np.ndarray]
+
+        if ts_scaled is None:
+            precomp_vals["ts_scaled"] = _utils.standardize_ts(ts=ts)
+
+        return precomp_vals
+
+    @classmethod
+    def precompute_period(cls,
+                          ts: np.ndarray,
+                          ts_period: t.Optional[int] = None,
+                          **kwargs) -> t.Dict[str, int]:
+        """TODO."""
+        precomp_vals = {}  # type: t.Dict[str, int]
+
+        if ts_period is not None:
+            precomp_vals["ts_period"] = cls.ft_period(ts=ts)
+
+        return precomp_vals
+
+    @classmethod
+    def precompute_embed_caos_method(cls,
+                                     ts: np.ndarray,
+                                     dims: t.Union[int, t.Sequence[int]] = 16,
+                                     lag: t.Optional[t.Union[str, int]] = None,
+                                     max_nlags: t.Optional[int] = None,
+                                     ts_scaled: t.Optional[np.ndarray] = None,
+                                     ts_acfs: t.Optional[np.ndarray] = None,
+                                     ts_ami: t.Optional[np.ndarray] = None,
+                                     emb_dim_cao_e1: t.Optional[
+                                         np.ndarray] = None,
+                                     **kwargs) -> t.Dict[str, np.ndarray]:
+        """TODO."""
+        precomp_vals = {}  # type: t.Dict[str, np.ndarray]
+
+        if ts_scaled is None:
+            precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
+            ts_scaled = precomp_vals["ts_scaled"]
+
+        if lag is None or isinstance(lag, str):
+            lag = _embed.embed_lag(ts=ts_scaled,
+                                   ts_acfs=ts_acfs,
+                                   ts_ami=ts_ami,
+                                   max_nlags=max_nlags)
+
+            precomp_vals["lag"] = lag
+
+        if emb_dim_cao_e1 is None:
+            emb_dim_cao_e1, emb_dim_cao_e2 = _embed.embed_dim_cao(
+                ts=ts, ts_scaled=ts_scaled, dims=dims, lag=lag)
+
+            precomp_vals["emb_dim_cao_e1"] = emb_dim_cao_e1
+            precomp_vals["emb_dim_cao_e2"] = emb_dim_cao_e2
+
+        return precomp_vals
+
+    @classmethod
+    def precompute_walker(cls,
+                          ts: np.ndarray,
+                          step_size: float = 0.1,
+                          start_point: t.Optional[t.Union[int, float]] = None,
+                          walker_path: t.Optional[np.ndarray] = None,
+                          ts_scaled: t.Optional[np.ndarray] = None,
+                          **kwargs) -> t.Dict[str, np.ndarray]:
+        """TODO."""
+        precomp_vals = {}  # type: t.Dict[str, np.ndarray]
+
+        if walker_path not in kwargs:
+            if ts_scaled is None:
+                precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
+                ts_scaled = precomp_vals["ts_scaled"]
+
+            walker_path = cls._ts_walker(ts=ts_scaled,
+                                         step_size=step_size,
+                                         start_point=start_point)
+
+            precomp_vals["walker_path"] = walker_path
+
+        return precomp_vals
+
     @staticmethod
     def _calc_season_mode_ind(ts_season: np.ndarray, ts_period: int,
                               indfunc: t.Callable[[np.ndarray], float]) -> int:
@@ -74,10 +160,6 @@ class MFETSGeneral:
         -------
         int
             Length of the time-seties.
-
-        References
-        ----------
-        TODO.
         """
         return ts.size
 
@@ -90,7 +172,7 @@ class MFETSGeneral:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        order : int, optional (default = 1)
+        order : int, optional (default=1)
             Order of differentiation.
 
         Returns
@@ -187,7 +269,7 @@ class MFETSGeneral:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        ddof : float, optional (default = 1)
+        ddof : float, optional (default=1)
             Degrees of freedom for standard deviation.
 
         Returns
@@ -229,7 +311,7 @@ class MFETSGeneral:
         ts_trend : :obj:`np.ndarray`
             One-dimensional time-series trend values.
 
-        ddof : float, optional (default = 1)
+        ddof : float, optional (default=1)
             Degrees of freedom for standard deviation.
 
         Returns
@@ -266,35 +348,35 @@ class MFETSGeneral:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        embed_dim : int, optional (default = 2)
+        embed_dim : int, optional (default=2)
             Dimension of the time-series embedding.
 
-        std_range : int or float, optional (default = 3)
+        std_range : int or float, optional (default=3)
             Number of standard deviations in range of the delay vector
             variance analysis (around the mean value).
 
-        num_spacing : int, optional (default = 4)
+        num_spacing : int, optional (default=4)
             Controls how fine is the spacing between the analysed values
             within the analysed range. The greater this parameter is, the
             less is the spacing between the analysed values around the mean.
 
-        metric : str, optional (default = "minkowski")
+        metric : str, optional (default="minkowski")
             Distance metric to measure the pairwise distance between embedded
             time-series instances. Check `scipy.spatial.distance.pdist`
             documentation to see the full list of available distance metrics.
 
-        p : int or float, optional (default = 2)
+        p : int or float, optional (default=2)
             Power parameter to minkowski metric (used only if metric is
             "minkowski").
 
-        ddof : int, optional (default = 1)
+        ddof : int, optional (default=1)
             Degrees of freedom to calculate the variance within this function.
             (standard deviation of pairwise distances of embedded time-seres
             and the variance of radius nearest neighbors from the definition
             of the implemented meta-feature. Check references for in-depth
             information.)
 
-        lag : int or str,
+        lag : int or str, optional
             Lag of the time-series embedding. It must be a strictly positive
             value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
             last two type of options, the lag is estimated within this method
@@ -308,25 +390,25 @@ class MFETSGeneral:
                 3. `ami`: lag corresponds to the first local minimum of the
                     time-series automutual information function.
 
-        max_nlags : int,
+        max_nlags : int, optional
             If ``lag`` is not a numeric value, than it will be estimated using
             either the time-series autocorrelation or mutual information
             function estimated up to this argument value.
 
-        ts_acfs : :obj:`np.ndarray`,
+        ts_acfs : :obj:`np.ndarray`, optional
             Array of time-series autocorrelation function (for distinct ordered
             lags). Used only if ``lag`` is either `acf`, `acf-nonsig` or None.
             If this argument is not given and the previous condiditon is meet,
             the autocorrelation function will be calculated inside this method
             up to ``max_nlags``.
 
-        ts_ami : :obj:`np.ndarray`,
+        ts_ami : :obj:`np.ndarray`, optional
             Array of time-series automutual information function (for distinct
             ordered lags). Used only if ``lag`` is `ami`. If not given and the
             previous condiditon is meet, the automutual information function
             will be calculated inside this method up to ``max_nlags``.
 
-        ts_scaled : :obj:`np.ndarray`,
+        ts_scaled : :obj:`np.ndarray`
             Standardized time-series values. Used to take advantage of
             precomputations.
 
@@ -423,7 +505,7 @@ class MFETSGeneral:
             If True, return the fraction of actual crosses over all possible
             crosses. If False, return the number of crosses.
 
-        ts_scaled : :obj:`np.ndarray`,
+        ts_scaled : :obj:`np.ndarray`
             Standardized time-series values. Used to take advantage of
             precomputations.
 
@@ -480,10 +562,10 @@ class MFETSGeneral:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        num_bins : int, optional (default = 10)
+        num_bins : int, optional (default=10)
             Number of bins to discretize the time-series values.
 
-        strategy : str, optional (default = `equal-width`)
+        strategy : str, optional (default=`equal-width`)
             Strategy used to define the histogram bins. Must be either
             `equal-width` (bins with equal with) or `equiprobable` (bins
             with the same amount of observations within).
@@ -540,7 +622,7 @@ class MFETSGeneral:
             as the lag corresponding to the absolute maximum of the time-series
             autocorrelation function.
 
-        normalize : bool, optional (default = True)
+        normalize : bool, optional (default=True)
             If False, the result will be the mode index of the seasonal peak.
 
         Returns
@@ -592,7 +674,7 @@ class MFETSGeneral:
             as the lag corresponding to the absolute maximum of the time-series
             autocorrelation function.
 
-        normalize : bool, optional (default = True)
+        normalize : bool, optional (default=True)
             If False, the result will be the mode index of the seasonal trough.
 
         Returns
@@ -635,7 +717,7 @@ class MFETSGeneral:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        step_size : float, optional (default = 0.1)
+        step_size : float, optional (default=0.1)
             Strength of the attractive force. In each time step, the particle
             position will be a weighted average of its previous position, with
             weight (1 - ``step_size``), and the current time-series value, with
@@ -645,7 +727,7 @@ class MFETSGeneral:
             Particle starting position. If None, will start at `0` (which is
             the mean value of the standardized time-series values).
 
-        relative_dist : bool, optional (default = True)
+        relative_dist : bool, optional (default=True)
             If True, return the distance of the particle to the current value
             of the time-series for each time-step. If False, then return the
             particle position in each time step.
@@ -665,6 +747,18 @@ class MFETSGeneral:
             current value of the time-series for each time-step. Otherwise, if
             `relative_dist` is False, then return the particle position in each
             time step.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
@@ -699,7 +793,7 @@ class MFETSGeneral:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        step_size : float, optional (default = 0.1)
+        step_size : float, optional (default=0.1)
             Strength of the attractive force. In each time step, the particle
             position will be a weighted average of its previous position, with
             weight (1 - ``step_size``), and the current time-series value, with
@@ -709,7 +803,7 @@ class MFETSGeneral:
             Particle starting position. If None, will start at `0` (which is
             the mean value of the standardized time-series values).
 
-        normalize : bool, optional (default = True)
+        normalize : bool, optional (default=True)
             If True, normalize the number of crosses by the maximum possible
             number of crosses (len(ts) - 1). If false, return the number of
             crosses.
@@ -729,6 +823,18 @@ class MFETSGeneral:
             the time-series values transitions and the particle position
             transitions over the total possible crosses. If `normalize` is
             False, then return the crosses number.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
@@ -765,17 +871,17 @@ class MFETSGeneral:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        rate_absorption : float, optional (default = 0.1)
+        rate_absorption : float, optional (default=0.1)
             Rate of absorption of the current time-series absolute value
             when it surpasses the current threshold value. Must be a value
             in (0, 1) range.
 
-        rate_decay : float, optional (default = 0.1)
+        rate_decay : float, optional (default=0.1)
             Rate of decay of the threshold when the current time-series
             absolute value is not higher than the current threshold value.
             Must be a value in (0, 1) range.
 
-        relative : bool, optional (default = False)
+        relative : bool, optional (default=False)
             If True, this method will return the threshold values subtracted by
             the current scaled time-series absolute values. Therefore, the
             return value is the threshold value relative to the time-series
@@ -791,6 +897,18 @@ class MFETSGeneral:
             If `relative` is False, return the obtained threshold values for
             each time step. If `relative` is True, return the threshold values
             with the time-series absolute values subtracted.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
         """
         if not 0 < rate_decay < 1:
             raise ValueError("'rate_decay' must be in (0, 1) (got {})."
@@ -845,17 +963,17 @@ class MFETSGeneral:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        radii : tuple of floats, optional (default = (0, 1))
+        radii : tuple of floats, optional (default=(0, 1))
             Tuple with the radii of both hyperspheres, in the form `(r, R)`
             with `r` being the radius of the inner (smaller) hypersphere and
             `R` being the radius of the outer (larger) hypersphere. `R` must
             be stricly positive while `r` must be non-negative. Also, `R`
             must be strictly larger than `r`.
 
-        embed_dim : int, optional (default = 2)
+        embed_dim : int, optional (default=2)
             The embedding dimension.
 
-        lag : int or str,
+        lag : int or str, optional
             Lag of the time-series embedding. It must be a strictly positive
             value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
             last two type of options, the lag is estimated within this method
@@ -869,23 +987,23 @@ class MFETSGeneral:
                 3. `ami`: lag corresponds to the first local minimum of the
                     time-series automutual information function.
 
-        normalize : bool, optional (default = True)
+        normalize : bool, optional (default=True)
             If True, return the fraction of the points inside the hypershell.
             If False, return the number of points inside the hypershell.
 
-        max_nlags : int,
+        max_nlags : int, optional
             If ``lag`` is not a numeric value, than it will be estimated using
             either the time-series autocorrelation or mutual information
             function estimated up to this argument value.
 
-        ts_acfs : :obj:`np.ndarray`,
+        ts_acfs : :obj:`np.ndarray`, optional
             Array of time-series autocorrelation function (for distinct ordered
             lags). Used only if ``lag`` is either `acf`, `acf-nonsig` or None.
             If this argument is not given and the previous condiditon is meet,
             the autocorrelation function will be calculated inside this method
             up to ``max_nlags``.
 
-        ts_ami : :obj:`np.ndarray`,
+        ts_ami : :obj:`np.ndarray`, optional
             Array of time-series automutual information function (for distinct
             ordered lags). Used only if ``lag`` is `ami`. If not given and the
             previous condiditon is meet, the automutual information function
@@ -901,6 +1019,18 @@ class MFETSGeneral:
             if `normalize` is True, return the fraction of the points inside
             the hypershell. If `normalize` is False, return the number of
             points inside the hypershell.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
         """
         radius_inner, radius_outer = radii
 
@@ -951,7 +1081,55 @@ class MFETSGeneral:
             params: t.Optional[t.Tuple[float, float, float]] = None,
             start_point: t.Optional[t.Tuple[float, float]] = None,
             ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Simulate a force potential function using the time-series as input.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        potential : {"sine", "dblwell"}, optional (default="sine")
+            Name of the potential function. Must be either `sine` or
+            `dblwell`, defined as:
+                1. sine: F(x) = sin(x / alpha) / alpha
+                2. dblwell: F(x) = alpha ** 2 * x - x ** 3
+
+        params : tuple of floats, optional
+            Parameters for the force potential function. Must be a tuple with
+            three values in the form (alpha, friction, time_step) which are,
+            respectivelly, the coefficient in the potential force function,
+            the decay rate of the particle velocity, and the size of the time
+            step between each potential measurement.
+
+        start_point : tuple of floats, optional
+            Tuple in the form (initial_position, initial_velocity). If None,
+            both the initial position and velocity will be 0, with the
+            reasoning that position=0 is the mean value of the standardized
+            time-series.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Position of the potential at every time step.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
+        # Note: 'DEF_PARAM' is in the following form:
+        # potential_name: (default_parameters, force_function)
         DEF_PARAM = dict(
             sine=((1, 1, 0.1), lambda x: np.sin(x / alpha) / alpha),
             dblwell=((2, 0.1, 0.1), lambda x: alpha**2 * x - x**3),
@@ -977,8 +1155,8 @@ class MFETSGeneral:
             pos[t_prev + 1] = pos[t_prev] + dt * vel[t_prev] + dt**2 * aux
             vel[t_prev + 1] = vel[t_prev] + dt * aux
 
-        if not np.isfinite(pos[-1]):
-            raise ValueError("Potential trajectory diverged.")
+            if np.isinf(pos[t_prev + 1]):
+                raise ValueError("Potential trajectory diverged.")
 
         return pos
 
@@ -987,16 +1165,47 @@ class MFETSGeneral:
             cls,
             ts: np.ndarray,
             ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Angle between observations with the same signal in the time domain.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Angles between time-series observations of the same signal.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         def calc_angles(inds: np.ndarray) -> np.ndarray:
             """TODO."""
-            return np.arctan(np.diff(ts_scaled[inds]) / np.diff(inds))
+            # Note: normalizing the indices in [0, 1] range to avoid too much
+            # interference from the artificial timestamps.
+            norm_factor = ts_scaled.size - 1
+            tangent = np.diff(ts_scaled[inds]) / np.diff(inds)
+            return np.arctan(norm_factor * tangent)
 
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        aux = ts_scaled >= 0
-        ts_ang_pos = calc_angles(inds=np.flatnonzero(aux))
-        ts_ang_neg = calc_angles(inds=np.flatnonzero(~aux))
+        is_nonneg = ts_scaled >= 0
+        ts_ang_pos = calc_angles(inds=np.flatnonzero(is_nonneg))
+        ts_ang_neg = calc_angles(inds=np.flatnonzero(~is_nonneg))
 
         angles = np.hstack((ts_ang_pos, ts_ang_neg))
 
@@ -1008,12 +1217,91 @@ class MFETSGeneral:
                        dims: t.Union[int, t.Sequence[int]] = 16,
                        lag: t.Optional[t.Union[str, int]] = None,
                        tol_threshold: float = 0.05,
+                       check_e2: bool = True,
                        max_nlags: t.Optional[int] = None,
                        ts_scaled: t.Optional[np.ndarray] = None,
                        ts_acfs: t.Optional[np.ndarray] = None,
                        ts_ami: t.Optional[np.ndarray] = None,
                        emb_dim_cao_e1: t.Optional[np.ndarray] = None) -> int:
-        """TODO.
+        """Embedding dimension estimation using Cao's method.
+
+        Using the Cao's embedding dimension estimation, it is calculated both
+        of its metrics, `E1` and `E2` whose purpose is to, respectivelly,
+        detect the appropriate embedding dimension and detect whether the given
+        time-series is generated by a completely random process (white noise).
+
+        The appropriate embedding dimension is the saturation dimension of `E1`
+        if and only if exists a dimension `E2` sufficiently distinct from 1.
+        If `E2` is approximately constant at 1 over all dimensions, the series
+        is considered white noise and, therefore, the embedding dimension is
+        assumed to be 1.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        dims : int or a sequence of int, optional (default=16)
+            The embedding dimension candidates. In int, investigate all values
+            between 1 and ``dims`` value (both inclusive). If a sequence of
+            integers is used, then investigate only the given dimensions.
+
+        lag : int or str, optional
+            Lag of the time-series embedding. It must be a strictly positive
+            value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
+            last two type of options, the lag is estimated within this method
+            using the given strategy method (or, if None, it is used the
+            strategy `acf-nonsig` by default) up to ``max_nlags``.
+                1. `acf`: the lag corresponds to the first non-positive value
+                    in the autocorrelation function.
+                2. `acf-nonsig`: lag corresponds to the first non-significant
+                    value in the autocorrelation function (absolute value below
+                    the critical value of 1.96 / sqrt(ts.size)).
+                3. `ami`: lag corresponds to the first local minimum of the
+                    time-series automutual information function.
+
+        tol_threshold : float, optional (default=0.05)
+            Tolerance threshold to defined the maximum absolute diference
+            between two E1 values in order to assume saturation. This same
+            threshold is the minimum absolute deviation that E2 values must
+            have in order to be considered different than 1.
+
+        check_e2 : bool, optional (default=True)
+            If True, check if there exist a Cao's E2 value different than 1,
+            and return 1 if this condition is not satisfied. If False, ignore
+            the E2 values.
+
+        max_nlags : int, optional
+            If ``lag`` is not a numeric value, than it will be estimated using
+            either the time-series autocorrelation or mutual information
+            function estimated up to this argument value.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags). Used only if ``lag`` is either `acf`, `acf-nonsig` or None.
+            If this argument is not given and the previous condiditon is meet,
+            the autocorrelation function will be calculated inside this method
+            up to ``max_nlags``.
+
+        ts_ami : :obj:`np.ndarray`, optional
+            Array of time-series automutual information function (for distinct
+            ordered lags). Used only if ``lag`` is `ami`. If not given and the
+            previous condiditon is meet, the automutual information function
+            will be calculated inside this method up to ``max_nlags``.
+
+        emb_dim_cao_e1 : :obj:`np.ndarray`, optional
+            E1 values from the Cao's method. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        int
+            Estimation of the appropriate embedding dimension using Cao's
+            method.
 
         References
         ----------
@@ -1031,10 +1319,11 @@ class MFETSGeneral:
                                max_nlags=max_nlags)
 
         if emb_dim_cao_e1 is None:
-            emb_dim_cao_e1, _ = _embed.embed_dim_cao(ts=ts,
-                                                     ts_scaled=ts_scaled,
-                                                     dims=dims,
-                                                     lag=lag)
+            emb_dim_cao_e1, emb_dim_cao_e2 = _embed.embed_dim_cao(
+                ts=ts, ts_scaled=ts_scaled, dims=dims, lag=lag)
+
+        if check_e2 and np.all(np.abs(emb_dim_cao_e2 - 1) < tol_threshold):
+            return 1
 
         e1_abs_diff = np.abs(np.diff(emb_dim_cao_e1))
 
@@ -1057,8 +1346,74 @@ class MFETSGeneral:
                   ts_scaled: t.Optional[np.ndarray] = None,
                   ts_acfs: t.Optional[np.ndarray] = None,
                   ts_ami: t.Optional[np.ndarray] = None,
-                  emb_dim_cao_e1: t.Optional[np.ndarray] = None) -> int:
-        """TODO.
+                  emb_dim_cao_e1: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """Estimated Cao's method E1 values.
+
+        Using the Cao's embedding dimension estimation, it is calculated both
+        of its metrics, `E1` and `E2` whose purpose is to, respectivelly,
+        detect the appropriate embedding dimension and detect whether the given
+        time-series is generated by a completely random process (white noise).
+
+        The appropriate embedding dimension is the saturation dimension of `E1`
+        if and only if exists a dimension `E2` sufficiently distinct from 1.
+        If `E2` is approximately constant at 1 over all dimensions, the series
+        is considered white noise and, therefore, the embedding dimension is
+        assumed to be 1.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        dims : int or a sequence of int, optional (default=16)
+            The embedding dimension candidates. In int, investigate all values
+            between 1 and ``dims`` value (both inclusive). If a sequence of
+            integers is used, then investigate only the given dimensions.
+
+        lag : int or str, optional
+            Lag of the time-series embedding. It must be a strictly positive
+            value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
+            last two type of options, the lag is estimated within this method
+            using the given strategy method (or, if None, it is used the
+            strategy `acf-nonsig` by default) up to ``max_nlags``.
+                1. `acf`: the lag corresponds to the first non-positive value
+                    in the autocorrelation function.
+                2. `acf-nonsig`: lag corresponds to the first non-significant
+                    value in the autocorrelation function (absolute value below
+                    the critical value of 1.96 / sqrt(ts.size)).
+                3. `ami`: lag corresponds to the first local minimum of the
+                    time-series automutual information function.
+
+        max_nlags : int, optional
+            If ``lag`` is not a numeric value, than it will be estimated using
+            either the time-series autocorrelation or mutual information
+            function estimated up to this argument value.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags). Used only if ``lag`` is either `acf`, `acf-nonsig` or None.
+            If this argument is not given and the previous condiditon is meet,
+            the autocorrelation function will be calculated inside this method
+            up to ``max_nlags``.
+
+        ts_ami : :obj:`np.ndarray`, optional
+            Array of time-series automutual information function (for distinct
+            ordered lags). Used only if ``lag`` is `ami`. If not given and the
+            previous condiditon is meet, the automutual information function
+            will be calculated inside this method up to ``max_nlags``.
+
+        emb_dim_cao_e1 : :obj:`np.ndarray`, optional
+            E1 values from the Cao's method. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            E1 values from Cao's method for all given dimensions.
 
         References
         ----------
@@ -1093,7 +1448,73 @@ class MFETSGeneral:
                   ts_acfs: t.Optional[np.ndarray] = None,
                   ts_ami: t.Optional[np.ndarray] = None,
                   emb_dim_cao_e2: t.Optional[np.ndarray] = None) -> int:
-        """TODO.
+        """Estimated Cao's method E2 values.
+
+        Using the Cao's embedding dimension estimation, it is calculated both
+        of its metrics, `E1` and `E2` whose purpose is to, respectivelly,
+        detect the appropriate embedding dimension and detect whether the given
+        time-series is generated by a completely random process (white noise).
+
+        The appropriate embedding dimension is the saturation dimension of `E1`
+        if and only if exists a dimension `E2` sufficiently distinct from 1.
+        If `E2` is approximately constant at 1 over all dimensions, the series
+        is considered white noise and, therefore, the embedding dimension is
+        assumed to be 1.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        dims : int or a sequence of int, optional (default=16)
+            The embedding dimension candidates. In int, investigate all values
+            between 1 and ``dims`` value (both inclusive). If a sequence of
+            integers is used, then investigate only the given dimensions.
+
+        lag : int or str, optional
+            Lag of the time-series embedding. It must be a strictly positive
+            value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
+            last two type of options, the lag is estimated within this method
+            using the given strategy method (or, if None, it is used the
+            strategy `acf-nonsig` by default) up to ``max_nlags``.
+                1. `acf`: the lag corresponds to the first non-positive value
+                    in the autocorrelation function.
+                2. `acf-nonsig`: lag corresponds to the first non-significant
+                    value in the autocorrelation function (absolute value below
+                    the critical value of 1.96 / sqrt(ts.size)).
+                3. `ami`: lag corresponds to the first local minimum of the
+                    time-series automutual information function.
+
+        max_nlags : int, optional
+            If ``lag`` is not a numeric value, than it will be estimated using
+            either the time-series autocorrelation or mutual information
+            function estimated up to this argument value.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags). Used only if ``lag`` is either `acf`, `acf-nonsig` or None.
+            If this argument is not given and the previous condiditon is meet,
+            the autocorrelation function will be calculated inside this method
+            up to ``max_nlags``.
+
+        ts_ami : :obj:`np.ndarray`, optional
+            Array of time-series automutual information function (for distinct
+            ordered lags). Used only if ``lag`` is `ami`. If not given and the
+            previous condiditon is meet, the automutual information function
+            will be calculated inside this method up to ``max_nlags``.
+
+        emb_dim_cao_e2 : :obj:`np.ndarray`, optional
+            E2 values from the Cao's method. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            E2 values from Cao's method for all given dimensions.
 
         References
         ----------
@@ -1126,9 +1547,59 @@ class MFETSGeneral:
                     max_nlags: t.Optional[int] = None,
                     ts_scaled: t.Optional[np.ndarray] = None,
                     ts_acfs: t.Optional[np.ndarray] = None,
-                    ts_ami: t.Optional[np.ndarray] = None,
-                    fnn_prop: t.Optional[np.ndarray] = None) -> int:
-        """TODO.
+                    ts_ami: t.Optional[np.ndarray] = None) -> int:
+        """Proportion of False Nearest Neighbors in the embedded time-series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        dims : int or a sequence of int, optional (default=16)
+            The embedding dimension candidates. In int, investigate all values
+            between 1 and ``dims`` value (both inclusive). If a sequence of
+            integers is used, then investigate only the given dimensions.
+
+        lag : int or str, optional
+            Lag of the time-series embedding. It must be a strictly positive
+            value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
+            last two type of options, the lag is estimated within this method
+            using the given strategy method (or, if None, it is used the
+            strategy `acf-nonsig` by default) up to ``max_nlags``.
+                1. `acf`: the lag corresponds to the first non-positive value
+                    in the autocorrelation function.
+                2. `acf-nonsig`: lag corresponds to the first non-significant
+                    value in the autocorrelation function (absolute value below
+                    the critical value of 1.96 / sqrt(ts.size)).
+                3. `ami`: lag corresponds to the first local minimum of the
+                    time-series automutual information function.
+
+        max_nlags : int, optional
+            If ``lag`` is not a numeric value, than it will be estimated using
+            either the time-series autocorrelation or mutual information
+            function estimated up to this argument value.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        ts_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags). Used only if ``lag`` is either `acf`, `acf-nonsig` or None.
+            If this argument is not given and the previous condiditon is meet,
+            the autocorrelation function will be calculated inside this method
+            up to ``max_nlags``.
+
+        ts_ami : :obj:`np.ndarray`, optional
+            Array of time-series automutual information function (for distinct
+            ordered lags). Used only if ``lag`` is `ami`. If not given and the
+            previous condiditon is meet, the automutual information function
+            will be calculated inside this method up to ``max_nlags``.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Proportion of False Nearest Neighbors for each given dimension.
 
         References
         ----------
@@ -1145,11 +1616,10 @@ class MFETSGeneral:
                                ts_ami=ts_ami,
                                max_nlags=max_nlags)
 
-        if fnn_prop is None:
-            fnn_prop = _embed.embed_dim_fnn(ts=ts,
-                                            ts_scaled=ts_scaled,
-                                            dims=dims,
-                                            lag=lag)
+        fnn_prop = _embed.embed_dim_fnn(ts=ts,
+                                        ts_scaled=ts_scaled,
+                                        dims=dims,
+                                        lag=lag)
 
         return fnn_prop
 
@@ -1164,6 +1634,10 @@ def _test() -> None:
     ts = ts.to_numpy()
     print("TS period:", ts_period)
 
+    res = MFETSGeneral.ft_stick_angles(ts)
+    print(res)
+    exit(1)
+
     res = MFETSGeneral.ft_fs_len(ts, num_bins=2)
     print(res)
 
@@ -1171,9 +1645,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSGeneral.ft_embed_in_shell(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_stick_angles(ts)
     print(res)
 
     res = MFETSGeneral.ft_force_potential(ts, potential="sine")
