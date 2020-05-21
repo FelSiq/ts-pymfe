@@ -239,10 +239,58 @@ def calc_ioi_stats(ts: np.ndarray,
                    ts_scaled: t.Optional[np.ndarray] = None,
                    step_size: float = 0.05,
                    differentiate: bool = False) -> np.ndarray:
-    """TODO.
+    """Get statistics using the iterative outlier inclusion strategy.
 
-    https://github.com/benfulcher/hctsa/blob/master/Operations/DN_OutlierInclude.m
+    In the iterative outlier inclusion, a uniformly spaced set of thresholds
+    over the time-series range is build and, for each iteration, it is
+    calculated a statistic of the diference of the timestamp values of
+    instances larger or equal than the current threshold.
+
+    Parameters
+    ----------
+    ts : :obj:`np.ndarray`
+        One-dimensional time-series values.
+
+    funcs : callable or list of callables
+        Callables that extract the statistics from the timestamps. Every
+        callable must receive a numeric list of values as the first argument
+        and must return a single numeric value.
+
+    ts_scaled : :obj:`np.ndarray`, optional
+        Standardized time-series values. Used to take advantage of
+        precomputations.
+
+    step_size : float, optional (default=0.05)
+        Increase of the outlier threshold in each iteration. Must be a number
+        strictly positive.
+
+    differentiate : bool, optional (default=False)
+        If True, differentiate the timestamps before calculating each
+        statistic. If False, all statistics will be calculated on the
+        raw timestamps.
+
+    Returns
+    -------
+    :obj:`np.ndarray`
+        Array where each row corresponds to a distinct statistisc extracted 
+        from the timestamps, and each column corresponds to each iteration
+        of the iterative outlier inclusive process. If ``funcs`` is a single
+        function, then the return value will be flattened to a 1-D array.
+
+    References
+    ----------
+    .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+        for Automated Time-Series Phenotyping Using Massive Feature
+        Extraction, Cell Systems 5: 527 (2017).
+        DOI: 10.1016/j.cels.2017.10.001
+    .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+        time-series analysis: the empirical structure of time series and
+        their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+        DOI: 10.1098/rsif.2013.0048
     """
+    if step_size <= 0:
+        raise ValueError("'step_size' must be positive (got {})."
+                         "".format(step_size))
     try:
         if len(funcs) == 0:
             raise ValueError("'funcs' is empty.")
@@ -279,7 +327,9 @@ def calc_ioi_stats(ts: np.ndarray,
     if res.shape[1] == 1:
         return res.ravel()
 
-    return res
+    # Note: transposing in order to each statistic be represented by a row,
+    # and not a column.
+    return res.T
 
 
 def apply_on_samples(ts: np.ndarray,

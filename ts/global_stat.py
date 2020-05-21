@@ -1,3 +1,4 @@
+"""Module dedicated to global time-series meta-features."""
 import typing as t
 import warnings
 
@@ -13,18 +14,73 @@ import _get_data
 
 
 class MFETSGlobalStats:
+    """Extract time-series meta-features from Global Statistics group."""
     @classmethod
     def ft_ioi_tdelta_mean(
             cls,
             ts: np.ndarray,
             step_size: float = 0.05,
             normalize: bool = True,
+            differentiate: bool = False,
             ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Mean change of interval length with iterative outlier inclusion.
+
+        This method calculates, at each iteration, the mean of the differences
+        of the timestamps of instances using the iterative outlier inclusion
+        strategy.
+
+        In the iterative outlier inclusion, a uniformly spaced set of
+        thresholds over the time-series range is build and, for each iteration,
+        it is calculated a statistic of the diference of the timestamp values
+        of instances larger or equal than the current threshold.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        step_size : float, optional (default=0.05)
+            Increase of the outlier threshold in each iteration. Must be a
+            number strictly positive.
+
+        normalize : bool, optional (default=True)
+            If True, normalize the statistic in the [-1, 1] interval. If
+            False, return the raw mean timestamp values.
+
+        differentiate : bool, optional (default=False)
+            If True, differentiate the timestamps before calculating each
+            statistic. If False, all statistics will be calculated on the
+            raw timestamps.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            If `differentiate` is False, the mean value of outlier timestamps
+            of all iterations of the iterative outlier inclusion process. If
+            `differentiate` is True, the mean value of the timestamps interval 
+            of outliers for every iteration. Also, if `normalize` is True,
+            every value will be normalized to the [-1, 1] range.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         tdelta_it_mean = _utils.calc_ioi_stats(ts=ts,
                                                funcs=np.mean,
                                                ts_scaled=ts_scaled,
-                                               step_size=step_size)
+                                               step_size=step_size,
+                                               differentiate=differentiate)
 
         if normalize:
             tdelta_it_mean = 2 * tdelta_it_mean / ts.size - 1
@@ -32,10 +88,10 @@ class MFETSGlobalStats:
         return tdelta_it_mean
 
     @classmethod
-    def ft_trend(cls,
-                 ts_residuals: np.ndarray,
-                 ts_deseasonalized: np.ndarray,
-                 ddof: int = 1) -> float:
+    def ft_trend_strenght(cls,
+                          ts_residuals: np.ndarray,
+                          ts_deseasonalized: np.ndarray,
+                          ddof: int = 1) -> float:
         """Ratio of standard deviations of time-series and after detrend.
 
         Parameters
@@ -57,7 +113,17 @@ class MFETSGlobalStats:
 
         References
         ----------
-        TODO.
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
         trend = 1.0 - (np.var(ts_residuals, ddof=ddof) /
                        np.var(ts_deseasonalized, ddof=ddof))
@@ -65,14 +131,42 @@ class MFETSGlobalStats:
         return min(1.0, max(0.0, trend))
 
     @classmethod
-    def ft_seasonality(cls,
-                       ts_residuals: np.ndarray,
-                       ts_detrended: np.ndarray,
-                       ddof: int = 1) -> float:
-        """
-        TODO.
+    def ft_season_strenght(cls,
+                           ts_residuals: np.ndarray,
+                           ts_detrended: np.ndarray,
+                           ddof: int = 1) -> float:
+        """Ratio of standard deviations of time-series and after deseasoning.
 
-        https://pkg.robjhyndman.com/tsfeatures/articles/tsfeatures.html
+        Parameters
+        ----------
+        ts_residuals : :obj:`np.ndarray`
+            Residuals (random noise) of an one-dimensional time-series.
+
+        ts_deseasonalized: :obj:`np.ndarray`
+            One-dimensional deseasonalized time-series values.
+
+        ddof : float, optional
+            Degrees of freedom for standard deviation.
+
+        Returns
+        -------
+        float
+            Ratio of standard deviation of the original time-series
+            and the standard deviation of the deseasonalized version.
+
+        References
+        ----------
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
 
         seas = 1.0 - (np.var(ts_residuals, ddof=ddof) /
@@ -371,7 +465,20 @@ class MFETSGlobalStats:
 
     @classmethod
     def ft_t_mean(cls, ts: np.ndarray, pcut: float = 0.02) -> np.ndarray:
-        """TODO."""
+        """Trimmed mean of the time-series values.
+
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         return pymfe.statistical.MFEStatistical.ft_t_mean(N=ts, pcut=pcut)
 
 
@@ -435,11 +542,12 @@ def _test() -> None:
     res = MFETSGlobalStats.ft_sd_residuals(ts_residuals)
     print(res)
 
-    res = MFETSGlobalStats.ft_trend(ts_residuals, ts_trend + ts_residuals)
+    res = MFETSGlobalStats.ft_trend_strenght(ts_residuals,
+                                             ts_trend + ts_residuals)
     print(res)
 
-    res = MFETSGlobalStats.ft_seasonality(ts_residuals,
-                                          ts_season + ts_residuals)
+    res = MFETSGlobalStats.ft_season_strenght(ts_residuals,
+                                              ts_season + ts_residuals)
     print(res)
 
 

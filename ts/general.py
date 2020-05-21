@@ -49,12 +49,27 @@ class MFETSGeneral:
     @classmethod
     def precompute_period(cls,
                           ts: np.ndarray,
-                          ts_period: t.Optional[int] = None,
                           **kwargs) -> t.Dict[str, int]:
-        """TODO."""
+        """Precompute the time-series period.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        kwargs:
+            Additional arguments and previous precomputed items. May
+            speed up this precomputation.
+
+        Returns
+        -------
+        dict
+            The following precomputed item is returned:
+                * ``ts_period`` (:obj:`int`): time-series period.
+        """
         precomp_vals = {}  # type: t.Dict[str, int]
 
-        if ts_period is not None:
+        if ts_period not in kwargs:
             precomp_vals["ts_period"] = cls.ft_period(ts=ts)
 
         return precomp_vals
@@ -195,10 +210,28 @@ class MFETSGeneral:
                           ts: np.ndarray,
                           step_size: float = 0.1,
                           start_point: t.Optional[t.Union[int, float]] = None,
-                          walker_path: t.Optional[np.ndarray] = None,
                           ts_scaled: t.Optional[np.ndarray] = None,
                           **kwargs) -> t.Dict[str, np.ndarray]:
         """Precompute the path of a particle attracted by the time-series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        step_size : float, optional (default=0.1)
+            Strength of the attractive force. In each time step, the particle
+            position will be a weighted average of its previous position, with
+            weight (1 - ``step_size``), and the current time-series value, with
+            weight ``step_size``.
+
+        start_point : int or float, optional
+            Particle starting position. If None, will start at `0` (which is
+            the mean value of the standardized time-series values).
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
 
         kwargs:
             Additional arguments and previous precomputed items. May
@@ -224,7 +257,6 @@ class MFETSGeneral:
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
@@ -278,7 +310,6 @@ class MFETSGeneral:
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
@@ -696,10 +727,8 @@ class MFETSGeneral:
             Series Detection," 2015 IEEE International Conference on Data
             Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
             doi: 10.1109/ICDMW.2015.104.
-
         .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
             tsfeatures: Time series feature extraction. R package version 0.1.
-
         .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
@@ -740,7 +769,6 @@ class MFETSGeneral:
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
@@ -781,7 +809,6 @@ class MFETSGeneral:
         ----------
         .. [1] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
             tsfeatures: Time series feature extraction. R package version 0.1.
-
         .. [2] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
@@ -852,10 +879,8 @@ class MFETSGeneral:
             Series Detection," 2015 IEEE International Conference on Data
             Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
             doi: 10.1109/ICDMW.2015.104.
-
         .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
             tsfeatures: Time series feature extraction. R package version 0.1.
-
         .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
@@ -920,10 +945,8 @@ class MFETSGeneral:
             Series Detection," 2015 IEEE International Conference on Data
             Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
             doi: 10.1109/ICDMW.2015.104.
-
         .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
             tsfeatures: Time series feature extraction. R package version 0.1.
-
         .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
@@ -999,7 +1022,6 @@ class MFETSGeneral:
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
@@ -1075,7 +1097,6 @@ class MFETSGeneral:
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
@@ -1149,7 +1170,6 @@ class MFETSGeneral:
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
@@ -1271,7 +1291,6 @@ class MFETSGeneral:
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
@@ -1367,7 +1386,6 @@ class MFETSGeneral:
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
@@ -1432,7 +1450,6 @@ class MFETSGeneral:
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
