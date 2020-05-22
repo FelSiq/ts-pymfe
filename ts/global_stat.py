@@ -334,7 +334,56 @@ class MFETSGlobalStats:
                          num_diff: int = 1,
                          method: int = 3,
                          unbiased: bool = False) -> float:
-        """TODO."""
+        """Skewness of the nth-order differenced time-series.
+
+        This method calculates the skewness of the nth-order differenced
+        time-series (with lag = 1), with `n` being given by `num_diff`.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_diff : int, optional (default=1)
+            Order of the differentiation.
+
+        method : int, optional (default=3)
+            Defines the strategy used for estimate data skewness. This argument
+            is used fo compatibility with R package `e1071`. The options must
+            be one of the following:
+
+            +--------+-----------------------------------------------+
+            |Option  | Formula                                       |
+            +--------+-----------------------------------------------+
+            |1       | Skew_1 = m_3 / m_2**(3/2)                     |
+            |        | (default of ``scipy.stats``)                  |
+            +--------+-----------------------------------------------+
+            |2       | Skew_2 = Skew_1 * sqrt(n(n-1)) / (n-2)        |
+            +--------+-----------------------------------------------+
+            |3       | Skew_3 = m_3 / s**3 = Skew_1 ((n-1)/n)**(3/2) |
+            +--------+-----------------------------------------------+
+
+            Where `n` is the number of instances in ``ts``, `s` is the standard
+            deviation of each attribute in ``ts``, and `m_i` is the ith
+            statistical momentum of each attribute in ``ts``.
+
+            Note that if the selected method is unable to be calculated due to
+            division by zero, then the first method will be used instead.
+
+        unbiased : bool, optional
+            If True, then the calculations are corrected for statistical bias.
+
+        Returns
+        -------
+        float
+            Skewness of the nth-order differenced time-series
+
+        References
+        ----------
+        .. [1] Donald Michie, David J. Spiegelhalter, Charles C. Taylor, and
+           John Campbell. Machine Learning, Neural and Statistical
+           Classification, volume 37. Ellis Horwood Upper Saddle River, 1994.
+        """
         ts_diff = np.diff(ts, n=num_diff)
         ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_diff,
                                                                method=method,
@@ -348,7 +397,53 @@ class MFETSGlobalStats:
                           method: int = 3,
                           unbiased: bool = False,
                           ts_period: t.Optional[int] = None) -> float:
-        """TODO."""
+        """Seasonal skewness of the first-order differenced time-series.
+
+        This method calculates the skewness of the first-order differenced
+        time-series, lagged with its period.
+
+        If the time-series is not seasonal, then its period is assumed to be 1.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        method : int, optional (default=3)
+            Defines the strategy used for estimate data skewness. This argument
+            is used fo compatibility with R package `e1071`. The options must
+            be one of the following:
+
+            +--------+-----------------------------------------------+
+            |Option  | Formula                                       |
+            +--------+-----------------------------------------------+
+            |1       | Skew_1 = m_3 / m_2**(3/2)                     |
+            |        | (default of ``scipy.stats``)                  |
+            +--------+-----------------------------------------------+
+            |2       | Skew_2 = Skew_1 * sqrt(n(n-1)) / (n-2)        |
+            +--------+-----------------------------------------------+
+            |3       | Skew_3 = m_3 / s**3 = Skew_1 ((n-1)/n)**(3/2) |
+            +--------+-----------------------------------------------+
+
+            Where `n` is the number of instances in ``ts``, `s` is the standard
+            deviation of each attribute in ``ts``, and `m_i` is the ith
+            statistical momentum of each attribute in ``ts``.
+
+            Note that if the selected method is unable to be calculated due to
+            division by zero, then the first method will be used instead.
+
+        unbiased : bool, optional
+            If True, then the calculations are corrected for statistical bias.
+
+        ts_period : int, optional
+            Time-series period. Used to take advantage of precomputations.
+
+        Returns
+        -------
+        float
+            Skewness of the first-order difference of the lagged time-series
+            by its own period.
+        """
         ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
 
         ts_sdiff = ts[ts_period:] - ts[:-ts_period]
@@ -422,7 +517,7 @@ class MFETSGlobalStats:
                          num_diff: int = 1,
                          method: int = 3,
                          unbiased: bool = False) -> float:
-        """kurtosis of the nth-order differenced time-series.
+        """Kurtosis of the nth-order differenced time-series.
 
         This method calculates the kurtosis of the nth-order differenced
         time-series (with lag = 1), with `n` being given by `num_diff`.

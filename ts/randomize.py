@@ -60,12 +60,51 @@ class MFETSRandomize:
                                 ts_scaled: t.Optional[np.ndarray] = None,
                                 random_state: t.Optional[int] = None,
                                 **kwargs) -> t.Dict[str, np.ndarray]:
-        """Precompute statistics with ...
+        """Precompute global statistics with iterative perturbation method.
+
+        In the iterative perturbation method, a copy of the time-series is
+        modified at each iteration. The quantity of observations modified and
+        the sample pool from which the new values are drawn depends on the
+        ``strategy``selected. Then, statistics are extracted after every `k`
+        iterations (given by ceil(ts.size * ``prop_interval``))..
 
         Parameters
         ----------
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
+
+        strategy : str, optional (default="dist-dynamic")
+            The strategy used to perturb the current population. Must be one
+            of the following:
+
+                1. `dist-static`: (static distribution) one observation of the
+                current population is overwritten by one observation from the
+                original time-series.
+
+                2. `dist-dynamic`: (dynamic distribution) one observation of
+                the current population is overwritten by another observation
+                of the current population.
+
+                3. `permute`: two observations of the current population swaps
+                its positions.
+
+        prop_rep : int or float, optional (default=2)
+            Number of total iterations proportional to the time-series size.
+            This means that this process will iterate for approximately
+            ceil(prop_rep * ts.size) iterations. More rigorously, the number
+            of iterations also depends on the number of iterations that the
+            statistics are extracted, to avoid lose computations.
+
+        prop_interval : float, optional (default=0.1)
+            Interval that the statistics are extracted from the current
+            population, proportional to the time-series length.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        random_state : int, optional
+            Random seed to ensure reproducibility.
 
         kwargs:
             Additional arguments and previous precomputed items. May
@@ -75,12 +114,30 @@ class MFETSRandomize:
         -------
         dict
             The following precomputed item is returned:
-                * ...
+                * ``itrand_stat_mean`` (:obj:`np.ndarray`): mean extracted
+                    from each extraction event in the iterative perturbation
+                    method on the time-series.
+                * ``itrand_stat_std`` (:obj:`np.ndarray`): std extracted
+                    from each extraction event in the iterative perturbation
+                    method on the time-series.
+                * ``itrand_stat_acf`` (:obj:`np.ndarray`): autocorrelation of
+                    lag 1 extracted from each extraction event in the iterative
+                    perturbation method on the time-series.
 
             The following items is necessary and, therefore, also precomputed
             if necessary:
                 * ``ts_scaled`` (:obj:`np.ndarray`): standardized time-series
                     values (z-score).
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
         """
         precomp_vals = {}  # type: t.Dict[str, np.ndarray]
 
@@ -122,8 +179,8 @@ class MFETSRandomize:
         In the iterative perturbation method, a copy of the time-series is
         modified at each iteration. The quantity of observations modified and
         the sample pool from which the new values are drawn depends on the
-        ``strategy``selected. Then, a statistic is extracted after every`k`
-        iterations (given by ceil(ts.size * ``prop_interval``).
+        ``strategy``selected. Then, a statistic is extracted after every `k`
+        iterations (given by ceil(ts.size * ``prop_interval``)).
 
         Parameters
         ----------
@@ -161,7 +218,7 @@ class MFETSRandomize:
             Interval that the statistics are extracted from the current
             population, proportional to the time-series length.
 
-        ts_scaled : :obj:`np.ndarray`, optional (default=None)
+        ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
             precomputations.
 
@@ -256,8 +313,8 @@ class MFETSRandomize:
         In the iterative perturbation method, a copy of the time-series is
         modified at each iteration. The quantity of observations modified and
         the sample pool from which the new values are drawn depends on the
-        ``strategy``selected. Then, a statistic is extracted after every`k`
-        iterations (given by ceil(ts.size * ``prop_interval``).
+        ``strategy``selected. Then, a statistic is extracted after every `k`
+        iterations (given by ceil(ts.size * ``prop_interval``)).
 
         Parameters
         ----------
@@ -290,7 +347,7 @@ class MFETSRandomize:
             Interval that the statistics are extracted from the current
             population, proportional to the time-series length.
 
-        ts_scaled : :obj:`np.ndarray`, optional (default=None)
+        ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
             precomputations.
 
@@ -348,8 +405,8 @@ class MFETSRandomize:
         In the iterative perturbation method, a copy of the time-series is
         modified at each iteration. The quantity of observations modified and
         the sample pool from which the new values are drawn depends on the
-        ``strategy``selected. Then, a statistic is extracted after every`k`
-        iterations (given by ceil(ts.size * ``prop_interval``).
+        ``strategy``selected. Then, a statistic is extracted after every `k`
+        iterations (given by ceil(ts.size * ``prop_interval``)).
 
         Parameters
         ----------
@@ -382,7 +439,7 @@ class MFETSRandomize:
             Interval that the statistics are extracted from the current
             population, proportional to the time-series length.
 
-        ts_scaled : :obj:`np.ndarray`, optional (default=None)
+        ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
             precomputations.
 
@@ -440,8 +497,8 @@ class MFETSRandomize:
         In the iterative perturbation method, a copy of the time-series is
         modified at each iteration. The quantity of observations modified and
         the sample pool from which the new values are drawn depends on the
-        ``strategy``selected. Then, a statistic is extracted after every`k`
-        iterations (given by ceil(ts.size * ``prop_interval``).
+        ``strategy``selected. Then, a statistic is extracted after every `k`
+        iterations (given by ceil(ts.size * ``prop_interval``)).
 
         Parameters
         ----------
@@ -474,7 +531,7 @@ class MFETSRandomize:
             Interval that the statistics are extracted from the current
             population, proportional to the time-series length.
 
-        ts_scaled : :obj:`np.ndarray`, optional (default=None)
+        ts_scaled : :obj:`np.ndarray`, optional
             Standardized time-series values. Used to take advantage of
             precomputations.
 
@@ -529,7 +586,37 @@ class MFETSRandomize:
             ddof: int = 1,
             random_state: t.Optional[int] = None,
             ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Time-series standard deviation from repeated subsampling.
+
+        A subsample of size L is L consecutive observations from the
+        time-series, starting from a random index in [0, len(ts)-L] range.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_samples : int, optional (default=64)
+            Number of time-series subsamples.
+
+        sample_size_frac : float, optional (default=0.1)
+            Size of each subsample proportional to the time-series length.
+
+        ddof : int, optional (default=1)
+            Degrees of freedom of the standard deviation.
+
+        random_state : int, optional
+            Random seed to ensure reproducibility.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Standard deviations from repeated subsampling.
+        """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         sample_std = _utils.apply_on_samples(ts=ts_scaled,
@@ -550,7 +637,37 @@ class MFETSRandomize:
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
             random_state: t.Optional[int] = None) -> np.ndarray:
-        """TODO."""
+        """First non-positive autocorrelation lag using repeated subsampling.
+
+        A subsample of size L is L consecutive observations from the
+        time-series, starting from a random index in [0, len(ts)-L] range.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_samples : int, optional (default=64)
+            Number of time-series subsamples.
+
+        sample_size_frac : float, optional (default=0.2)
+            Size of each subsample proportional to the time-series length.
+
+        ddof : int, optional (default=1)
+            Degrees of freedom of the first non-positive autocorrelation.
+
+        random_state : int, optional
+            Random seed to ensure reproducibility.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            First non-positive autocorrelation lags from repeated subsampling.
+        """
         sample_acf_nonpos = _utils.apply_on_samples(
             ts=ts,
             func=autocorr.MFETSAutocorr.ft_acf_first_nonpos,
@@ -571,7 +688,37 @@ class MFETSRandomize:
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
             random_state: t.Optional[int] = None) -> np.ndarray:
-        """TODO."""
+        """First local minima autocorrelation lag using repeated subsampling.
+
+        A subsample of size L is L consecutive observations from the
+        time-series, starting from a random index in [0, len(ts)-L] range.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_samples : int, optional (default=64)
+            Number of time-series subsamples.
+
+        sample_size_frac : float, optional (default=0.2)
+            Size of each subsample proportional to the time-series length.
+
+        ddof : int, optional (default=1)
+            Degrees of freedom of the first local minima autocorrelation.
+
+        random_state : int, optional
+            Random seed to ensure reproducibility.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            First local minima autocorrelation lags from repeated subsampling.
+        """
         sample_acf_locmin = _utils.apply_on_samples(
             ts=ts,
             func=autocorr.MFETSAutocorr.ft_first_acf_locmin,
@@ -596,7 +743,94 @@ class MFETSRandomize:
             max_nlags: t.Optional[int] = None,
             detrended_acfs: t.Optional[np.ndarray] = None,
             detrended_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Trev statistic extracted from surrogate time-series.
+
+        The surrogate time-series are generated using the IAAFT algorithm.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        surrogate_num : int, optional (default=32)
+            Number of surrogate time-series.
+
+        max_iter : int, optional (default=128)
+            Maximum number of iterations allowed before the convergence of the
+            IAAFT algorithm process.
+
+        relative : bool, optional (default=True)
+            If True, the obtained statistics will be normalized by the
+            statistic value extracted from the original time-series.
+
+        lag : int or str, optional
+            Lag to calculate the statistic. It must be a strictly positive
+            value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
+            last two type of options, the lag is estimated within this method
+            using the given strategy method (or, if None, it is used the
+            strategy `acf-nonsig` by default) up to ``max_nlags``.
+                1. `acf`: the lag corresponds to the first non-positive value
+                    in the autocorrelation function.
+                2. `acf-nonsig`: lag corresponds to the first non-significant
+                    value in the autocorrelation function (absolute value below
+                    the critical value of 1.96 / sqrt(ts.size)).
+                3. `ami`: lag corresponds to the first local minimum of the
+                    time-series automutual information function.
+
+        only_numerator : bool, optional (default=False)
+            If True, return only the numerator from this statistic definition.
+            Check `autocorr.MFETSAutocorr.ft_trev` documentation for more
+            information.
+
+        random_state : int, optional
+            Random seed to ensure reproducibility.
+
+        max_nlags : int, optional
+            If ``lag`` is not a numeric value, than it will be estimated using
+            either the time-series autocorrelation or mutual information
+            function estimated up to this argument value.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags) of the detrended time-series. Used only if ``lag`` is any of
+            `acf`, `acf-nonsig` or None.  If this argument is not given and the
+            previous condiditon is meet, the autocorrelation function will be
+            calculated inside this method up to ``max_nlags``.
+
+        detrended_ami : :obj:`np.ndarray`, optional
+            Array of time-series automutual information function (for distinct
+            ordered lags). Used only if ``lag`` is `ami`. If not given and the
+            previous condiditon is meet, the automutual information function
+            will be calculated inside this method up to ``max_nlags``.
+
+        Returns
+        ------
+        :obj:`np.ndarray`
+            Trev statistic extracted from distinct generated surrogate
+            time-series using the IAAFT algorithm.
+
+        References
+        ----------
+        .. [1] Kugiumtzis, D.: Test your surrogate data before you test for
+            nonlinearity, Phys. Rev. E, 60(3), 2808–2816, 1999.
+        .. [2] Schreiber, T. and Schmitz, A.: Improved surrogate data for
+            nonlinearity tests, Phys. Rev. Lett, 77, 635–638, 1996.
+        .. [3] Schreiber, T. and Schmitz, A.: Surrogate time series, Physica
+            D,142(3–4), 346–382, 2000.
+        .. [4] Theiler, J., Eubank, S., Longtin, A., Galdrikian, B., and
+            Farmer, J.D.: Testing for nonlinearity in time series: the method
+            of surrogate data, Physica D, 58, 77–94, 1992.
+        .. [5] Theiler, J. and Prichard, D.: Constrained-realization
+            Monte-Carlo method for hypothesis testing, Physica D, 94(4),
+            221–235, 1996.
+        .. [6] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [7] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+        """
         lag = _embed.embed_lag(ts=ts,
                                lag=lag,
                                max_nlags=max_nlags,
@@ -631,7 +865,94 @@ class MFETSRandomize:
             max_nlags: t.Optional[int] = None,
             detrended_acfs: t.Optional[np.ndarray] = None,
             detrended_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Tc3 statistic extracted from surrogate time-series.
+
+        The surrogate time-series are generated using the IAAFT algorithm.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        surrogate_num : int, optional (default=32)
+            Number of surrogate time-series.
+
+        max_iter : int, optional (default=128)
+            Maximum number of iterations allowed before the convergence of the
+            IAAFT algorithm process.
+
+        relative : bool, optional (default=True)
+            If True, the obtained statistics will be normalized by the
+            statistic value extracted from the original time-series.
+
+        lag : int or str, optional
+            Lag to calculate the statistic. It must be a strictly positive
+            value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
+            last two type of options, the lag is estimated within this method
+            using the given strategy method (or, if None, it is used the
+            strategy `acf-nonsig` by default) up to ``max_nlags``.
+                1. `acf`: the lag corresponds to the first non-positive value
+                    in the autocorrelation function.
+                2. `acf-nonsig`: lag corresponds to the first non-significant
+                    value in the autocorrelation function (absolute value below
+                    the critical value of 1.96 / sqrt(ts.size)).
+                3. `ami`: lag corresponds to the first local minimum of the
+                    time-series automutual information function.
+
+        only_numerator : bool, optional (default=False)
+            If True, return only the numerator from this statistic definition.
+            Check `autocorr.MFETSAutocorr.ft_tc3` documentation for more
+            information.
+
+        random_state : int, optional
+            Random seed to ensure reproducibility.
+
+        max_nlags : int, optional
+            If ``lag`` is not a numeric value, than it will be estimated using
+            either the time-series autocorrelation or mutual information
+            function estimated up to this argument value.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags) of the detrended time-series. Used only if ``lag`` is any of
+            `acf`, `acf-nonsig` or None.  If this argument is not given and the
+            previous condiditon is meet, the autocorrelation function will be
+            calculated inside this method up to ``max_nlags``.
+
+        detrended_ami : :obj:`np.ndarray`, optional
+            Array of time-series automutual information function (for distinct
+            ordered lags). Used only if ``lag`` is `ami`. If not given and the
+            previous condiditon is meet, the automutual information function
+            will be calculated inside this method up to ``max_nlags``.
+
+        Returns
+        ------
+        :obj:`np.ndarray`
+            Tc3 statistic extracted from distinct generated surrogate
+            time-series using the IAAFT algorithm.
+
+        References
+        ----------
+        .. [1] Kugiumtzis, D.: Test your surrogate data before you test for
+            nonlinearity, Phys. Rev. E, 60(3), 2808–2816, 1999.
+        .. [2] Schreiber, T. and Schmitz, A.: Improved surrogate data for
+            nonlinearity tests, Phys. Rev. Lett, 77, 635–638, 1996.
+        .. [3] Schreiber, T. and Schmitz, A.: Surrogate time series, Physica
+            D,142(3–4), 346–382, 2000.
+        .. [4] Theiler, J., Eubank, S., Longtin, A., Galdrikian, B., and
+            Farmer, J.D.: Testing for nonlinearity in time series: the method
+            of surrogate data, Physica D, 58, 77–94, 1992.
+        .. [5] Theiler, J. and Prichard, D.: Constrained-realization
+            Monte-Carlo method for hypothesis testing, Physica D, 94(4),
+            221–235, 1996.
+        .. [6] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [7] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+        """
         lag = _embed.embed_lag(ts=ts,
                                lag=lag,
                                max_nlags=max_nlags,
