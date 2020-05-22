@@ -10,7 +10,6 @@ import _utils
 import _detrend
 import _period
 import _get_data
-import _surrogates
 
 
 class MFETSAutocorr:
@@ -345,41 +344,6 @@ class MFETSAutocorr:
         return trev
 
     @classmethod
-    def ft_trev_surr(cls,
-                     ts: np.ndarray,
-                     surrogate_num: int = 32,
-                     max_iter: int = 128,
-                     relative: bool = True,
-                     lag: t.Optional[t.Union[str, int]] = None,
-                     only_numerator: bool = False,
-                     random_state: t.Optional[int] = None,
-                     max_nlags: t.Optional[int] = None,
-                     ts_acfs: t.Optional[np.ndarray] = None,
-                     ts_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
-        lag = _embed.embed_lag(ts=ts,
-                               lag=lag,
-                               max_nlags=max_nlags,
-                               ts_acfs=ts_acfs,
-                               ts_ami=ts_ami)
-
-        surr_trev = _surrogates.apply_on_surrogates(
-            ts=ts,
-            surrogate_num=surrogate_num,
-            func=cls.ft_trev,
-            max_iter=max_iter,
-            random_state=random_state,
-            only_numerator=only_numerator,
-            lag=lag)
-
-        if relative:
-            surr_trev /= cls.ft_trev(ts=ts,
-                                     lag=lag,
-                                     only_numerator=only_numerator)
-
-        return surr_trev
-
-    @classmethod
     def ft_tc3(cls,
                ts: np.ndarray,
                lag: t.Optional[t.Union[str, int]] = None,
@@ -409,41 +373,6 @@ class MFETSAutocorr:
         tc3 = numen / denom
 
         return tc3
-
-    @classmethod
-    def ft_tc3_surr(cls,
-                    ts: np.ndarray,
-                    surrogate_num: int = 32,
-                    max_iter: int = 128,
-                    relative: bool = True,
-                    lag: t.Optional[t.Union[str, int]] = None,
-                    only_numerator: bool = False,
-                    random_state: t.Optional[int] = None,
-                    max_nlags: t.Optional[int] = None,
-                    ts_acfs: t.Optional[np.ndarray] = None,
-                    ts_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
-        lag = _embed.embed_lag(ts=ts,
-                               lag=lag,
-                               max_nlags=max_nlags,
-                               ts_acfs=ts_acfs,
-                               ts_ami=ts_ami)
-
-        surr_tc3 = _surrogates.apply_on_surrogates(
-            ts=ts,
-            surrogate_num=surrogate_num,
-            func=cls.ft_tc3,
-            max_iter=max_iter,
-            random_state=random_state,
-            only_numerator=only_numerator,
-            lag=lag)
-
-        if relative:
-            surr_tc3 /= cls.ft_tc3(ts=ts,
-                                   lag=lag,
-                                   only_numerator=only_numerator)
-
-        return surr_tc3
 
     @classmethod
     def ft_gen_autocorr(cls,
@@ -618,12 +547,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSAutocorr.ft_acf_first_nonpos(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_tc3_surr(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_trev_surr(ts)
     print(res)
 
     res = MFETSAutocorr.ft_tc3(ts, only_numerator=False)

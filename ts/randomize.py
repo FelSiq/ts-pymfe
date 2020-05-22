@@ -10,6 +10,14 @@ import _utils
 import _detrend
 import _period
 import _get_data
+import _embed
+import _surrogates
+
+try:
+    import autocorr
+
+except ImportError:
+    pass
 
 
 class MFETSRandomize:
@@ -209,12 +217,86 @@ class MFETSRandomize:
 
         return sample_std
 
+    @classmethod
+    def ft_trev_surr(cls,
+                     ts: np.ndarray,
+                     surrogate_num: int = 32,
+                     max_iter: int = 128,
+                     relative: bool = True,
+                     lag: t.Optional[t.Union[str, int]] = None,
+                     only_numerator: bool = False,
+                     random_state: t.Optional[int] = None,
+                     max_nlags: t.Optional[int] = None,
+                     ts_acfs: t.Optional[np.ndarray] = None,
+                     ts_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        lag = _embed.embed_lag(ts=ts,
+                               lag=lag,
+                               max_nlags=max_nlags,
+                               ts_acfs=ts_acfs,
+                               ts_ami=ts_ami)
+
+        surr_trev = _surrogates.apply_on_surrogates(
+            ts=ts,
+            surrogate_num=surrogate_num,
+            func=autocorr.MFETSAutocorr.ft_trev,
+            max_iter=max_iter,
+            random_state=random_state,
+            only_numerator=only_numerator,
+            lag=lag)
+
+        if relative:
+            surr_trev /= autocorr.MFETSAutocorr.ft_trev(
+                ts=ts, lag=lag, only_numerator=only_numerator)
+
+        return surr_trev
+
+    @classmethod
+    def ft_tc3_surr(cls,
+                    ts: np.ndarray,
+                    surrogate_num: int = 32,
+                    max_iter: int = 128,
+                    relative: bool = True,
+                    lag: t.Optional[t.Union[str, int]] = None,
+                    only_numerator: bool = False,
+                    random_state: t.Optional[int] = None,
+                    max_nlags: t.Optional[int] = None,
+                    ts_acfs: t.Optional[np.ndarray] = None,
+                    ts_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        lag = _embed.embed_lag(ts=ts,
+                               lag=lag,
+                               max_nlags=max_nlags,
+                               ts_acfs=ts_acfs,
+                               ts_ami=ts_ami)
+
+        surr_tc3 = _surrogates.apply_on_surrogates(
+            ts=ts,
+            surrogate_num=surrogate_num,
+            func=autocorr.MFETSAutocorr.ft_tc3,
+            max_iter=max_iter,
+            random_state=random_state,
+            only_numerator=only_numerator,
+            lag=lag)
+
+        if relative:
+            surr_tc3 /= autocorr.MFETSAutocorr.ft_tc3(
+                ts=ts, lag=lag, only_numerator=only_numerator)
+
+        return surr_tc3
+
 
 def _test() -> None:
     ts = _get_data.load_data(3)
     ts_period = _period.ts_period(ts=ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
+
+    res = MFETSRandomize.ft_tc3_surr(ts, random_state=16)
+    print(res)
+
+    res = MFETSRandomize.ft_trev_surr(ts, random_state=16)
+    print(res)
 
     res = MFETSRandomize.precompute_randomize_stats(ts, random_state=16)
     print(res)
