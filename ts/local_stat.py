@@ -345,10 +345,8 @@ class MFETSLocalStats:
             Series Detection," 2015 IEEE International Conference on Data
             Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
             doi: 10.1109/ICDMW.2015.104.
-
         .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
             tsfeatures: Time series feature extraction. R package version 0.1.
-
         .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
@@ -417,10 +415,8 @@ class MFETSLocalStats:
             Series Detection," 2015 IEEE International Conference on Data
             Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
             doi: 10.1109/ICDMW.2015.104.
-
         .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
             tsfeatures: Time series feature extraction. R package version 0.1.
-
         .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
@@ -500,10 +496,8 @@ class MFETSLocalStats:
             Series Detection," 2015 IEEE International Conference on Data
             Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
             doi: 10.1109/ICDMW.2015.104.
-
         .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
             tsfeatures: Time series feature extraction. R package version 0.1.
-
         .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
@@ -1296,10 +1290,8 @@ class MFETSLocalStats:
             Series Detection," 2015 IEEE International Conference on Data
             Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
             doi: 10.1109/ICDMW.2015.104.
-
         .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
             tsfeatures: Time series feature extraction. R package version 0.1.
-
         .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
@@ -1395,10 +1387,8 @@ class MFETSLocalStats:
             Series Detection," 2015 IEEE International Conference on Data
             Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
             doi: 10.1109/ICDMW.2015.104.
-
         .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
             tsfeatures: Time series feature extraction. R package version 0.1.
-
         .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
@@ -1477,7 +1467,6 @@ class MFETSLocalStats:
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
@@ -1565,7 +1554,6 @@ class MFETSLocalStats:
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
@@ -1625,10 +1613,8 @@ class MFETSLocalStats:
             Series Detection," 2015 IEEE International Conference on Data
             Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
             doi: 10.1109/ICDMW.2015.104.
-
         .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
             tsfeatures: Time series feature extraction. R package version 0.1.
-
         .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
@@ -1680,7 +1666,6 @@ class MFETSLocalStats:
         ----------
         .. [1] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
             tsfeatures: Time series feature extraction. R package version 0.1.
-
         .. [2] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
@@ -1728,10 +1713,8 @@ class MFETSLocalStats:
             Series Detection," 2015 IEEE International Conference on Data
             Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
             doi: 10.1109/ICDMW.2015.104.
-
         .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
             tsfeatures: Time series feature extraction. R package version 0.1.
-
         .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
             Thiyanga S. Talagala, FFORMA: Feature-based forecast model
             averaging, International Journal of Forecasting, Volume 36, Issue
@@ -1784,7 +1767,6 @@ class MFETSLocalStats:
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
@@ -1836,7 +1818,6 @@ class MFETSLocalStats:
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).

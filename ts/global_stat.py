@@ -16,6 +16,33 @@ import _get_data
 class MFETSGlobalStats:
     """Extract time-series meta-features from Global Statistics group."""
     @classmethod
+    def precompute_period(cls, ts: np.ndarray, **kwargs) -> t.Dict[str, int]:
+        """Precompute the time-series period.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        kwargs:
+            Additional arguments and previous precomputed items. May
+            speed up this precomputation.
+
+        Returns
+        -------
+        dict
+            The following precomputed item is returned:
+                * ``ts_period`` (:obj:`int`): time-series period.
+        """
+        precomp_vals = {}  # type: t.Dict[str, int]
+
+        if ts_period not in kwargs:
+            ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
+            precomp_vals["ts_period"] = ts_period
+
+        return precomp_vals
+
+    @classmethod
     def ft_ioi_tdelta_mean(
             cls,
             ts: np.ndarray,
@@ -102,7 +129,7 @@ class MFETSGlobalStats:
         ts_deseasonalized: :obj:`np.ndarray`
             One-dimensional deseasonalized time-series values.
 
-        ddof : float, optional
+        ddof : int, optional (default=1)
             Degrees of freedom for standard deviation.
 
         Returns
@@ -145,7 +172,7 @@ class MFETSGlobalStats:
         ts_deseasonalized: :obj:`np.ndarray`
             One-dimensional deseasonalized time-series values.
 
-        ddof : float, optional
+        ddof : int, optional (default=1)
             Degrees of freedom for standard deviation.
 
         Returns
@@ -183,17 +210,13 @@ class MFETSGlobalStats:
         ts_residuals : :obj:`np.ndarray`
             Residuals (random noise) of an one-dimensional time-series.
 
-        ddof : float, optional
+        ddof : int, optional (default=1)
             Degrees of freedom for standard deviation.
 
         Returns
         -------
         float
-            Detrended time-series standard deviation.
-
-        References
-        ----------
-        TODO.
+            Standard deviation of the time-series residuals.
         """
         return np.std(ts_residuals, ddof=ddof)
 
@@ -202,59 +225,59 @@ class MFETSGlobalStats:
                    ts: np.ndarray,
                    num_diff: int = 1,
                    ddof: int = 1) -> float:
-        """TODO.
+        """Standard deviation of the nth-order differenced time-series.
 
         Parameters
         ----------
-        ts: :obj:`np.ndarray`
-            TODO.
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
 
-        ddof : float, optional
+        num_diff : int, optional (default=1)
+            Order of the differentiation.
+
+        ddof : float, optional (default=1)
             Degrees of freedom for standard deviation.
 
         Returns
         -------
         float
-        TODO.
-
-        References
-        ----------
-        TODO.
+            Standard deviation of the nth-order differenced time-series.
         """
         return np.std(np.diff(ts, n=num_diff), ddof=ddof)
 
     @classmethod
-    def ft_sd_mdiff(cls,
+    def ft_sd_sdiff(cls,
                     ts: np.ndarray,
-                    ts_period: int,
-                    ddof: int = 1) -> float:
-        """TODO.
+                    ddof: int = 1,
+                    ts_period: t.Optional[int] = None) -> float:
+        """Seasonal standard dev.  of the first-order differenced time-series.
 
         Parameters
         ----------
-        ts: :obj:`np.ndarray`
-            TODO.
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
 
-        ddof : float, optional
+        ddof : int, optional (default=1)
             Degrees of freedom for standard deviation.
+
+        ts_period : int, optional
+            Time-series period. Used to take advantage of precomputations.
 
         Returns
         -------
         float
-        TODO.
-
-        References
-        ----------
-        TODO.
+            Standard deviation of the first-order difference of the lagged
+            time-series by its own period.
         """
-        ts_diff = ts[ts_period:] - ts[:-ts_period]
-        return np.std(ts_diff, ddof=ddof)
+        ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
+        ts_sdiff = ts[ts_period:] - ts[:-ts_period]
+        return np.std(ts_sdiff, ddof=ddof)
 
     @classmethod
     def ft_skewness_residuals(cls,
                               ts_residuals: np.ndarray,
                               method: int = 3,
-                              bias: bool = True) -> float:
+                              unbiased: bool = False) -> float:
         """Compute the skewness of the time-series residuals.
 
         Parameters
@@ -262,7 +285,7 @@ class MFETSGlobalStats:
         ts_residuals : :obj:`np.ndarray`
             Residuals (random noise) of an one-dimensional time-series.
 
-        method : int, optional
+        method : int, optional (default=3)
             Defines the strategy used for estimate data skewness. This argument
             is used fo compatibility with R package `e1071`. The options must
             be one of the following:
@@ -285,8 +308,8 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
 
-        bias : bool, optional
-            If False, then the calculations are corrected for statistical bias.
+        unbiased : bool, optional
+            If True, then the calculations are corrected for statistical bias.
 
         Returns
         -------
@@ -301,7 +324,7 @@ class MFETSGlobalStats:
         """
         ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_residuals,
                                                                method=method,
-                                                               bias=bias)
+                                                               bias=~unbiased)
 
         return ts_skew
 
@@ -310,26 +333,29 @@ class MFETSGlobalStats:
                          ts: np.ndarray,
                          num_diff: int = 1,
                          method: int = 3,
-                         bias: bool = True) -> float:
+                         unbiased: bool = False) -> float:
         """TODO."""
         ts_diff = np.diff(ts, n=num_diff)
         ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_diff,
                                                                method=method,
-                                                               bias=bias)
+                                                               bias=~unbiased)
 
         return ts_skew
 
     @classmethod
-    def ft_skewness_mdiff(cls,
+    def ft_skewness_sdiff(cls,
                           ts: np.ndarray,
-                          ts_period: int,
                           method: int = 3,
-                          bias: bool = True) -> float:
+                          unbiased: bool = False,
+                          ts_period: t.Optional[int] = None) -> float:
         """TODO."""
-        ts_diff = ts[ts_period] - ts[:-ts_period]
-        ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_diff,
+        ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
+
+        ts_sdiff = ts[ts_period:] - ts[:-ts_period]
+
+        ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_sdiff,
                                                                method=method,
-                                                               bias=bias)
+                                                               bias=~unbiased)
 
         return ts_skew
 
@@ -337,7 +363,7 @@ class MFETSGlobalStats:
     def ft_kurtosis_residuals(cls,
                               ts_residuals: np.ndarray,
                               method: int = 3,
-                              bias: bool = True) -> float:
+                              unbiased: bool = False) -> float:
         """Compute the kurtosis of the time-series residuals.
 
         Parameters
@@ -345,7 +371,7 @@ class MFETSGlobalStats:
         ts_residuals : :obj:`np.ndarray`
             Residuals (random noise) of an one-dimensional time-series.
 
-        method : int, optional
+        method : int, optional (default=3)
             Defines the strategy used for estimate data kurtosis. Used for
             total compatibility with R package ``e1071``. This option must be
             one of the following:
@@ -370,8 +396,8 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due
             to division by zero, then the first method is used instead.
 
-        bias : bool, optional
-            If False, then the calculations are corrected for statistical bias.
+        unbiased : bool, optional
+            If True, then the calculations are corrected for statistical bias.
 
         Returns
         -------
@@ -386,7 +412,7 @@ class MFETSGlobalStats:
         """
         ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_residuals,
                                                                method=method,
-                                                               bias=bias)
+                                                               bias=~unbiased)
 
         return ts_kurt
 
@@ -395,33 +421,163 @@ class MFETSGlobalStats:
                          ts: np.ndarray,
                          num_diff: int = 1,
                          method: int = 3,
-                         bias: bool = True) -> float:
-        """TODO."""
+                         unbiased: bool = False) -> float:
+        """kurtosis of the nth-order differenced time-series.
+
+        This method calculates the kurtosis of the nth-order differenced
+        time-series (with lag = 1), with `n` being given by `num_diff`.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_diff : int, optional (default=1)
+            Order of the differentiation.
+
+        method : int, optional (default=3)
+            Defines the strategy used for estimate data kurtosis. Used for
+            total compatibility with R package ``e1071``. This option must be
+            one of the following:
+
+            +--------+-----------------------------------------------+
+            |Method  | Formula                                       |
+            +--------+-----------------------------------------------+
+            |1       | Kurt_1 = (m_4 / m_2**2 - 3)                   |
+            |        | (default of `scipy.stats` package)            |
+            +--------+-----------------------------------------------+
+            |2       | Kurt_2 = (((n+1) * Kurt_1 + 6) * (n-1) / f_2),|
+            |        | f_2 = ((n-2)*(n-3))                           |
+            +--------+-----------------------------------------------+
+            |3       | Kurt_3 = (m_4 / s**4 - 3)                     |
+            |        |        = ((Kurt_1+3) * (1 - 1/n)**2 - 3)      |
+            +--------+-----------------------------------------------+
+
+            Where `n` is the number of instances in ``ts``, `s` is the standard
+            deviation of each attribute in ``ts``, and `m_i` is the ith
+            statistical momentum of each attribute in ``ts``.
+
+            Note that if the selected method is unable to be calculated due
+            to division by zero, then the first method is used instead.
+
+        unbiased : bool, optional
+            If True, then the calculations are corrected for statistical bias.
+
+        Returns
+        -------
+        float
+            Kurtosis of the nth-order differenced time-series
+        """
         ts_diff = np.diff(ts, n=num_diff)
         ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_diff,
                                                                method=method,
-                                                               bias=bias)
+                                                               bias=~unbiased)
 
         return ts_kurt
 
     @classmethod
-    def ft_kurtosis_mdiff(cls,
+    def ft_kurtosis_sdiff(cls,
                           ts: np.ndarray,
-                          ts_period: int,
                           method: int = 3,
-                          bias: bool = True) -> float:
-        """TODO."""
-        ts_diff = ts[ts_period:] - ts[:-ts_period]
-        ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_diff,
+                          unbiased: bool = False,
+                          ts_period: t.Optional[int] = None) -> float:
+        """Seasonal kurtosis of the first-order differenced time-series.
+
+        This method calculates the kurtosis of the first-order differenced
+        time-series, lagged with its period.
+
+        If the time-series is not seasonal, then its period is assumed to be 1.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        method : int, optional (default=3)
+            Defines the strategy used for estimate data kurtosis. Used for
+            total compatibility with R package ``e1071``. This option must be
+            one of the following:
+
+            +--------+-----------------------------------------------+
+            |Method  | Formula                                       |
+            +--------+-----------------------------------------------+
+            |1       | Kurt_1 = (m_4 / m_2**2 - 3)                   |
+            |        | (default of `scipy.stats` package)            |
+            +--------+-----------------------------------------------+
+            |2       | Kurt_2 = (((n+1) * Kurt_1 + 6) * (n-1) / f_2),|
+            |        | f_2 = ((n-2)*(n-3))                           |
+            +--------+-----------------------------------------------+
+            |3       | Kurt_3 = (m_4 / s**4 - 3)                     |
+            |        |        = ((Kurt_1+3) * (1 - 1/n)**2 - 3)      |
+            +--------+-----------------------------------------------+
+
+            Where `n` is the number of instances in ``ts``, `s` is the standard
+            deviation of each attribute in ``ts``, and `m_i` is the ith
+            statistical momentum of each attribute in ``ts``.
+
+            Note that if the selected method is unable to be calculated due
+            to division by zero, then the first method is used instead.
+
+        unbiased : bool, optional
+            If True, then the calculations are corrected for statistical bias.
+
+        ts_period : int, optional
+            Time-series period. Used to take advantage of precomputations.
+
+        Returns
+        -------
+        float
+            Kurtosis of the first-order difference of the lagged time-series
+            by its own period.
+        """
+        ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
+
+        ts_sdiff = ts[ts_period:] - ts[:-ts_period]
+
+        ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_sdiff,
                                                                method=method,
-                                                               bias=bias)
+                                                               bias=~unbiased)
 
         return ts_kurt
 
     @classmethod
-    def ft_exp_max_lyap(cls, ts: np.ndarray, embed_dim: int,
-                        lag: int) -> float:
-        """TODO."""
+    def ft_exp_max_lyap(cls,
+                        ts: np.ndarray,
+                        embed_dim: int = 10,
+                        lag: t.Optional[int] = None) -> float:
+        """Estimation of the maximum Lyapunov coefficient.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        embed_dim : int, optional (default=10)
+            Time-series embed dimension.
+
+        lag : int, optional
+            Lag of the embed.
+
+        Returns
+        -------
+        float
+            Estimation of the maximum Lyapunov coefficient.
+
+        References
+        ----------
+        .. [1] H. E. Hurst, The problem of long-term storage in reservoirs,
+            International Association of Scientific Hydrology. Bulletin, vol. 1,
+            no. 3, pp. 13–27, 1956.
+        .. [2] H. E. Hurst, A suggested statistical model of some time series
+            which occur in nature, Nature, vol. 180, p. 494, 1957.
+        .. [3] R. Weron, Estimating long-range dependence: finite sample
+            properties and confidence intervals, Physica A: Statistical Mechanics
+            and its Applications, vol. 312, no. 1, pp. 285–299, 2002.
+        .. [4] "nolds" Python package: https://pypi.org/project/nolds/
+        .. [5] Lemke, Christiane & Gabrys, Bogdan. (2010). Meta-learning for
+            time series forecasting and forecast combination. Neurocomputing.
+            73. 2006-2016. 10.1016/j.neucom.2009.09.020.
+        """
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore",
                                     module="nolds",
@@ -433,40 +589,172 @@ class MFETSGlobalStats:
 
     @classmethod
     def ft_exp_hurst(cls, ts: np.ndarray) -> float:
-        """TODO."""
+        """Estimation of the Hurst exponent.
+
+        Check `nolds.hurst_rs` documentation for a clear explanation about
+        the underlying function.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        Returns
+        -------
+        float
+            Estimation of the hurst exponent.
+
+        References
+        ----------
+        .. [1] H. E. Hurst, The problem of long-term storage in reservoirs,
+            International Association of Scientific Hydrology. Bulletin, vol. 1,
+            no. 3, pp. 13–27, 1956.
+        .. [2] H. E. Hurst, A suggested statistical model of some time series
+            which occur in nature, Nature, vol. 180, p. 494, 1957.
+        .. [3] R. Weron, Estimating long-range dependence: finite sample
+            properties and confidence intervals, Physica A: Statistical Mechanics
+            and its Applications, vol. 312, no. 1, pp. 285–299, 2002.
+        .. [4] "nolds" Python package: https://pypi.org/project/nolds/
+        """
         return nolds.hurst_rs(data=ts)
 
     @classmethod
     def ft_dfa(cls,
                ts: np.ndarray,
-               order: int = 1,
-               overlap_windows: bool = True,
-               return_coeff: bool = True) -> float:
-        """TODO."""
-        hurst_coeff = nolds.dfa(ts, order=order, overlap=overlap_windows)
+               pol_order: int = 1,
+               overlap_windows: bool = True) -> float:
+        """Calculate the Hurst parameter from Detrended fluctuation analysis.
+
+        Note that the ``Hurst parameter`` is not the same quantity as the
+        ``Hurst exponent``. The Hurst parameter `H` is defined as the quantity
+        such that the following holds: std(ts, l * n) = l ** H * std(ts, n),
+        where `ts` is the time-series, `l` is a constant factor, `n` is some
+        window length of `ts`, and std(ts, k) is the standard deviation of
+        `ts` within a window of size `k`.
+
+        Check `nolds.dfa` documentation for a clear explanation about the
+        underlying function.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        pol_order : int, optional (default=1)
+            Order of the detrending polynomial within each window of the
+            analysis.
+
+        overlap_windows : bool, optional (default=True)
+            If True, overlap the windows used while performing the analysis.
+
+        Returns
+        -------
+        float
+            Hurst parameter.
+
+        References
+        ----------
+        .. [1] C.-K. Peng, S. V. Buldyrev, S. Havlin, M. Simons,
+            H. E. Stanley, and A. L. Goldberger, Mosaic organization of
+            DNA nucleotides, Physical Review E, vol. 49, no. 2, 1994.
+        .. [2] R. Hardstone, S.-S. Poil, G. Schiavone, R. Jansen,
+            V. V. Nikulin, H. D. Mansvelder, and K. Linkenkaer-Hansen,
+            Detrended fluctuation analysis: A scale-free view on neuronal
+            oscillations, Frontiers in Physiology, vol. 30, 2012.
+        .. [3] "nolds" Python package: https://pypi.org/project/nolds/
+        """
+        hurst_coeff = nolds.dfa(ts, order=pol_order, overlap=overlap_windows)
         return hurst_coeff
 
     @classmethod
-    def ft_corr_dim(cls,
-                    ts: np.ndarray,
-                    emb_dim: int = 1) -> t.Union[np.ndarray, float]:
-        """TODO."""
+    def ft_corr_dim(cls, ts: np.ndarray, emb_dim: int = 1) -> float:
+        """Correlation dimension of the time-series.
+
+        It is used the Grassberger-Procaccia algorithm for the correlation
+        dimension estimation.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        emb_dim : int, optional (default=1)
+            Embedding dimension to estimate the correlation dimension.
+
+        Returns
+        -------
+        float
+            Estimated correlation dimension.
+
+        References
+        ----------
+        .. [1] P. Grassberger and I. Procaccia, Characterization of strange
+            attractors, Physical review letters, vol. 50, no. 5, p. 346,
+            1983.
+        .. [2] P. Grassberger and I. Procaccia, Measuring the strangeness of
+            strange attractors, Physica D: Nonlinear Phenomena, vol. 9,
+            no. 1, pp. 189–208, 1983.
+        .. [3] P. Grassberger, Grassberger-Procaccia algorithm,
+            Scholarpedia, vol. 2, no. 5, p. 3043.
+        .. [4] "nolds" Python package. URL: https://pypi.org/project/nolds/
+        """
         corr_dim = nolds.corr_dim(ts, emb_dim=emb_dim)
         return corr_dim
 
     @classmethod
     def ft_opt_boxcox_coef(cls,
                            ts: np.ndarray,
-                           epsilon: float = 1.0e-4,
-                           num_lambdas: int = 16) -> float:
-        """TODO."""
-        ts = ts - ts.min() + epsilon
+                           adjust_data: bool = True) -> float:
+        """Estimated optimal box-cox transformation coefficient.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        adjust_data : bool, optional (default=True)
+            If True, transform the data to y(t) = ts(t) - min(ts) + 1. This is
+            required for non-positive data. If False, estimate the coefficient
+            with the original data, possibly failing if the time-series have
+            non-positive data.
+
+        Returns
+        -------
+        float
+            Estimated optimal box-cox transformation coefficient.
+
+        References
+        ----------
+        .. [1] Box, G. E. P. and Cox, D. R. (1964). An analysis of
+            transformations, Journal of the Royal Statistical Society, Series
+            B, 26, 211-252.
+        .. [2] Yanfei Kang, Rob J. Hyndman, Kate Smith-Miles, Visualising
+            forecasting algorithm performance using time series instance
+            spaces, International Journal of Forecasting, Volume 33, Issue 2,
+            2017, Pages 345-358, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2016.09.004.
+        """
+        if adjust_data:
+            ts = ts - ts.min() + 1
+
         return scipy.stats.boxcox_normmax(ts, method="mle")
 
     @classmethod
-    def ft_t_mean(cls, ts: np.ndarray, pcut: float = 0.02) -> np.ndarray:
+    def ft_t_mean(cls, ts: np.ndarray, pcut: float = 0.02) -> float:
         """Trimmed mean of the time-series values.
 
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        pcut : float, optional (default=0.02)
+            Proportion of outlier cut. Must be in [0, 0.5) range.
+
+        Returns
+        -------
+        float
+            Trimmed mean of time-series.
 
         References
         ----------
@@ -495,7 +783,6 @@ def _test() -> None:
 
     res = MFETSGlobalStats.ft_corr_dim(ts)
     print("corr_dim", res)
-    exit(1)
 
     res = MFETSGlobalStats.ft_ioi_tdelta_mean(ts)
     print(res)
@@ -509,20 +796,20 @@ def _test() -> None:
     res = MFETSGlobalStats.ft_sd_diff(ts)
     print("sd diff", res)
 
-    res = MFETSGlobalStats.ft_sd_mdiff(ts, ts_period)
-    print("sd mdiff", res)
+    res = MFETSGlobalStats.ft_sd_sdiff(ts)
+    print("sd sdiff", res)
 
     res = MFETSGlobalStats.ft_skewness_diff(ts)
     print("skewness diff", res)
 
-    res = MFETSGlobalStats.ft_skewness_mdiff(ts, ts_period)
-    print("skewness mdiff", res)
+    res = MFETSGlobalStats.ft_skewness_sdiff(ts)
+    print("skewness sdiff", res)
 
     res = MFETSGlobalStats.ft_kurtosis_diff(ts)
     print("kurtosis diff", res)
 
-    res = MFETSGlobalStats.ft_kurtosis_mdiff(ts, ts_period)
-    print("kurtosis mdiff", res)
+    res = MFETSGlobalStats.ft_kurtosis_sdiff(ts)
+    print("kurtosis sdiff", res)
 
     res = MFETSGlobalStats.ft_sd_diff(ts)
     print("sd diff", res)
