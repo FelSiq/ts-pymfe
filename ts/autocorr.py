@@ -22,27 +22,36 @@ class MFETSAutocorr:
         """TODO."""
         precomp_vals = {}
 
-        if "ts_acfs" not in kwargs:
-            precomp_vals["ts_acfs"] = cls.ft_acf(ts=ts,
-                                                 nlags=nlags,
-                                                 unbiased=unbiased)
+        if "detrended_acfs" not in kwargs:
+            precomp_vals["detrended_acfs"] = cls.ft_acf_detrended(
+                ts=ts, nlags=nlags, unbiased=unbiased)
 
         return precomp_vals
 
     @classmethod
     def _calc_acf(cls,
-                  data: np.ndarray,
+                  ts: np.ndarray,
                   nlags: t.Optional[int] = None,
                   unbiased: bool = True,
-                  ts_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
+                  detrend: bool = True,
+                  detrended_acfs: t.Optional[np.ndarray] = None,
+                  ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
-        if ts_acfs is not None and (nlags is None or tc_acfs.size == nlags):
-            return ts_acfs
+        if detrended_acfs is not None and (nlags is None
+                                           or tc_acfs.size == nlags):
+            return detrended_acfs
+
+        try:
+            if detrend and ts_detrended is None:
+                ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
+
+        except ValueError:
+            ts_detrended = ts
 
         if nlags is None:
-            nlags = data.size // 2
+            nlags = ts.size // 2
 
-        acf = statsmodels.tsa.stattools.acf(data,
+        acf = statsmodels.tsa.stattools.acf(ts,
                                             nlags=nlags,
                                             unbiased=unbiased,
                                             fft=True)
@@ -50,141 +59,24 @@ class MFETSAutocorr:
 
     @classmethod
     def _calc_pacf(cls,
-                   data: np.ndarray,
+                   ts: np.ndarray,
                    nlags: t.Optional[int] = None,
-                   method: str = "ols-unbiased") -> np.ndarray:
+                   method: str = "ols-unbiased",
+                   detrend: bool = True,
+                   ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
         if nlags is None:
-            nlags = data.size // 2
+            nlags = ts.size // 2
 
-        pacf = statsmodels.tsa.stattools.pacf(data, nlags=nlags, method=method)
+        try:
+            if detrend and ts_detrended is None:
+                ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
+
+        except ValueError:
+            ts_detrended = ts
+
+        pacf = statsmodels.tsa.stattools.pacf(ts, nlags=nlags, method=method)
         return pacf[1:]
-
-    @classmethod
-    def ft_pacf(cls,
-                ts: np.ndarray,
-                nlags: t.Optional[int] = None,
-                method: str = "ols-unbiased") -> np.ndarray:
-        """TODO."""
-        return cls._calc_pacf(data=ts, nlags=nlags, method=method)
-
-    @classmethod
-    def ft_pacf_diff(cls,
-                     ts: np.ndarray,
-                     num_diff: int = 1,
-                     nlags: t.Optional[int] = None,
-                     method: str = "ols-unbiased") -> np.ndarray:
-        """TODO."""
-        return cls._calc_pacf(data=np.diff(ts, n=num_diff),
-                              nlags=nlags,
-                              method=method)
-
-    @classmethod
-    def ft_pacf_residuals(cls,
-                          ts_residuals: np.ndarray,
-                          nlags: t.Optional[int] = None,
-                          method: str = "ols-unbiased") -> np.ndarray:
-        """TODO."""
-        return cls._calc_pacf(data=ts_residuals, nlags=nlags, method=method)
-
-    @classmethod
-    def ft_pacf_trend(cls,
-                      ts_trend: np.ndarray,
-                      nlags: t.Optional[int] = None,
-                      method: str = "ols-unbiased") -> np.ndarray:
-        """TODO."""
-        return cls._calc_pacf(data=ts_trend, nlags=nlags, method=method)
-
-    @classmethod
-    def ft_pacf_seasonality(cls,
-                            ts_season: np.ndarray,
-                            nlags: t.Optional[int] = None,
-                            method: str = "ols-unbiased") -> np.ndarray:
-        """TODO."""
-        return cls._calc_pacf(data=ts_season, nlags=nlags, method=method)
-
-    @classmethod
-    def ft_pacf_detrended(cls,
-                          ts_detrended: np.ndarray,
-                          nlags: t.Optional[int] = None,
-                          method: str = "ols-unbiased") -> np.ndarray:
-        """TODO."""
-        return cls._calc_pacf(data=ts_detrended, nlags=nlags, method=method)
-
-    @classmethod
-    def ft_pacf_deseasonalized(cls,
-                               ts_deseasonalized: np.ndarray,
-                               nlags: t.Optional[int] = None,
-                               method: str = "ols-unbiased") -> np.ndarray:
-        """TODO."""
-        return cls._calc_pacf(data=ts_deseasonalized,
-                              nlags=nlags,
-                              method=method)
-
-    @classmethod
-    def ft_acf(cls,
-               ts: np.ndarray,
-               nlags: t.Optional[int] = None,
-               unbiased: bool = True,
-               ts_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
-        return cls._calc_acf(data=ts,
-                             nlags=nlags,
-                             unbiased=unbiased,
-                             ts_acfs=ts_acfs)
-
-    @classmethod
-    def ft_acf_diff(cls,
-                    ts: np.ndarray,
-                    num_diff: int = 1,
-                    nlags: t.Optional[int] = None,
-                    unbiased: bool = True) -> np.ndarray:
-        """TODO."""
-        return cls._calc_acf(data=np.diff(ts, n=num_diff),
-                             nlags=nlags,
-                             unbiased=unbiased)
-
-    @classmethod
-    def ft_acf_residuals(cls,
-                         ts_residuals: np.ndarray,
-                         nlags: t.Optional[int] = None,
-                         unbiased: bool = True) -> np.ndarray:
-        """TODO."""
-        return cls._calc_acf(data=ts_residuals, nlags=nlags, unbiased=unbiased)
-
-    @classmethod
-    def ft_acf_trend(cls,
-                     ts_trend: np.ndarray,
-                     nlags: t.Optional[int] = None,
-                     unbiased: bool = True) -> np.ndarray:
-        """TODO."""
-        return cls._calc_acf(data=ts_trend, nlags=nlags, unbiased=unbiased)
-
-    @classmethod
-    def ft_acf_seasonality(cls,
-                           ts_season: np.ndarray,
-                           nlags: t.Optional[int] = None,
-                           unbiased: bool = True) -> np.ndarray:
-        """TODO."""
-        return cls._calc_acf(data=ts_season, nlags=nlags, unbiased=unbiased)
-
-    @classmethod
-    def ft_acf_detrended(cls,
-                         ts_detrended: np.ndarray,
-                         nlags: t.Optional[int] = None,
-                         unbiased: bool = True) -> np.ndarray:
-        """TODO."""
-        return cls._calc_acf(data=ts_detrended, nlags=nlags, unbiased=unbiased)
-
-    @classmethod
-    def ft_acf_deseasonalized(cls,
-                              ts_deseasonalized: np.ndarray,
-                              nlags: t.Optional[int] = None,
-                              unbiased: bool = True) -> np.ndarray:
-        """TODO."""
-        return cls._calc_acf(data=ts_deseasonalized,
-                             nlags=nlags,
-                             unbiased=unbiased)
 
     @classmethod
     def _first_acf_below_threshold(
@@ -194,19 +86,20 @@ class MFETSAutocorr:
             abs_acf_vals: bool = False,
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
-            ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+            detrended_acfs: t.Optional[np.ndarray] = None
+    ) -> t.Union[int, float]:
         """TODO."""
-        ts_acfs = cls._calc_acf(data=ts,
-                                nlags=max_nlags,
-                                unbiased=unbiased,
-                                ts_acfs=ts_acfs)
+        detrended_acfs = cls._calc_acf(ts=ts,
+                                       nlags=max_nlags,
+                                       unbiased=unbiased,
+                                       detrended_acfs=detrended_acfs)
 
         if abs_acf_vals:
             # Note: in this case, we are testing if
             # -threshold <= acf <= threshold.
-            ts_acfs = np.abs(ts_acfs)
+            detrended_acfs = np.abs(detrended_acfs)
 
-        nonpos_acfs = np.flatnonzero(ts_acfs <= threshold)
+        nonpos_acfs = np.flatnonzero(detrended_acfs <= threshold)
 
         try:
             return nonpos_acfs[0] + 1
@@ -215,12 +108,93 @@ class MFETSAutocorr:
             return np.nan
 
     @classmethod
+    def ft_acf(cls,
+               ts: np.ndarray,
+               nlags: t.Optional[int] = None,
+               unbiased: bool = True) -> np.ndarray:
+        """TODO."""
+        return cls._calc_acf(ts=ts,
+                             nlags=nlags,
+                             unbiased=unbiased,
+                             detrend=False)
+
+    @classmethod
+    def ft_acf_detrended(
+            cls,
+            ts: np.ndarray,
+            nlags: t.Optional[int] = None,
+            unbiased: bool = True,
+            ts_detrended: t.Optional[np.ndarray] = None,
+            detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        return cls._calc_acf(ts=ts,
+                             nlags=nlags,
+                             unbiased=unbiased,
+                             detrend=True,
+                             detrended_acfs=detrended_acfs,
+                             ts_detrended=ts_detrended)
+
+    @classmethod
+    def ft_acf_diff(cls,
+                    ts: np.ndarray,
+                    num_diff: int = 1,
+                    nlags: t.Optional[int] = None,
+                    detrend: bool = True,
+                    ts_detrended: t.Optional[np.ndarray] = None,
+                    unbiased: bool = True) -> np.ndarray:
+        """TODO."""
+        return cls._calc_acf(ts=np.diff(ts, n=num_diff),
+                             detrend=detrend,
+                             nlags=nlags,
+                             unbiased=unbiased,
+                             ts_detrended=ts_detrended)
+
+    @classmethod
+    def ft_pacf(cls,
+                ts: np.ndarray,
+                nlags: t.Optional[int] = None,
+                method: str = "ols-unbiased") -> np.ndarray:
+        """TODO."""
+        return cls._calc_pacf(ts=ts, nlags=nlags, method=method, detrend=False)
+
+    @classmethod
+    def ft_pacf_detrended(
+            cls,
+            ts: np.ndarray,
+            nlags: t.Optional[int] = None,
+            method: str = "ols-unbiased",
+            ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        return cls._calc_pacf(ts=ts,
+                              nlags=nlags,
+                              method=method,
+                              detrend=True,
+                              ts_detrended=ts_detrended)
+
+    @classmethod
+    def ft_pacf_diff(
+            cls,
+            ts: np.ndarray,
+            num_diff: int = 1,
+            nlags: t.Optional[int] = None,
+            method: str = "ols-unbiased",
+            detrend: bool = True,
+            ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        return cls._calc_pacf(ts=np.diff(ts, n=num_diff),
+                              nlags=nlags,
+                              method=method,
+                              detrend=detrend,
+                              ts_detrended=ts_detrended)
+
+    @classmethod
     def ft_acf_first_nonsig(
             cls,
             ts: np.ndarray,
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
-            ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+            detrended_acfs: t.Optional[np.ndarray] = None
+    ) -> t.Union[int, float]:
         """TODO."""
         threshold = 1.96 / np.sqrt(ts.size)
 
@@ -229,7 +203,7 @@ class MFETSAutocorr:
                                              abs_acf_vals=True,
                                              max_nlags=max_nlags,
                                              unbiased=unbiased,
-                                             ts_acfs=ts_acfs)
+                                             detrended_acfs=detrended_acfs)
         return res
 
     @classmethod
@@ -238,14 +212,15 @@ class MFETSAutocorr:
             ts: np.ndarray,
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
-            ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+            detrended_acfs: t.Optional[np.ndarray] = None
+    ) -> t.Union[int, float]:
         """TODO."""
         res = cls._first_acf_below_threshold(ts=ts,
                                              threshold=0,
                                              abs_acf_vals=False,
                                              max_nlags=max_nlags,
                                              unbiased=unbiased,
-                                             ts_acfs=ts_acfs)
+                                             detrended_acfs=detrended_acfs)
         return res
 
     @classmethod
@@ -254,14 +229,16 @@ class MFETSAutocorr:
             ts: np.ndarray,
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
-            ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+            detrended_acfs: t.Optional[np.ndarray] = None
+    ) -> t.Union[int, float]:
         """TODO."""
-        ts_acfs = cls._calc_acf(data=ts,
-                                nlags=max_nlags,
-                                unbiased=unbiased,
-                                ts_acfs=ts_acfs)
+        detrended_acfs = cls._calc_acf(ts=ts,
+                                       nlags=max_nlags,
+                                       unbiased=unbiased,
+                                       detrended_acfs=detrended_acfs)
 
-        acfs_locmin = np.flatnonzero(_utils.find_crit_pt(ts_acfs, type_="min"))
+        acfs_locmin = np.flatnonzero(
+            _utils.find_crit_pt(detrended_acfs, type_="min"))
 
         try:
             return acfs_locmin[0] + 1
@@ -270,55 +247,13 @@ class MFETSAutocorr:
             return np.nan
 
     @classmethod
-    def ft_sfirst_acf_nonpos(
-            cls,
-            ts: np.ndarray,
-            num_samples: int = 128,
-            sample_size_frac: float = 0.2,
-            max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
-            random_state: t.Optional[int] = None) -> np.ndarray:
-        """TODO."""
-        sample_acf_nonpos = _utils.apply_on_samples(
-            ts=ts,
-            func=cls.ft_acf_first_nonpos,
-            num_samples=num_samples,
-            sample_size_frac=sample_size_frac,
-            random_state=random_state,
-            max_nlags=max_nlags,
-            unbiased=unbiased)
-
-        return sample_acf_nonpos
-
-    @classmethod
-    def ft_sfirst_acf_locmin(
-            cls,
-            ts: np.ndarray,
-            num_samples: int = 128,
-            sample_size_frac: float = 0.2,
-            max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
-            random_state: t.Optional[int] = None) -> np.ndarray:
-        """TODO."""
-        sample_acf_locmin = _utils.apply_on_samples(
-            ts=ts,
-            func=cls.ft_first_acf_locmin,
-            num_samples=num_samples,
-            sample_size_frac=sample_size_frac,
-            random_state=random_state,
-            max_nlags=max_nlags,
-            unbiased=unbiased)
-
-        return sample_acf_locmin
-
-    @classmethod
     def ft_trev(cls,
                 ts: np.ndarray,
                 lag: t.Optional[t.Union[str, int]] = None,
                 only_numerator: bool = False,
                 max_nlags: t.Optional[int] = None,
-                ts_acfs: t.Optional[np.ndarray] = None,
-                ts_ami: t.Optional[np.ndarray] = None) -> float:
+                detrended_acfs: t.Optional[np.ndarray] = None,
+                detrended_ami: t.Optional[np.ndarray] = None) -> float:
         """TODO.
 
         Normalized nonlinear autocorrelation.
@@ -328,8 +263,8 @@ class MFETSAutocorr:
         lag = _embed.embed_lag(ts=ts,
                                lag=lag,
                                max_nlags=max_nlags,
-                               ts_acfs=ts_acfs,
-                               ts_ami=ts_ami)
+                               detrended_acfs=detrended_acfs,
+                               detrended_ami=detrended_ami)
 
         diff = ts[lag:] - ts[:-lag]
 
@@ -349,14 +284,14 @@ class MFETSAutocorr:
                lag: t.Optional[t.Union[str, int]] = None,
                only_numerator: bool = False,
                max_nlags: t.Optional[int] = None,
-               ts_acfs: t.Optional[np.ndarray] = None,
-               ts_ami: t.Optional[np.ndarray] = None) -> float:
+               detrended_acfs: t.Optional[np.ndarray] = None,
+               detrended_ami: t.Optional[np.ndarray] = None) -> float:
         """TODO."""
         lag = _embed.embed_lag(ts=ts,
                                lag=lag,
                                max_nlags=max_nlags,
-                               ts_acfs=ts_acfs,
-                               ts_ami=ts_ami)
+                               detrended_acfs=detrended_acfs,
+                               detrended_ami=detrended_ami)
 
         ts_shift_1 = ts[:-2 * lag]
         ts_shift_2 = ts[lag:-lag]
@@ -381,8 +316,8 @@ class MFETSAutocorr:
                         beta: float = 1,
                         lag: t.Optional[t.Union[str, int]] = None,
                         max_nlags: t.Optional[int] = None,
-                        ts_acfs: t.Optional[np.ndarray] = None,
-                        ts_ami: t.Optional[np.ndarray] = None) -> float:
+                        detrended_acfs: t.Optional[np.ndarray] = None,
+                        detrended_ami: t.Optional[np.ndarray] = None) -> float:
         """TODO.
 
         References
@@ -406,8 +341,8 @@ class MFETSAutocorr:
         lag = _embed.embed_lag(ts=ts,
                                lag=lag,
                                max_nlags=max_nlags,
-                               ts_acfs=ts_acfs,
-                               ts_ami=ts_ami)
+                               detrended_acfs=detrended_acfs,
+                               detrended_ami=detrended_ami)
 
         ts_abs = np.abs(ts)
         ts_sft_1 = ts_abs[:-lag]
@@ -434,14 +369,16 @@ class MFETSAutocorr:
             crit_point_type: str = "non-plateau",
             unbiased: bool = True,
             max_nlags: t.Optional[int] = None,
-            ts_acfs: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+            detrended_acfs: t.Optional[np.ndarray] = None
+    ) -> t.Union[int, float]:
         """TODO."""
-        ts_acfs = cls._calc_acf(data=ts,
-                                nlags=max_nlags,
-                                unbiased=unbiased,
-                                ts_acfs=ts_acfs)
+        detrended_acfs = cls._calc_acf(ts=ts,
+                                       nlags=max_nlags,
+                                       unbiased=unbiased,
+                                       detrended_acfs=detrended_acfs)
 
-        ac_shape = _utils.find_crit_pt(arr=ts_acfs, type_=crit_point_type)
+        ac_shape = _utils.find_crit_pt(arr=detrended_acfs,
+                                       type_=crit_point_type)
 
         # Note: in 'hctsa', either the sum or the mean is returned.
         # However, to enable summarization, here we return the whole
@@ -471,7 +408,7 @@ class MFETSAutocorr:
                 gaussian_model=gaussian_model,
                 return_residuals=True)
 
-        gaussian_resid_acf = cls._calc_acf(data=gaussian_resid,
+        gaussian_resid_acf = cls._calc_acf(ts=gaussian_resid,
                                            nlags=nlags,
                                            unbiased=unbiased)
 
@@ -514,21 +451,22 @@ class MFETSAutocorr:
             p: float = 0.8,
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
-            ts_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
+            detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
-        ts_acfs = cls._calc_acf(data=ts,
-                                nlags=max_nlags,
-                                unbiased=unbiased,
-                                ts_acfs=ts_acfs)
+        detrended_acfs = cls._calc_acf(ts=ts,
+                                       nlags=max_nlags,
+                                       unbiased=unbiased,
+                                       detrended_acfs=detrended_acfs)
 
         ts_abs = np.abs(ts)
         ts_inliners = ts[ts_abs <= np.quantile(ts_abs, p)]
 
-        ts_inliners_acfs = cls._calc_acf(data=ts_inliners,
+        ts_inliners_acfs = cls._calc_acf(ts=ts_inliners,
                                          nlags=max_nlags,
                                          unbiased=unbiased)
 
-        dist_acfs = np.abs(ts_acfs[:ts_inliners_acfs.size] - ts_inliners_acfs)
+        dist_acfs = np.abs(detrended_acfs[:ts_inliners_acfs.size] -
+                           ts_inliners_acfs)
 
         return dist_acfs
 
@@ -555,12 +493,6 @@ def _test() -> None:
     res = MFETSAutocorr.ft_autocorr_out_dist(ts)
     print(res)
 
-    res = MFETSAutocorr.ft_sfirst_acf_nonpos(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_sfirst_acf_locmin(ts)
-    print(res)
-
     res = MFETSAutocorr.ft_first_acf_locmin(ts)
     print(res)
 
@@ -579,40 +511,10 @@ def _test() -> None:
     res = MFETSAutocorr.ft_acf_first_nonpos(ts)
     print(res)
 
-    res = MFETSAutocorr.ft_acf(ts)
+    res = MFETSAutocorr.ft_acf_detrended(ts)
     print(res)
 
     res = MFETSAutocorr.ft_pacf(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_acf_trend(ts_trend)
-    print(res)
-
-    res = MFETSAutocorr.ft_pacf_trend(ts_trend)
-    print(res)
-
-    res = MFETSAutocorr.ft_acf_residuals(ts_residuals)
-    print(res)
-
-    res = MFETSAutocorr.ft_pacf_residuals(ts_residuals)
-    print(res)
-
-    res = MFETSAutocorr.ft_acf_seasonality(ts_season)
-    print(res)
-
-    res = MFETSAutocorr.ft_pacf_seasonality(ts_season)
-    print(res)
-
-    res = MFETSAutocorr.ft_acf_detrended(ts - ts_trend)
-    print(res)
-
-    res = MFETSAutocorr.ft_pacf_detrended(ts - ts_trend)
-    print(res)
-
-    res = MFETSAutocorr.ft_acf_deseasonalized(ts - ts_season)
-    print(res)
-
-    res = MFETSAutocorr.ft_pacf_deseasonalized(ts - ts_season)
     print(res)
 
     res = MFETSAutocorr.ft_acf_diff(ts)

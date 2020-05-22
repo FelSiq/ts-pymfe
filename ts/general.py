@@ -47,9 +47,7 @@ class MFETSGeneral:
         return precomp_vals
 
     @classmethod
-    def precompute_period(cls,
-                          ts: np.ndarray,
-                          **kwargs) -> t.Dict[str, int]:
+    def precompute_period(cls, ts: np.ndarray, **kwargs) -> t.Dict[str, int]:
         """Precompute the time-series period.
 
         Parameters
@@ -82,8 +80,8 @@ class MFETSGeneral:
             lag: t.Optional[t.Union[str, int]] = None,
             max_nlags: t.Optional[int] = None,
             ts_scaled: t.Optional[np.ndarray] = None,
-            ts_acfs: t.Optional[np.ndarray] = None,
-            ts_ami: t.Optional[np.ndarray] = None,
+            detrended_acfs: t.Optional[np.ndarray] = None,
+            detrended_ami: t.Optional[np.ndarray] = None,
             emb_dim_cao_e1: t.Optional[np.ndarray] = None,
             emb_dim_cao_e2: t.Optional[np.ndarray] = None,
             **kwargs) -> t.Dict[str, np.ndarray]:
@@ -133,14 +131,14 @@ class MFETSGeneral:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_acfs : :obj:`np.ndarray`, optional
+        detrended_acfs : :obj:`np.ndarray`, optional
             Array of time-series autocorrelation function (for distinct ordered
-            lags). Used only if ``lag`` is any of `acf`, `acf-nonsig` or None.
-            If this argument is not given and the previous condiditon is meet,
-            the autocorrelation function will be calculated inside this method
-            up to ``max_nlags``.
+            lags) of the detrended time-series. Used only if ``lag`` is any of
+            `acf`, `acf-nonsig` or None.  If this argument is not given and the
+            previous condiditon is meet, the autocorrelation function will be
+            calculated inside this method up to ``max_nlags``.
 
-        ts_ami : :obj:`np.ndarray`, optional
+        detrended_ami : :obj:`np.ndarray`, optional
             Array of time-series automutual information function (for distinct
             ordered lags). Used only if ``lag`` is `ami`. If not given and the
             previous condiditon is meet, the automutual information function
@@ -190,8 +188,8 @@ class MFETSGeneral:
 
         if lag is None or isinstance(lag, str):
             lag = _embed.embed_lag(ts=ts_scaled,
-                                   ts_acfs=ts_acfs,
-                                   ts_ami=ts_ami,
+                                   detrended_acfs=detrended_acfs,
+                                   detrended_ami=detrended_ami,
                                    max_nlags=max_nlags)
 
             precomp_vals["lag"] = lag
@@ -543,8 +541,8 @@ class MFETSGeneral:
                 ddof: int = 1,
                 lag: t.Optional[t.Union[int, str]] = None,
                 max_nlags: t.Optional[int] = None,
-                ts_acfs: t.Optional[np.ndarray] = None,
-                ts_ami: t.Optional[np.ndarray] = None,
+                detrended_acfs: t.Optional[np.ndarray] = None,
+                detrended_ami: t.Optional[np.ndarray] = None,
                 ts_scaled: t.Optional[np.ndarray] = None) -> float:
         """Signal predictability using delay vector variance method.
 
@@ -600,14 +598,14 @@ class MFETSGeneral:
             either the time-series autocorrelation or mutual information
             function estimated up to this argument value.
 
-        ts_acfs : :obj:`np.ndarray`, optional
+        detrended_acfs : :obj:`np.ndarray`, optional
             Array of time-series autocorrelation function (for distinct ordered
-            lags). Used only if ``lag`` is any of `acf`, `acf-nonsig` or None.
-            If this argument is not given and the previous condiditon is meet,
-            the autocorrelation function will be calculated inside this method
-            up to ``max_nlags``.
+            lags) of the detrended time-series. Used only if ``lag`` is any of
+            `acf`, `acf-nonsig` or None.  If this argument is not given and the
+            previous condiditon is meet, the autocorrelation function will be
+            calculated inside this method up to ``max_nlags``.
 
-        ts_ami : :obj:`np.ndarray`, optional
+        detrended_ami : :obj:`np.ndarray`, optional
             Array of time-series automutual information function (for distinct
             ordered lags). Used only if ``lag`` is `ami`. If not given and the
             previous condiditon is meet, the automutual information function
@@ -647,8 +645,8 @@ class MFETSGeneral:
         lag = _embed.embed_lag(ts=ts_scaled,
                                lag=lag,
                                max_nlags=max_nlags,
-                               ts_acfs=ts_acfs,
-                               ts_ami=ts_ami)
+                               detrended_acfs=detrended_acfs,
+                               detrended_ami=detrended_ami)
 
         ts_embed = _embed.embed_ts(ts_scaled, lag=lag, dim=embed_dim)
 
@@ -1214,8 +1212,8 @@ class MFETSGeneral:
             lag: t.Optional[t.Union[str, int]] = None,
             normalize: bool = True,
             max_nlags: t.Optional[int] = None,
-            ts_acfs: t.Optional[np.ndarray] = None,
-            ts_ami: t.Optional[np.ndarray] = None,
+            detrended_acfs: t.Optional[np.ndarray] = None,
+            detrended_ami: t.Optional[np.ndarray] = None,
             ts_scaled: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
         """Fraction of embedded time-series observations inside a hypershell.
 
@@ -1261,14 +1259,14 @@ class MFETSGeneral:
             either the time-series autocorrelation or mutual information
             function estimated up to this argument value.
 
-        ts_acfs : :obj:`np.ndarray`, optional
+        detrended_acfs : :obj:`np.ndarray`, optional
             Array of time-series autocorrelation function (for distinct ordered
-            lags). Used only if ``lag`` is any of `acf`, `acf-nonsig` or None.
-            If this argument is not given and the previous condiditon is meet,
-            the autocorrelation function will be calculated inside this method
-            up to ``max_nlags``.
+            lags) of the detrended time-series. Used only if ``lag`` is any of
+            `acf`, `acf-nonsig` or None.  If this argument is not given and the
+            previous condiditon is meet, the autocorrelation function will be
+            calculated inside this method up to ``max_nlags``.
 
-        ts_ami : :obj:`np.ndarray`, optional
+        detrended_ami : :obj:`np.ndarray`, optional
             Array of time-series automutual information function (for distinct
             ordered lags). Used only if ``lag`` is `ami`. If not given and the
             previous condiditon is meet, the automutual information function
@@ -1314,8 +1312,8 @@ class MFETSGeneral:
 
         lag = _embed.embed_lag(ts=ts_scaled,
                                lag=lag,
-                               ts_acfs=ts_acfs,
-                               ts_ami=ts_ami,
+                               detrended_acfs=detrended_acfs,
+                               detrended_ami=detrended_ami,
                                max_nlags=max_nlags)
 
         # Note: embed is given by x(t) = [x(t), x(t-1), ..., x(t-m+1)]^T
@@ -1482,8 +1480,8 @@ class MFETSGeneral:
                        check_e2: bool = True,
                        max_nlags: t.Optional[int] = None,
                        ts_scaled: t.Optional[np.ndarray] = None,
-                       ts_acfs: t.Optional[np.ndarray] = None,
-                       ts_ami: t.Optional[np.ndarray] = None,
+                       detrended_acfs: t.Optional[np.ndarray] = None,
+                       detrended_ami: t.Optional[np.ndarray] = None,
                        emb_dim_cao_e1: t.Optional[np.ndarray] = None) -> int:
         """Embedding dimension estimation using Cao's method.
 
@@ -1542,14 +1540,14 @@ class MFETSGeneral:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_acfs : :obj:`np.ndarray`, optional
+        detrended_acfs : :obj:`np.ndarray`, optional
             Array of time-series autocorrelation function (for distinct ordered
-            lags). Used only if ``lag`` is any of `acf`, `acf-nonsig` or None.
-            If this argument is not given and the previous condiditon is meet,
-            the autocorrelation function will be calculated inside this method
-            up to ``max_nlags``.
+            lags) of the detrended time-series. Used only if ``lag`` is any of
+            `acf`, `acf-nonsig` or None.  If this argument is not given and the
+            previous condiditon is meet, the autocorrelation function will be
+            calculated inside this method up to ``max_nlags``.
 
-        ts_ami : :obj:`np.ndarray`, optional
+        detrended_ami : :obj:`np.ndarray`, optional
             Array of time-series automutual information function (for distinct
             ordered lags). Used only if ``lag`` is `ami`. If not given and the
             previous condiditon is meet, the automutual information function
@@ -1576,8 +1574,8 @@ class MFETSGeneral:
 
         lag = _embed.embed_lag(ts=ts_scaled,
                                lag=lag,
-                               ts_acfs=ts_acfs,
-                               ts_ami=ts_ami,
+                               detrended_acfs=detrended_acfs,
+                               detrended_ami=detrended_ami,
                                max_nlags=max_nlags)
 
         if emb_dim_cao_e1 is None:
@@ -1606,8 +1604,8 @@ class MFETSGeneral:
                   lag: t.Optional[t.Union[str, int]] = None,
                   max_nlags: t.Optional[int] = None,
                   ts_scaled: t.Optional[np.ndarray] = None,
-                  ts_acfs: t.Optional[np.ndarray] = None,
-                  ts_ami: t.Optional[np.ndarray] = None,
+                  detrended_acfs: t.Optional[np.ndarray] = None,
+                  detrended_ami: t.Optional[np.ndarray] = None,
                   emb_dim_cao_e1: t.Optional[np.ndarray] = None) -> np.ndarray:
         """Estimated Cao's method E1 values.
 
@@ -1655,14 +1653,14 @@ class MFETSGeneral:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_acfs : :obj:`np.ndarray`, optional
+        detrended_acfs : :obj:`np.ndarray`, optional
             Array of time-series autocorrelation function (for distinct ordered
-            lags). Used only if ``lag`` is any of `acf`, `acf-nonsig` or None.
-            If this argument is not given and the previous condiditon is meet,
-            the autocorrelation function will be calculated inside this method
-            up to ``max_nlags``.
+            lags) of the detrended time-series. Used only if ``lag`` is any of
+            `acf`, `acf-nonsig` or None.  If this argument is not given and the
+            previous condiditon is meet, the autocorrelation function will be
+            calculated inside this method up to ``max_nlags``.
 
-        ts_ami : :obj:`np.ndarray`, optional
+        detrended_ami : :obj:`np.ndarray`, optional
             Array of time-series automutual information function (for distinct
             ordered lags). Used only if ``lag`` is `ami`. If not given and the
             previous condiditon is meet, the automutual information function
@@ -1688,8 +1686,8 @@ class MFETSGeneral:
 
         lag = _embed.embed_lag(ts=ts_scaled,
                                lag=lag,
-                               ts_acfs=ts_acfs,
-                               ts_ami=ts_ami,
+                               detrended_acfs=detrended_acfs,
+                               detrended_ami=detrended_ami,
                                max_nlags=max_nlags)
 
         if emb_dim_cao_e1 is None:
@@ -1707,8 +1705,8 @@ class MFETSGeneral:
                   lag: t.Optional[t.Union[str, int]] = None,
                   max_nlags: t.Optional[int] = None,
                   ts_scaled: t.Optional[np.ndarray] = None,
-                  ts_acfs: t.Optional[np.ndarray] = None,
-                  ts_ami: t.Optional[np.ndarray] = None,
+                  detrended_acfs: t.Optional[np.ndarray] = None,
+                  detrended_ami: t.Optional[np.ndarray] = None,
                   emb_dim_cao_e2: t.Optional[np.ndarray] = None) -> int:
         """Estimated Cao's method E2 values.
 
@@ -1756,14 +1754,14 @@ class MFETSGeneral:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_acfs : :obj:`np.ndarray`, optional
+        detrended_acfs : :obj:`np.ndarray`, optional
             Array of time-series autocorrelation function (for distinct ordered
-            lags). Used only if ``lag`` is any of `acf`, `acf-nonsig` or None.
-            If this argument is not given and the previous condiditon is meet,
-            the autocorrelation function will be calculated inside this method
-            up to ``max_nlags``.
+            lags) of the detrended time-series. Used only if ``lag`` is any of
+            `acf`, `acf-nonsig` or None.  If this argument is not given and the
+            previous condiditon is meet, the autocorrelation function will be
+            calculated inside this method up to ``max_nlags``.
 
-        ts_ami : :obj:`np.ndarray`, optional
+        detrended_ami : :obj:`np.ndarray`, optional
             Array of time-series automutual information function (for distinct
             ordered lags). Used only if ``lag`` is `ami`. If not given and the
             previous condiditon is meet, the automutual information function
@@ -1789,8 +1787,8 @@ class MFETSGeneral:
 
         lag = _embed.embed_lag(ts=ts_scaled,
                                lag=lag,
-                               ts_acfs=ts_acfs,
-                               ts_ami=ts_ami,
+                               detrended_acfs=detrended_acfs,
+                               detrended_ami=detrended_ami,
                                max_nlags=max_nlags)
 
         if emb_dim_cao_e2 is None:
@@ -1808,8 +1806,8 @@ class MFETSGeneral:
                     lag: t.Optional[t.Union[str, int]] = None,
                     max_nlags: t.Optional[int] = None,
                     ts_scaled: t.Optional[np.ndarray] = None,
-                    ts_acfs: t.Optional[np.ndarray] = None,
-                    ts_ami: t.Optional[np.ndarray] = None) -> int:
+                    detrended_acfs: t.Optional[np.ndarray] = None,
+                    detrended_ami: t.Optional[np.ndarray] = None) -> int:
         """Proportion of False Nearest Neighbors in the embedded time-series.
 
         Parameters
@@ -1845,14 +1843,14 @@ class MFETSGeneral:
             Standardized time-series values. Used to take advantage of
             precomputations.
 
-        ts_acfs : :obj:`np.ndarray`, optional
+        detrended_acfs : :obj:`np.ndarray`, optional
             Array of time-series autocorrelation function (for distinct ordered
-            lags). Used only if ``lag`` is any of `acf`, `acf-nonsig` or None.
-            If this argument is not given and the previous condiditon is meet,
-            the autocorrelation function will be calculated inside this method
-            up to ``max_nlags``.
+            lags) of the detrended time-series. Used only if ``lag`` is any of
+            `acf`, `acf-nonsig` or None.  If this argument is not given and the
+            previous condiditon is meet, the autocorrelation function will be
+            calculated inside this method up to ``max_nlags``.
 
-        ts_ami : :obj:`np.ndarray`, optional
+        detrended_ami : :obj:`np.ndarray`, optional
             Array of time-series automutual information function (for distinct
             ordered lags). Used only if ``lag`` is `ami`. If not given and the
             previous condiditon is meet, the automutual information function
@@ -1874,8 +1872,8 @@ class MFETSGeneral:
 
         lag = _embed.embed_lag(ts=ts_scaled,
                                lag=lag,
-                               ts_acfs=ts_acfs,
-                               ts_ami=ts_ami,
+                               detrended_acfs=detrended_acfs,
+                               detrended_ami=detrended_ami,
                                max_nlags=max_nlags)
 
         fnn_prop = _embed.embed_dim_fnn(ts=ts,
@@ -1898,7 +1896,6 @@ def _test() -> None:
 
     res = MFETSGeneral.ft_stick_angles(ts)
     print(res)
-    exit(1)
 
     res = MFETSGeneral.ft_fs_len(ts, num_bins=2)
     print(res)

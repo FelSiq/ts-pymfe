@@ -1,4 +1,4 @@
-"""Module dedicated to global time-series meta-features."""
+"""Module dedicated to global statistics time-series meta-features."""
 import typing as t
 import warnings
 

@@ -279,7 +279,7 @@ class MFETSLocalStats:
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_wind)
+                                               ts_rol_win=ts_rol_win)
 
         rolling_stat = ts_rol_win.mean()
 
@@ -426,7 +426,7 @@ class MFETSLocalStats:
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_wind)
+                                               ts_rol_win=ts_rol_win)
 
         rolling_stat = ts_rol_win.var(ddof=ddof)
 
@@ -565,7 +565,7 @@ class MFETSLocalStats:
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_wind)
+                                               ts_rol_win=ts_rol_win)
 
         rolling_stat = ts_rol_win.std(ddof=ddof)
 
@@ -712,7 +712,7 @@ class MFETSLocalStats:
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_wind)
+                                               ts_rol_win=ts_rol_win)
 
         rolling_stat = ts_rol_win.apply(
             pymfe.statistical.MFEStatistical.ft_skewness,
@@ -889,7 +889,7 @@ class MFETSLocalStats:
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_wind)
+                                               ts_rol_win=ts_rol_win)
 
         rolling_stat = ts_rol_win.apply(
             pymfe.statistical.MFEStatistical.ft_kurtosis,
@@ -1043,7 +1043,7 @@ class MFETSLocalStats:
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_wind)
+                                               ts_rol_win=ts_rol_win)
 
         rolling_stat = ts_rol_win.apply(autocorr.MFETSAutocorr.ft_acf,
                                         kwargs=dict(nlags=1,
@@ -1166,7 +1166,7 @@ class MFETSLocalStats:
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_wind)
+                                               ts_rol_win=ts_rol_win)
 
         rolling_stat = ts_rol_win.apply(scipy.stats.gmean)
 
@@ -1475,7 +1475,7 @@ class MFETSLocalStats:
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_wind)
+                                               ts_rol_win=ts_rol_win)
 
         rolling_stat = ts_rol_win.apply(
             stat_tests.MFETSStatTests.ft_test_lilliefors,
@@ -1562,7 +1562,7 @@ class MFETSLocalStats:
         ts_rol_win = _utils.get_rolling_window(ts=ts,
                                                window_size=window_size,
                                                ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_wind)
+                                               ts_rol_win=ts_rol_win)
 
         rolling_stat = ts_rol_win.apply(
             info_theory.MFETSInfoTheory.ft_approx_entropy,
@@ -1840,12 +1840,9 @@ def _test() -> None:
 
     res = MFETSLocalStats.ft_moving_lilliefors(ts)
     print(res)
-    exit(1)
 
     res = MFETSLocalStats.ft_moving_approx_ent(ts)
     print(res)
-
-    exit(1)
 
     res = MFETSLocalStats.ft_moving_lilliefors(ts)
     print(res)
@@ -1876,7 +1873,6 @@ def _test() -> None:
 
     res = MFETSLocalStats.ft_moving_kldiv_shift(ts)
     print(res)
-    exit(1)
 
     res = MFETSLocalStats.ft_spikiness(ts_residuals)
     print(np.var(res))

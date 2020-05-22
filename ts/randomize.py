@@ -1,3 +1,4 @@
+"""Module dedicated to itrandd time-series meta-features."""
 import typing as t
 import collections
 
@@ -21,16 +22,17 @@ except ImportError:
 
 
 class MFETSRandomize:
+    """Extract time-series meta-features from Randomize group."""
     @classmethod
-    def precompute_randomize_stats(cls,
-                                   ts: np.ndarray,
-                                   strategy: str = "dist-dynamic",
-                                   prop_rep: t.Union[int, float] = 2,
-                                   prop_interval: float = 0.1,
-                                   ts_scaled: t.Optional[np.ndarray] = None,
-                                   random_state: t.Optional[int] = None,
-                                   **kwargs) -> t.Dict[str, np.ndarray]:
-        """TODO."""
+    def precompute_itrand_stats(cls,
+                                ts: np.ndarray,
+                                strategy: str = "dist-dynamic",
+                                prop_rep: t.Union[int, float] = 2,
+                                prop_interval: float = 0.1,
+                                ts_scaled: t.Optional[np.ndarray] = None,
+                                random_state: t.Optional[int] = None,
+                                **kwargs) -> t.Dict[str, np.ndarray]:
+        """Precompute statistics with iterative"""
         precomp_vals = {}  # type: t.Dict[str, np.ndarray]
 
         stats = collections.OrderedDict((
@@ -43,13 +45,13 @@ class MFETSRandomize:
         stat_names = list(map("rand_stat_{}".format, stats.keys()))
 
         if not set(stat_names).issubset(kwargs):
-            stat_vals = cls._randomize_stat(ts=ts,
-                                            func_stats=stats.values(),
-                                            strategy=strategy,
-                                            prop_rep=prop_rep,
-                                            prop_interval=prop_interval,
-                                            random_state=random_state,
-                                            ts_scaled=ts_scaled)
+            stat_vals = cls._itrand_stat(ts=ts,
+                                         func_stats=stats.values(),
+                                         strategy=strategy,
+                                         prop_rep=prop_rep,
+                                         prop_interval=prop_interval,
+                                         random_state=random_state,
+                                         ts_scaled=ts_scaled)
 
             precomp_vals.update(
                 {name: val
@@ -58,15 +60,14 @@ class MFETSRandomize:
         return precomp_vals
 
     @classmethod
-    def _randomize_stat(cls,
-                        ts: np.ndarray,
-                        func_stats: t.Sequence[t.Callable[[np.ndarray],
-                                                          float]],
-                        strategy: str = "dist-dynamic",
-                        prop_rep: t.Union[int, float] = 2,
-                        prop_interval: float = 0.1,
-                        ts_scaled: t.Optional[np.ndarray] = None,
-                        random_state: t.Optional[int] = None) -> np.ndarray:
+    def _itrand_stat(cls,
+                     ts: np.ndarray,
+                     func_stats: t.Sequence[t.Callable[[np.ndarray], float]],
+                     strategy: str = "dist-dynamic",
+                     prop_rep: t.Union[int, float] = 2,
+                     prop_interval: float = 0.1,
+                     ts_scaled: t.Optional[np.ndarray] = None,
+                     random_state: t.Optional[int] = None) -> np.ndarray:
         """TODO."""
         if prop_rep <= 0:
             raise ValueError(
@@ -122,7 +123,7 @@ class MFETSRandomize:
         return res if len(func_stats) > 1 else res.ravel()
 
     @classmethod
-    def ft_randomize_mean(
+    def ft_itrand_mean(
             cls,
             ts: np.ndarray,
             strategy: str = "dist-dynamic",
@@ -135,18 +136,18 @@ class MFETSRandomize:
         if rand_stat_mean is not None:
             return rand_stat_mean
 
-        res = cls._randomize_stat(ts=ts,
-                                  func_stats=np.mean,
-                                  strategy=strategy,
-                                  prop_rep=prop_rep,
-                                  prop_interval=prop_interval,
-                                  random_state=random_state,
-                                  ts_scaled=ts_scaled)
+        res = cls._itrand_stat(ts=ts,
+                               func_stats=np.mean,
+                               strategy=strategy,
+                               prop_rep=prop_rep,
+                               prop_interval=prop_interval,
+                               random_state=random_state,
+                               ts_scaled=ts_scaled)
 
         return res
 
     @classmethod
-    def ft_randomize_sd(
+    def ft_itrand_sd(
             cls,
             ts: np.ndarray,
             strategy: str = "dist-dynamic",
@@ -159,18 +160,18 @@ class MFETSRandomize:
         if rand_stat_std is not None:
             return rand_stat_std
 
-        res = cls._randomize_stat(ts=ts,
-                                  func_stats=np.std,
-                                  strategy=strategy,
-                                  prop_rep=prop_rep,
-                                  prop_interval=prop_interval,
-                                  random_state=random_state,
-                                  ts_scaled=ts_scaled)
+        res = cls._itrand_stat(ts=ts,
+                               func_stats=np.std,
+                               strategy=strategy,
+                               prop_rep=prop_rep,
+                               prop_interval=prop_interval,
+                               random_state=random_state,
+                               ts_scaled=ts_scaled)
 
         return res
 
     @classmethod
-    def ft_randomize_acf(
+    def ft_itrand_acf(
             cls,
             ts: np.ndarray,
             strategy: str = "dist-dynamic",
@@ -186,18 +187,18 @@ class MFETSRandomize:
         func_acf = lambda arr: statsmodels.tsa.stattools.acf(
             arr, nlags=1, fft=True)[1]
 
-        res = cls._randomize_stat(ts=ts,
-                                  func_stats=func_acf,
-                                  strategy=strategy,
-                                  prop_rep=prop_rep,
-                                  prop_interval=prop_interval,
-                                  random_state=random_state,
-                                  ts_scaled=ts_scaled)
+        res = cls._itrand_stat(ts=ts,
+                               func_stats=func_acf,
+                               strategy=strategy,
+                               prop_rep=prop_rep,
+                               prop_interval=prop_interval,
+                               random_state=random_state,
+                               ts_scaled=ts_scaled)
 
         return res
 
     @classmethod
-    def ft_rand_samp_std(
+    def ft_resample_std(
             cls,
             ts: np.ndarray,
             num_samples: int = 64,
@@ -218,23 +219,66 @@ class MFETSRandomize:
         return sample_std
 
     @classmethod
-    def ft_trev_surr(cls,
-                     ts: np.ndarray,
-                     surrogate_num: int = 32,
-                     max_iter: int = 128,
-                     relative: bool = True,
-                     lag: t.Optional[t.Union[str, int]] = None,
-                     only_numerator: bool = False,
-                     random_state: t.Optional[int] = None,
-                     max_nlags: t.Optional[int] = None,
-                     ts_acfs: t.Optional[np.ndarray] = None,
-                     ts_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
+    def ft_resample_first_acf_nonpos(
+            cls,
+            ts: np.ndarray,
+            num_samples: int = 128,
+            sample_size_frac: float = 0.2,
+            max_nlags: t.Optional[int] = None,
+            unbiased: bool = True,
+            random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        sample_acf_nonpos = _utils.apply_on_samples(
+            ts=ts,
+            func=autocorr.MFETSAutocorr.ft_acf_first_nonpos,
+            num_samples=num_samples,
+            sample_size_frac=sample_size_frac,
+            random_state=random_state,
+            max_nlags=max_nlags,
+            unbiased=unbiased)
+
+        return sample_acf_nonpos
+
+    @classmethod
+    def ft_resample_first_acf_locmin(
+            cls,
+            ts: np.ndarray,
+            num_samples: int = 128,
+            sample_size_frac: float = 0.2,
+            max_nlags: t.Optional[int] = None,
+            unbiased: bool = True,
+            random_state: t.Optional[int] = None) -> np.ndarray:
+        """TODO."""
+        sample_acf_locmin = _utils.apply_on_samples(
+            ts=ts,
+            func=autocorr.MFETSAutocorr.ft_first_acf_locmin,
+            num_samples=num_samples,
+            sample_size_frac=sample_size_frac,
+            random_state=random_state,
+            max_nlags=max_nlags,
+            unbiased=unbiased)
+
+        return sample_acf_locmin
+
+    @classmethod
+    def ft_surr_trev(
+            cls,
+            ts: np.ndarray,
+            surrogate_num: int = 32,
+            max_iter: int = 128,
+            relative: bool = True,
+            lag: t.Optional[t.Union[str, int]] = None,
+            only_numerator: bool = False,
+            random_state: t.Optional[int] = None,
+            max_nlags: t.Optional[int] = None,
+            detrended_acfs: t.Optional[np.ndarray] = None,
+            detrended_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
         lag = _embed.embed_lag(ts=ts,
                                lag=lag,
                                max_nlags=max_nlags,
-                               ts_acfs=ts_acfs,
-                               ts_ami=ts_ami)
+                               detrended_acfs=detrended_acfs,
+                               detrended_ami=detrended_ami)
 
         surr_trev = _surrogates.apply_on_surrogates(
             ts=ts,
@@ -252,23 +296,24 @@ class MFETSRandomize:
         return surr_trev
 
     @classmethod
-    def ft_tc3_surr(cls,
-                    ts: np.ndarray,
-                    surrogate_num: int = 32,
-                    max_iter: int = 128,
-                    relative: bool = True,
-                    lag: t.Optional[t.Union[str, int]] = None,
-                    only_numerator: bool = False,
-                    random_state: t.Optional[int] = None,
-                    max_nlags: t.Optional[int] = None,
-                    ts_acfs: t.Optional[np.ndarray] = None,
-                    ts_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
+    def ft_surr_tc3(
+            cls,
+            ts: np.ndarray,
+            surrogate_num: int = 32,
+            max_iter: int = 128,
+            relative: bool = True,
+            lag: t.Optional[t.Union[str, int]] = None,
+            only_numerator: bool = False,
+            random_state: t.Optional[int] = None,
+            max_nlags: t.Optional[int] = None,
+            detrended_acfs: t.Optional[np.ndarray] = None,
+            detrended_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
         lag = _embed.embed_lag(ts=ts,
                                lag=lag,
                                max_nlags=max_nlags,
-                               ts_acfs=ts_acfs,
-                               ts_ami=ts_ami)
+                               detrended_acfs=detrended_acfs,
+                               detrended_ami=detrended_ami)
 
         surr_tc3 = _surrogates.apply_on_surrogates(
             ts=ts,
@@ -292,25 +337,31 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
 
-    res = MFETSRandomize.ft_tc3_surr(ts, random_state=16)
+    res = MFETSRandomize.ft_resample_first_acf_nonpos(ts, random_state=16)
     print(res)
 
-    res = MFETSRandomize.ft_trev_surr(ts, random_state=16)
+    res = MFETSRandomize.ft_resample_first_acf_locmin(ts, random_state=16)
     print(res)
 
-    res = MFETSRandomize.precompute_randomize_stats(ts, random_state=16)
+    res = MFETSRandomize.ft_surr_tc3(ts, random_state=16)
     print(res)
 
-    res = MFETSRandomize.ft_randomize_mean(ts, random_state=16)
+    res = MFETSRandomize.ft_surr_trev(ts, random_state=16)
     print(res)
 
-    res = MFETSRandomize.ft_randomize_sd(ts, random_state=16)
+    res = MFETSRandomize.precompute_itrand_stats(ts, random_state=16)
     print(res)
 
-    res = MFETSRandomize.ft_randomize_acf(ts, random_state=16)
+    res = MFETSRandomize.ft_itrand_mean(ts, random_state=16)
     print(res)
 
-    res = MFETSRandomize.ft_rand_samp_std(ts, random_state=16)
+    res = MFETSRandomize.ft_itrand_sd(ts, random_state=16)
+    print(res)
+
+    res = MFETSRandomize.ft_itrand_acf(ts, random_state=16)
+    print(res)
+
+    res = MFETSRandomize.ft_resample_std(ts, random_state=16)
     print(res)
 
 

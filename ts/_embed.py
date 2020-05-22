@@ -206,8 +206,8 @@ def embed_lag(ts: np.ndarray,
               lag: t.Optional[t.Union[str, int]] = None,
               default_lag: int = 1,
               max_nlags: t.Optional[int] = None,
-              ts_acfs: t.Optional[np.ndarray] = None,
-              ts_ami: t.Optional[np.ndarray] = None,
+              detrended_acfs: t.Optional[np.ndarray] = None,
+              detrended_ami: t.Optional[np.ndarray] = None,
               **kwargs) -> int:
     """Find the appropriate embedding lag using a given criteria.
 
@@ -242,14 +242,25 @@ def embed_lag(ts: np.ndarray,
         If None, the lag will be searched will the 'acf-nonsig'
         criteria.
 
-    max_nlags : int, optional (default = None)
-        Maximum lag while searching for the appropriate embedding lag.
+    max_nlags : int, optional
+        If ``lag`` is not a numeric value, than it will be estimated using
+        either the time-series autocorrelation or mutual information
+        function estimated up to this argument value.
 
-    ts_acfs : :obj:`np.ndarray` = None,
-        
-    ts_ami : t.Optional[np.ndarray] = None,
+    detrended_acfs : :obj:`np.ndarray`, optional
+        Array of time-series autocorrelation function (for distinct ordered
+        lags) of the detrended time-series. Used only if ``lag`` is any of
+        `acf`, `acf-nonsig` or None.  If this argument is not given and the
+        previous condiditon is meet, the autocorrelation function will be
+        calculated inside this method up to ``max_nlags``.
 
-    kwargs :
+    detrended_ami : :obj:`np.ndarray`, optional
+        Array of time-series automutual information function (for distinct
+        ordered lags). Used only if ``lag`` is `ami`. If not given and the
+        previous condiditon is meet, the automutual information function
+        will be calculated inside this method up to ``max_nlags``.
+
+    kwargs:
 
     Returns
     -------
@@ -272,17 +283,14 @@ def embed_lag(ts: np.ndarray,
             max_nlags = ts.size // 2
 
         if lag == "ami":
-            kwargs["ts_ami"] = ts_ami
+            kwargs["detrended_ami"] = detrended_ami
 
         else:
-            kwargs["ts_acfs"] = ts_acfs
+            kwargs["detrended_acfs"] = detrended_acfs
 
         kwargs["max_nlags"] = max_nlags
 
-        if ts_detrended is None:
-            ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
-
-        lag = VALID_OPTIONS[lag](ts_detrended, **kwargs)
+        lag = VALID_OPTIONS[lag](ts, **kwargs)
 
         return default_lag if np.isnan(lag) else lag
 

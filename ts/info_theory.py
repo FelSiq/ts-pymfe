@@ -15,44 +15,45 @@ import _get_data
 
 class MFETSInfoTheory:
     @classmethod
-    def precompute_ts_ami(cls,
-                          ts: np.ndarray,
-                          num_bins: int = 64,
-                          max_nlags: t.Optional[int] = None,
-                          return_dist: bool = False,
-                          unbiased: bool = True,
-                          **kwargs) -> t.Dict[str, np.ndarray]:
+    def precompute_calc_ami(cls,
+                            ts: np.ndarray,
+                            num_bins: int = 64,
+                            max_nlags: t.Optional[int] = None,
+                            return_dist: bool = False,
+                            unbiased: bool = True,
+                            **kwargs) -> t.Dict[str, np.ndarray]:
         """TODO."""
         precomp_vals = {}
 
-        ts_acfs = None
+        detrended_acfs = None
 
         if max_nlags is None:
-            ts_acfs = kwargs.get("ts_acfs")
+            detrended_acfs = kwargs.get("detrended_acfs")
 
-            if ts_acfs is None:
+            if detrended_acfs is None:
                 precomp_vals.update(
                     autocorr.precompute_acf(ts=ts,
                                             nlags=max_nlags,
                                             unbiased=unbiased))
-                ts_acfs = kwargs["ts_acfs"]
+                detrended_acfs = kwargs["detrended_acfs"]
 
-        if "ts_ami" in kwargs:
-            precomp_vals["ts_ami"] = cls.ft_ami(ts=ts,
-                                                num_bins=num_bins,
-                                                max_nlags=max_nlags,
-                                                return_dist=return_dist,
-                                                unbiased=unbiased,
-                                                ts_acfs=ts_acfs)
+        if "detrended_ami" in kwargs:
+            precomp_vals["detrended_ami"] = cls.ft_ami_detrended(
+                ts=ts,
+                num_bins=num_bins,
+                max_nlags=max_nlags,
+                return_dist=return_dist,
+                unbiased=unbiased,
+                detrended_acfs=detrended_acfs)
 
         return precomp_vals
 
     @classmethod
-    def _ts_ami(cls,
-                ts: np.ndarray,
-                lag: int,
-                num_bins: int = 64,
-                return_dist: bool = False) -> float:
+    def _calc_ami(cls,
+                  ts: np.ndarray,
+                  lag: int,
+                  num_bins: int = 64,
+                  return_dist: bool = False) -> float:
         """TODO."""
         ts_x = ts[:-lag]
         ts_y = ts[lag:]
@@ -122,17 +123,39 @@ class MFETSInfoTheory:
                lags: t.Optional[t.Sequence[int]] = None,
                return_dist: bool = False,
                max_nlags: t.Optional[int] = None,
-               ts_acfs: t.Optional[np.ndarray] = None,
-               ts_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
+               detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
-        if ts_ami is not None:
-            return ts_ami
+        # Note: using ts_detrended=ts to avoid detrending.
+        non_detrended_ami = cls.ft_ami_detrended(ts=ts,
+                                                 num_bins=num_bins,
+                                                 lags=lags,
+                                                 return_dist=return_dist,
+                                                 max_nlags=max_nlags,
+                                                 detrended_acfs=detrended_acfs,
+                                                 ts_detrended=ts)
+
+        return non_detrended_ami
+
+    @classmethod
+    def ft_ami_detrended(
+            cls,
+            ts: np.ndarray,
+            num_bins: int = 64,
+            lags: t.Optional[t.Sequence[int]] = None,
+            return_dist: bool = False,
+            max_nlags: t.Optional[int] = None,
+            ts_detrended: t.Optional[np.ndarray] = None,
+            detrended_acfs: t.Optional[np.ndarray] = None,
+            detrended_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """TODO."""
+        if detrended_ami is not None:
+            return detrended_ami
 
         if lags is None:
             lags = _embed.embed_lag(ts=ts,
                                     lag="acf",
                                     max_nlags=max_nlags,
-                                    ts_acfs=ts_acfs)
+                                    detrended_acfs=detrended_acfs)
             lags = np.asarray([lags])
 
         elif np.isscalar(lags):
@@ -140,11 +163,14 @@ class MFETSInfoTheory:
 
         ami = np.zeros(lags.size, dtype=float)
 
+        if ts_detrended is None:
+            ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
+
         for ind, lag in enumerate(lags):
-            ami[ind] = cls._ts_ami(ts=ts,
-                                   lag=lag,
-                                   num_bins=num_bins,
-                                   return_dist=return_dist)
+            ami[ind] = cls._calc_ami(ts=ts_detrended,
+                                     lag=lag,
+                                     num_bins=num_bins,
+                                     return_dist=return_dist)
 
         return ami
 
@@ -155,22 +181,23 @@ class MFETSInfoTheory:
             num_bins: int = 64,
             max_nlags: t.Optional[int] = None,
             return_dist: bool = False,
-            ts_ami: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+            detrended_ami: t.Optional[np.ndarray] = None
+    ) -> t.Union[int, float]:
         """TODO."""
         if max_nlags is None:
             max_nlags = max(64, ts.size // 2)
 
-        if ts_ami is None:
-            ts_ami = cls.ft_ami(ts=ts,
-                                num_bins=num_bins,
-                                lags=max_nlags,
-                                return_dist=return_dist)
+        if detrended_ami is None:
+            detrended_ami = cls.ft_ami_detrended(ts=ts,
+                                                 num_bins=num_bins,
+                                                 lags=max_nlags,
+                                                 return_dist=return_dist)
 
         # Note: if 'return_dist=True', return the first local maximum.
         # If otherwise, return the first local minimum.
         type_ = "max" if return_dist else "min"
 
-        crit_point = _utils.find_crit_pt(arr=ts_ami, type_=type_)
+        crit_point = _utils.find_crit_pt(arr=detrended_ami, type_=type_)
 
         try:
             return np.flatnonzero(crit_point)[0] + 1
@@ -201,9 +228,9 @@ class MFETSInfoTheory:
         for ind, cur_std in enumerate(noise_std):
             ts_corrupted = ts_scaled + cur_std * gaussian_noise
 
-            ami[ind] = cls.ft_ami(ts=ts_corrupted,
-                                  num_bins=32,
-                                  return_dist=False)
+            ami[ind] = cls.ft_ami_detrended(ts=ts_corrupted,
+                                            num_bins=32,
+                                            return_dist=False)
 
         model = sklearn.linear_model.LinearRegression().fit(
             X=noise_std.reshape(-1, 1), y=ami)
@@ -335,7 +362,8 @@ class MFETSInfoTheory:
                 mem_data = ts_bin[ref_ind - memory_size:ref_ind]
                 prev_val = mem_data[-1]
                 prev_val_inds = np.flatnonzero(mem_data[:-1] == prev_val)
-                return np.mean(mem_data[prev_val_inds + 1] == ts_bin[ref_ind])
+                equal_vals = mem_data[prev_val_inds + 1] == ts_bin[ref_ind]
+                return np.mean(equal_vals) if equal_vals.size else 0.0
 
         # Note: not necessarily we need to to this on the differenced
         # time-series. This should be optional in the future.
@@ -389,13 +417,19 @@ class MFETSInfoTheory:
 
 
 def _test() -> None:
-    ts = _get_data.load_data(2)
+    ts = _get_data.load_data(3)
 
     ts_period = _period.ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
     print("TS period:", ts_period)
+
+    res = MFETSInfoTheory.ft_ami_detrended(ts, return_dist=True)
+    print(res)
+
+    res = MFETSInfoTheory.ft_ami(ts, return_dist=True)
+    print(res)
 
     res = MFETSInfoTheory.ft_lz_complexity(ts)
     print(res)
@@ -418,9 +452,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSInfoTheory.ft_ami_first_critpt(ts, return_dist=True)
-    print(res)
-
-    res = MFETSInfoTheory.ft_ami(ts, return_dist=True)
     print(res)
 
     res = MFETSInfoTheory.ft_hist_entropy(ts)
