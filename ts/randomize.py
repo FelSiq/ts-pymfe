@@ -24,6 +24,34 @@ except ImportError:
 class MFETSRandomize:
     """Extract time-series meta-features from Randomize group."""
     @classmethod
+    def precompute_ts_scaled(cls, ts: np.ndarray,
+                             **kwargs) -> t.Dict[str, np.ndarray]:
+        """Precompute a standardized time series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        kwargs:
+            Additional arguments and previous precomputed items. May
+            speed up this precomputation.
+
+        Returns
+        -------
+        dict
+            The following precomputed item is returned:
+                * ``ts_scaled`` (:obj:`np.ndarray`): standardized time-series
+                    values (z-score).
+        """
+        precomp_vals = {}  # type: t.Dict[str, np.ndarray]
+
+        if "ts_scaled" not in kwargs:
+            precomp_vals["ts_scaled"] = _utils.standardize_ts(ts=ts)
+
+        return precomp_vals
+
+    @classmethod
     def precompute_itrand_stats(cls,
                                 ts: np.ndarray,
                                 strategy: str = "dist-dynamic",
@@ -32,7 +60,28 @@ class MFETSRandomize:
                                 ts_scaled: t.Optional[np.ndarray] = None,
                                 random_state: t.Optional[int] = None,
                                 **kwargs) -> t.Dict[str, np.ndarray]:
-        """Precompute statistics with iterative"""
+        """Precompute statistics with ...
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        kwargs:
+            Additional arguments and previous precomputed items. May
+            speed up this precomputation.
+
+        Returns
+        -------
+        dict
+            The following precomputed item is returned:
+                * ...
+
+            The following items is necessary and, therefore, also precomputed
+            if necessary:
+                * ``ts_scaled`` (:obj:`np.ndarray`): standardized time-series
+                    values (z-score).
+        """
         precomp_vals = {}  # type: t.Dict[str, np.ndarray]
 
         stats = collections.OrderedDict((
@@ -42,7 +91,7 @@ class MFETSRandomize:
                 arr, nlags=1, fft=True)[1]),
         ))
 
-        stat_names = list(map("rand_stat_{}".format, stats.keys()))
+        stat_names = list(map("itrand_stat_{}".format, stats.keys()))
 
         if not set(stat_names).issubset(kwargs):
             stat_vals = cls._itrand_stat(ts=ts,
@@ -68,7 +117,77 @@ class MFETSRandomize:
                      prop_interval: float = 0.1,
                      ts_scaled: t.Optional[np.ndarray] = None,
                      random_state: t.Optional[int] = None) -> np.ndarray:
-        """TODO."""
+        """Calculate global statistics with iterative perturbation method.
+
+        In the iterative perturbation method, a copy of the time-series is
+        modified at each iteration. The quantity of observations modified and
+        the sample pool from which the new values are drawn depends on the
+        ``strategy``selected. Then, a statistic is extracted after every`k`
+        iterations (given by ceil(ts.size * ``prop_interval``).
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        func_stats : sequence of callable
+            Sequence of callables to extract the statistic values. Each
+            callable must receive a list of numeric values as the first
+            argument, and return a single numeric value.
+
+        strategy : str, optional (default="dist-dynamic")
+            The strategy used to perturb the current population. Must be one
+            of the following:
+
+                1. `dist-static`: (static distribution) one observation of the
+                current population is overwritten by one observation from the
+                original time-series.
+
+                2. `dist-dynamic`: (dynamic distribution) one observation of
+                the current population is overwritten by another observation
+                of the current population.
+
+                3. `permute`: two observations of the current population swaps
+                its positions.
+
+        prop_rep : int or float, optional (default=2)
+            Number of total iterations proportional to the time-series size.
+            This means that this process will iterate for approximately
+            ceil(prop_rep * ts.size) iterations. More rigorously, the number
+            of iterations also depends on the number of iterations that the
+            statistics are extracted, to avoid lose computations.
+
+        prop_interval : float, optional (default=0.1)
+            Interval that the statistics are extracted from the current
+            population, proportional to the time-series length.
+
+        ts_scaled : :obj:`np.ndarray`, optional (default=None)
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        random_state : int, optional
+            Random seed to ensure reproducibility.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Statistics extracted from the dynamic population. Each row is
+            associated to a method from ``func_stats``, and each column is
+            one distinct extraction event, ordered temporally by index (i.e.
+            lower indices corresponds to populations more similar to the
+            starting state, and higher indices to populations more affected
+            by the process).
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+        """
         if prop_rep <= 0:
             raise ValueError(
                 "'prop_rep' must be positive (got {}).".format(prop_rep))
@@ -131,10 +250,78 @@ class MFETSRandomize:
             prop_interval: float = 0.1,
             ts_scaled: t.Optional[np.ndarray] = None,
             random_state: t.Optional[int] = None,
-            rand_stat_mean: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
-        if rand_stat_mean is not None:
-            return rand_stat_mean
+            itrand_stat_mean: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """Calculate time-series mean with iterative perturbation method.
+
+        In the iterative perturbation method, a copy of the time-series is
+        modified at each iteration. The quantity of observations modified and
+        the sample pool from which the new values are drawn depends on the
+        ``strategy``selected. Then, a statistic is extracted after every`k`
+        iterations (given by ceil(ts.size * ``prop_interval``).
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        strategy : str, optional (default="dist-dynamic")
+            The strategy used to perturb the current population. Must be one
+            of the following:
+
+                1. `dist-static`: (static distribution) one observation of the
+                current population is overwritten by one observation from the
+                original time-series.
+
+                2. `dist-dynamic`: (dynamic distribution) one observation of
+                the current population is overwritten by another observation
+                of the current population.
+
+                3. `permute`: two observations of the current population swaps
+                its positions.
+
+        prop_rep : int or float, optional (default=2)
+            Number of total iterations proportional to the time-series size.
+            This means that this process will iterate for approximately
+            ceil(prop_rep * ts.size) iterations. More rigorously, the number
+            of iterations also depends on the number of iterations that the
+            statistics are extracted, to avoid lose computations.
+
+        prop_interval : float, optional (default=0.1)
+            Interval that the statistics are extracted from the current
+            population, proportional to the time-series length.
+
+        ts_scaled : :obj:`np.ndarray`, optional (default=None)
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        random_state : int, optional
+            Random seed to ensure reproducibility.
+
+        itrand_stat_mean : :obj:`np.ndarray`, optional
+            The return value of this method. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Mean extracted from the dynamic population. Each index corresponds
+            to a extraction event, ordered temporally by index (i.e.  lower
+            indices corresponds to populations more similar to the starting
+            state, and higher indices to populations more affected by the
+            process).
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+        """
+        if itrand_stat_mean is not None:
+            return itrand_stat_mean
 
         res = cls._itrand_stat(ts=ts,
                                func_stats=np.mean,
@@ -155,10 +342,78 @@ class MFETSRandomize:
             prop_interval: float = 0.1,
             ts_scaled: t.Optional[np.ndarray] = None,
             random_state: t.Optional[int] = None,
-            rand_stat_std: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
-        if rand_stat_std is not None:
-            return rand_stat_std
+            itrand_stat_std: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """Time-series standard deviation with iterative perturbation method.
+
+        In the iterative perturbation method, a copy of the time-series is
+        modified at each iteration. The quantity of observations modified and
+        the sample pool from which the new values are drawn depends on the
+        ``strategy``selected. Then, a statistic is extracted after every`k`
+        iterations (given by ceil(ts.size * ``prop_interval``).
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        strategy : str, optional (default="dist-dynamic")
+            The strategy used to perturb the current population. Must be one
+            of the following:
+
+                1. `dist-static`: (static distribution) one observation of the
+                current population is overwritten by one observation from the
+                original time-series.
+
+                2. `dist-dynamic`: (dynamic distribution) one observation of
+                the current population is overwritten by another observation
+                of the current population.
+
+                3. `permute`: two observations of the current population swaps
+                its positions.
+
+        prop_rep : int or float, optional (default=2)
+            Number of total iterations proportional to the time-series size.
+            This means that this process will iterate for approximately
+            ceil(prop_rep * ts.size) iterations. More rigorously, the number
+            of iterations also depends on the number of iterations that the
+            statistics are extracted, to avoid lose computations.
+
+        prop_interval : float, optional (default=0.1)
+            Interval that the statistics are extracted from the current
+            population, proportional to the time-series length.
+
+        ts_scaled : :obj:`np.ndarray`, optional (default=None)
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        random_state : int, optional
+            Random seed to ensure reproducibility.
+
+        itrand_stat_std : :obj:`np.ndarray`, optional
+            The return value of this method. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Standard deviation extracted from the dynamic population. Each
+            index corresponds to a extraction event, ordered temporally by
+            index (i.e. lower indices corresponds to populations more similar
+            to the starting state, and higher indices to populations more
+            affected by the process).
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+        """
+        if itrand_stat_std is not None:
+            return itrand_stat_std
 
         res = cls._itrand_stat(ts=ts,
                                func_stats=np.std,
@@ -179,10 +434,78 @@ class MFETSRandomize:
             prop_interval: float = 0.1,
             ts_scaled: t.Optional[np.ndarray] = None,
             random_state: t.Optional[int] = None,
-            rand_stat_acf: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
-        if rand_stat_acf is not None:
-            return rand_stat_acf
+            itrand_stat_acf: t.Optional[np.ndarray] = None) -> np.ndarray:
+        """Time-series autocorrelation with iterative perturbation method.
+
+        In the iterative perturbation method, a copy of the time-series is
+        modified at each iteration. The quantity of observations modified and
+        the sample pool from which the new values are drawn depends on the
+        ``strategy``selected. Then, a statistic is extracted after every`k`
+        iterations (given by ceil(ts.size * ``prop_interval``).
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        strategy : str, optional (default="dist-dynamic")
+            The strategy used to perturb the current population. Must be one
+            of the following:
+
+                1. `dist-static`: (static distribution) one observation of the
+                current population is overwritten by one observation from the
+                original time-series.
+
+                2. `dist-dynamic`: (dynamic distribution) one observation of
+                the current population is overwritten by another observation
+                of the current population.
+
+                3. `permute`: two observations of the current population swaps
+                its positions.
+
+        prop_rep : int or float, optional (default=2)
+            Number of total iterations proportional to the time-series size.
+            This means that this process will iterate for approximately
+            ceil(prop_rep * ts.size) iterations. More rigorously, the number
+            of iterations also depends on the number of iterations that the
+            statistics are extracted, to avoid lose computations.
+
+        prop_interval : float, optional (default=0.1)
+            Interval that the statistics are extracted from the current
+            population, proportional to the time-series length.
+
+        ts_scaled : :obj:`np.ndarray`, optional (default=None)
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        random_state : int, optional
+            Random seed to ensure reproducibility.
+
+        itrand_stat_acf: :obj:`np.ndarray`, optional
+            The return value of this method. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Autocorrelation extracted from the dynamic population. Each
+            index corresponds to a extraction event, ordered temporally by
+            index (i.e. lower indices corresponds to populations more similar
+            to the starting state, and higher indices to populations more
+            affected by the process).
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+        """
+        if itrand_stat_acf is not None:
+            return itrand_stat_acf
 
         func_acf = lambda arr: statsmodels.tsa.stattools.acf(
             arr, nlags=1, fft=True)[1]
