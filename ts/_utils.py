@@ -254,17 +254,17 @@ def fit_gaussian_process(
     return gaussian_model
 
 
-def calc_ioi_stats(ts: np.ndarray,
+def calc_ioe_stats(ts: np.ndarray,
                    funcs: t.Union[t.Callable[[np.ndarray], float],
                                   t.Iterable[t.Callable[[np.ndarray], float]]],
                    ts_scaled: t.Optional[np.ndarray] = None,
                    step_size: float = 0.05,
                    differentiate: bool = False) -> np.ndarray:
-    """Get statistics using the iterative outlier inclusion strategy.
+    """Get statistics using the iterative outlier exclusion strategy.
 
-    In the iterative outlier inclusion, a uniformly spaced set of thresholds
-    over the time-series range is build and, for each iteration, it is
-    calculated a statistic of the diference of the timestamp values of
+    In the iterative outlier exclusion, a uniformly spaced set of thresholds
+    over the time-series range is build in increasing order. For each threshold
+    it is calculated a statistic of the diference of the timestamp values of
     instances larger or equal than the current threshold.
 
     Parameters

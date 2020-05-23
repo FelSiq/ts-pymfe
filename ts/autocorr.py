@@ -58,7 +58,6 @@ class MFETSAutocorr:
     def precompute_gaussian_model(cls,
                                   ts: np.ndarray,
                                   random_state: t.Optional[int] = None,
-                                  ts_scaled: t.Optional[np.ndarray] = None,
                                   **kwargs) -> t.Dict[str, t.Any]:
         """Precompute a gaussian process model.
 
@@ -70,10 +69,6 @@ class MFETSAutocorr:
         random_state : int, optional
             Random seed to optimize the gaussian process model, to keep
             the results reproducible.
-
-        ts_scaled : :obj:`np.ndarray`, optional
-            Standardized time-series values. Used to take advantage of
-            precomputations.
 
         kwargs:
             Additional arguments and previous precomputed items. May
@@ -95,19 +90,22 @@ class MFETSAutocorr:
         """
         precomp_vals = {}  # type: t.Dict[str, t.Any]
 
-        if ts_scaled not in kwargs:
+        if "ts_scaled" not in kwargs:
             precomp_vals["ts_scaled"] = _utils.standardize_ts(ts=ts)
 
         ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])
 
-        if gaussian_model not in kwargs:
+        if "gaussian_model" not in kwargs:
             gaussian_model = _utils.fit_gaussian_process(
                 ts=ts, ts_scaled=ts_scaled, random_state=random_state)
+            precomp_vals["gaussian_model"] = gaussian_model
 
+        gaussian_model = kwargs.get("gaussian_model",
+                                    precomp_vals["gaussian_model"])
+
+        if "gaussian_resid" not in kwargs:
             gaussian_resid = _utils.fit_gaussian_process(
                 ts=ts, ts_scaled=ts_scaled, gaussian_model=gaussian_model)
-
-            precomp_vals["gaussian_model"] = gaussian_model
             precomp_vals["gaussian_resid"] = gaussian_resid
 
         return precomp_vals

@@ -50,7 +50,6 @@ class MFETSLocalStats:
             cls,
             ts: np.ndarray,
             window_size: t.Union[int, float] = 0.1,
-            ts_scaled: t.Optional[np.ndarray] = None,
             **kwargs) -> t.Dict[str, pd.core.window.rolling.Rolling]:
         """Precompute a configured rolling window.
 
@@ -64,10 +63,6 @@ class MFETSLocalStats:
             If int >= 1, this argument defines the window size.
             If 0 < float < 1, this argument defines the fraction of the
             time-series length used as the window size.
-
-        ts_scaled : :obj:`np.ndarray`, optional
-            Standardized time-series values. Used to take advantage of
-            precomputations.
 
         kwargs:
             Additional arguments and previous precomputed items. May
@@ -87,7 +82,7 @@ class MFETSLocalStats:
         """
         precomp_vals = {}  # type: t.Dict[str, pd.core.window.rolling.Rolling]
 
-        if ts_scaled is None:
+        if "ts_scaled" not in kwargs:
             precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
 
         ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])

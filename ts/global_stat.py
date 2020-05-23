@@ -43,20 +43,20 @@ class MFETSGlobalStats:
         return precomp_vals
 
     @classmethod
-    def ft_ioi_tdelta_mean(
+    def ft_ioe_tdelta_mean(
             cls,
             ts: np.ndarray,
             step_size: float = 0.05,
             normalize: bool = True,
             differentiate: bool = False,
             ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """Mean change of interval length with iterative outlier inclusion.
+        """Mean change of interval length with iterative outlier exclusion.
 
         This method calculates, at each iteration, the mean of the differences
-        of the timestamps of instances using the iterative outlier inclusion
+        of the timestamps of instances using the iterative outlier exclusion
         strategy.
 
-        In the iterative outlier inclusion, a uniformly spaced set of
+        In the iterative outlier exclusion, a uniformly spaced set of
         thresholds over the time-series range is build and, for each iteration,
         it is calculated a statistic of the diference of the timestamp values
         of instances larger or equal than the current threshold.
@@ -87,7 +87,7 @@ class MFETSGlobalStats:
         -------
         :obj:`np.ndarray`
             If `differentiate` is False, the mean value of outlier timestamps
-            of all iterations of the iterative outlier inclusion process. If
+            of all iterations of the iterative outlier exclusion process. If
             `differentiate` is True, the mean value of the timestamps interval 
             of outliers for every iteration. Also, if `normalize` is True,
             every value will be normalized to the [-1, 1] range.
@@ -103,7 +103,7 @@ class MFETSGlobalStats:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
-        tdelta_it_mean = _utils.calc_ioi_stats(ts=ts,
+        tdelta_it_mean = _utils.calc_ioe_stats(ts=ts,
                                                funcs=np.mean,
                                                ts_scaled=ts_scaled,
                                                step_size=step_size,
@@ -879,7 +879,7 @@ def _test() -> None:
     res = MFETSGlobalStats.ft_corr_dim(ts)
     print("corr_dim", res)
 
-    res = MFETSGlobalStats.ft_ioi_tdelta_mean(ts)
+    res = MFETSGlobalStats.ft_ioe_tdelta_mean(ts)
     print(res)
 
     res = MFETSGlobalStats.ft_t_mean(ts)

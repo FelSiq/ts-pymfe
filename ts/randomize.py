@@ -57,7 +57,6 @@ class MFETSRandomize:
                                 strategy: str = "dist-dynamic",
                                 prop_rep: t.Union[int, float] = 2,
                                 prop_interval: float = 0.1,
-                                ts_scaled: t.Optional[np.ndarray] = None,
                                 random_state: t.Optional[int] = None,
                                 **kwargs) -> t.Dict[str, np.ndarray]:
         """Precompute global statistics with iterative perturbation method.
@@ -99,10 +98,6 @@ class MFETSRandomize:
             Interval that the statistics are extracted from the current
             population, proportional to the time-series length.
 
-        ts_scaled : :obj:`np.ndarray`, optional
-            Standardized time-series values. Used to take advantage of
-            precomputations.
-
         random_state : int, optional
             Random seed to ensure reproducibility.
 
@@ -140,6 +135,11 @@ class MFETSRandomize:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
         """
         precomp_vals = {}  # type: t.Dict[str, np.ndarray]
+
+        if "ts_scaled" not in kwargs:
+            precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
+
+        ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])
 
         stats = collections.OrderedDict((
             ("mean", np.mean),

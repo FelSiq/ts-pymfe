@@ -67,7 +67,7 @@ class MFETSGeneral:
         """
         precomp_vals = {}  # type: t.Dict[str, int]
 
-        if ts_period not in kwargs:
+        if "ts_period" not in kwargs:
             precomp_vals["ts_period"] = cls.ft_period(ts=ts)
 
         return precomp_vals
@@ -79,7 +79,6 @@ class MFETSGeneral:
             dims: t.Union[int, t.Sequence[int]] = 16,
             lag: t.Optional[t.Union[str, int]] = None,
             max_nlags: t.Optional[int] = None,
-            ts_scaled: t.Optional[np.ndarray] = None,
             detrended_acfs: t.Optional[np.ndarray] = None,
             detrended_ami: t.Optional[np.ndarray] = None,
             emb_dim_cao_e1: t.Optional[np.ndarray] = None,
@@ -126,10 +125,6 @@ class MFETSGeneral:
             If ``lag`` is not a numeric value, than it will be estimated using
             either the time-series autocorrelation or mutual information
             function estimated up to this argument value.
-
-        ts_scaled : :obj:`np.ndarray`, optional
-            Standardized time-series values. Used to take advantage of
-            precomputations.
 
         detrended_acfs : :obj:`np.ndarray`, optional
             Array of time-series autocorrelation function (for distinct ordered
@@ -181,7 +176,7 @@ class MFETSGeneral:
         """
         precomp_vals = {}  # type: t.Dict[str, np.ndarray]
 
-        if ts_scaled is None:
+        if "ts_scaled" not in kwargs:
             precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
 
         ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])
@@ -208,7 +203,6 @@ class MFETSGeneral:
                           ts: np.ndarray,
                           step_size: float = 0.1,
                           start_point: t.Optional[t.Union[int, float]] = None,
-                          ts_scaled: t.Optional[np.ndarray] = None,
                           **kwargs) -> t.Dict[str, np.ndarray]:
         """Precompute the path of a particle attracted by the time-series.
 
@@ -226,10 +220,6 @@ class MFETSGeneral:
         start_point : int or float, optional
             Particle starting position. If None, will start at `0` (which is
             the mean value of the standardized time-series values).
-
-        ts_scaled : :obj:`np.ndarray`, optional
-            Standardized time-series values. Used to take advantage of
-            precomputations.
 
         kwargs:
             Additional arguments and previous precomputed items. May
@@ -262,10 +252,11 @@ class MFETSGeneral:
         """
         precomp_vals = {}  # type: t.Dict[str, np.ndarray]
 
-        if walker_path not in kwargs:
-            if ts_scaled is None:
+        if "walker_path" not in kwargs:
+            if "ts_scaled" not in kwargs:
                 precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
-                ts_scaled = precomp_vals["ts_scaled"]
+
+            ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])
 
             walker_path = cls._ts_walker(ts=ts_scaled,
                                          step_size=step_size,

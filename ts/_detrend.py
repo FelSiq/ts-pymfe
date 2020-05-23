@@ -87,7 +87,16 @@ def detrend(ts: np.ndarray,
 def _decompose_ssmoother(
         ts: t.Union[np.ndarray, pd.core.series.Series],
         plot: bool = False) -> t.Tuple[t.Optional[np.ndarray], ...]:
-    """TODO."""
+    """TODO.
+
+    References
+    ----------
+    .. [1] Friedman, J. H. 1984, A variable span scatterplot smoother
+        Laboratory for Computational Statistics, Stanford University
+        Technical Report No. 5. Available at:
+        https://www.slac.stanford.edu/pubs/slacpubs/3250/slac-pub-3477.pdf
+        Accessed on May 12 2020.
+    """
     timestamp = np.arange(ts.size)
     model = supersmoother.SuperSmoother().fit(timestamp, ts, presorted=True)
     trend = model.predict(timestamp)
@@ -115,7 +124,16 @@ def _decompose_stl(ts: t.Union[np.ndarray, pd.core.series.Series],
 def decompose(ts: t.Union[np.ndarray, pd.core.series.Series],
               ts_period: t.Optional[int] = None,
               plot: bool = False) -> t.Tuple[t.Optional[np.ndarray], ...]:
-    """TODO."""
+    """TODO.
+
+    References
+    ----------
+    .. [1] Friedman, J. H. 1984, A variable span scatterplot smoother
+        Laboratory for Computational Statistics, Stanford University
+        Technical Report No. 5. Available at:
+        https://www.slac.stanford.edu/pubs/slacpubs/3250/slac-pub-3477.pdf
+        Accessed on May 12 2020.
+    """
     if ts_period is None:
         ts_period = _period.ts_period(ts)
 
