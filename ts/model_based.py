@@ -1,6 +1,6 @@
 import typing as t
 
-import sklearn.mixture
+import sklearn.gaussian_process
 import sklearn.preprocessing
 import statsmodels.tsa.holtwinters
 import statsmodels.regression
@@ -278,23 +278,24 @@ class MFETSModelBased:
     def ft_gaussian_mle(
         cls,
         ts: np.ndarray,
-        n_components: int = 2,
         random_state: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
-        gaussian_model: t.Optional[sklearn.mixture.GaussianMixture] = None,
+        gaussian_model: t.Optional[
+            sklearn.gaussian_process.GaussianProcessRegressor] = None,
     ) -> float:
         """TODO."""
-        ts_scaled = _utils.standardize_ts(ts=ts,
-                                          ts_scaled=ts_scaled).reshape(-1, 1)
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        gaussian_model = _utils.fit_gaussian_mix(ts=ts_scaled,
-                                                 n_components=n_components,
-                                                 random_state=random_state,
-                                                 gaussian_model=gaussian_model)
+        gaussian_model = _utils.fit_gaussian_process(
+            ts=ts_scaled,
+            random_state=random_state,
+            gaussian_model=gaussian_model,
+            ts_scaled=ts_scaled)
 
-        gaussian_mle = gaussian_model.score(ts_scaled)
+        X = np.linspace(0, 1, ts_scaled.size).reshape(-1, 1)
+        r_squared = gaussian_model.score(X=X, y=ts_scaled)
 
-        return gaussian_mle
+        return r_squared
 
     @classmethod
     def ft_ioi_std_curvature(

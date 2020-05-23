@@ -3,7 +3,7 @@ import typing as t
 import operator
 
 import sklearn.preprocessing
-import sklearn.mixture
+import sklearn.gaussian_process
 import numpy as np
 import pandas as pd
 
@@ -226,33 +226,30 @@ def find_crit_pt(arr: np.ndarray, type_: str) -> np.ndarray:
     return np.hstack((0, local_m.astype(int), 0))
 
 
-def fit_gaussian_mix(
+def fit_gaussian_process(
     ts: np.ndarray,
-    n_components: int = 2,
     random_state: t.Optional[int] = None,
     return_residuals: bool = False,
-    gaussian_model: t.Optional[sklearn.mixture.GaussianMixture] = None
-) -> t.Union[np.ndarray, sklearn.mixture.GaussianMixture]:
-    """Fit a Gaussian Mixture model to the time-series data.
+    ts_scaled: t.Optional[np.ndarray] = None,
+    gaussian_model: t.Optional[sklearn.gaussian_process.GaussianProcessRegressor] = None
+) -> t.Union[np.ndarray, sklearn.gaussian_process.GaussianProcessRegressor]:
+    """Fit a Gaussian Process model to the time-series data.
 
-    The fitted model is returned unless ``return_residuals`` is
-    True, which in this case the model residuals is returned
-    instead.
+    The fitted model is returned unless ``return_residuals`` is True, which in
+    this case the model residuals is returned instead.
     """
-    if ts.ndim == 1:
-        ts = ts.reshape(-1, 1)
+    ts_scaled = standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+    timestamps = np.linspace(0, 1, ts_scaled.size).reshape(-1, 1)
 
     if gaussian_model is None or gaussian_model.n_components != n_components:
-        gaussian_model = sklearn.mixture.GaussianMixture(
-            n_components=n_components, random_state=random_state)
+        gaussian_model = sklearn.gaussian_process.GaussianProcessRegressor(
+            copy_X_train=False, random_state=random_state)
 
-        if return_residuals:
-            return (ts - gaussian_model.fit_predict(X=ts)).ravel()
-
-        gaussian_model.fit(X=ts)
+        gaussian_model.fit(X=timestamps, y=ts_scaled)
 
     if return_residuals:
-        return (ts - gaussian_model.predict(X=ts)).ravel()
+        return (ts_scaled - gaussian_model.predict(X=timestamps)).ravel()
 
     return gaussian_model
 

@@ -13,7 +13,7 @@ import sklearn.model_selection
 import statsmodels.tsa.arima_model
 import statsmodels.tsa.holtwinters
 import statsmodels.tools.sm_exceptions
-import sklearn.mixture
+import sklearn.gaussian_process
 
 import autocorr
 import _utils
@@ -50,7 +50,7 @@ class MFETSLandmarking:
         if X is None:
             # Note: 'X' are the unitless timesteps of the timeseries
             y = _utils.sample_data(ts=y, lm_sample_frac=lm_sample_frac)
-            X = np.arange(y.size).reshape(-1, 1)
+            X = np.linspace(0, 1, y.size).reshape(-1, 1)
 
         else:
             y, X = _utils.sample_data(ts=y, X=X, lm_sample_frac=lm_sample_frac)
@@ -75,7 +75,13 @@ class MFETSLandmarking:
                 y_pred = model.predict(X_test).ravel()
                 res[ind_fold] = score(y_pred, y_test)
 
-            except TypeError:
+                import matplotlib.pyplot as plt
+                plt.plot(X_train, y_train)
+                plt.plot(X_test, y_test)
+                plt.plot(X_test, y_pred)
+                plt.show()
+
+            except (TypeError, ValueError):
                 res[ind_fold] = np.nan
 
         return res
@@ -152,7 +158,7 @@ class MFETSLandmarking:
 
                     res[ind_fold] = score(ts_pred, ts_test)
 
-                except ValueError:
+                except (TypeError, ValueError):
                     res[ind_fold] = np.nan
 
         return res
@@ -310,14 +316,13 @@ class MFETSLandmarking:
         ts: np.ndarray,
         score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
         tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        n_components: int = 2,
         num_cv_folds: int = 5,
         lm_sample_frac: float = 1.0,
         random_state: t.Optional[int] = None,
     ) -> np.ndarray:
         """TODO."""
-        model = sklearn.mixture.GaussianMixture(n_components=n_components,
-                                                random_state=random_state)
+        model = sklearn.gaussian_process.GaussianProcessRegressor(
+            copy_X_train=False, random_state=random_state)
 
         res = cls._standard_pipeline_sklearn(y=ts,
                                              model=model,
@@ -912,6 +917,10 @@ def _test() -> None:
     score = lambda *args: sklearn.metrics.mean_squared_error(*args,
                                                              squared=False)
 
+    res = MFETSLandmarking.ft_model_gaussian(ts, score=score, random_state=16)
+    print(4, res)
+    exit(1)
+
     res = MFETSLandmarking.ft_model_exp(ts, score=score)
     print(4, res)
     exit(1)
@@ -924,9 +933,6 @@ def _test() -> None:
     print(4, res)
 
     res = MFETSLandmarking.ft_model_loc_mean(ts, score=score)
-    print(4, res)
-
-    res = MFETSLandmarking.ft_model_gaussian(ts, score=score, random_state=16)
     print(4, res)
 
     res = MFETSLandmarking.ft_model_hwes_ada(ts, ts_period, score=score)

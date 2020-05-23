@@ -3,7 +3,7 @@ import typing as t
 
 import statsmodels.tsa.stattools
 import numpy as np
-import sklearn.mixture
+import sklearn.gaussian_process
 
 import stat_tests
 import _embed
@@ -536,7 +536,7 @@ class MFETSAutocorr:
             If True, the autocorrelation function is corrected for statistical
             bias.
 
-        ts_detrended : :obj:`np.ndarray`, optional
+        detrended_acfs : :obj:`np.ndarray`, optional
             Detrended time-series autocorrelation function with each index
             corresponding to its lag starting from the lag 1.
 
@@ -562,7 +562,30 @@ class MFETSAutocorr:
             unbiased: bool = True,
             detrended_acfs: t.Optional[np.ndarray] = None
     ) -> t.Union[int, float]:
-        """TODO."""
+        """First local minima detrended autocorrelation lag.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        max_nlags : int, optional
+            Number of lags to avaluate the autocorrelation function.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Detrended time-series autocorrelation function with each index
+            corresponding to its lag starting from the lag 1.
+
+        Returns
+        -------
+        int or float
+            Lag corresponding to the first autocorrelation below or equal
+            zero, if any. Return `np.nan` if no such index is found.
+        """
         detrended_acfs = cls._calc_acf(ts=ts,
                                        nlags=max_nlags,
                                        unbiased=unbiased,
@@ -809,8 +832,7 @@ class MFETSAutocorr:
             crit_point_type: str = "non-plateau",
             unbiased: bool = True,
             max_nlags: t.Optional[int] = None,
-            detrended_acfs: t.Optional[np.ndarray] = None
-    ) -> np.ndarray:
+            detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
         """TODO."""
         detrended_acfs = cls._calc_acf(ts=ts,
                                        nlags=max_nlags,
@@ -829,21 +851,20 @@ class MFETSAutocorr:
     def ft_autocorr_gaussian_resid(
         cls,
         ts: np.ndarray,
-        n_components: int = 2,
         nlags: int = 8,
         unbiased: bool = True,
         random_state: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
         gaussian_resid: t.Optional[np.ndarray] = None,
-        gaussian_model: t.Optional[sklearn.mixture.GaussianMixture] = None,
+        gaussian_model: t.Optional[
+            sklearn.gaussian_process.GaussianProcessRegressor] = None,
     ) -> np.ndarray:
         """TODO."""
         if gaussian_resid is None:
             ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-            gaussian_resid = _utils.fit_gaussian_mix(
+            gaussian_resid = _utils.fit_gaussian_process(
                 ts=ts_scaled,
-                n_components=n_components,
                 random_state=random_state,
                 gaussian_model=gaussian_model,
                 return_residuals=True)
@@ -858,24 +879,47 @@ class MFETSAutocorr:
     def ft_test_gaussian_resid(
         cls,
         ts: np.ndarray,
-        n_components: int = 2,
         nlags: int = 8,
         return_pval: bool = True,
         random_state: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
         gaussian_resid: t.Optional[np.ndarray] = None,
-        gaussian_model: t.Optional[sklearn.mixture.GaussianMixture] = None,
-    ) -> np.ndarray:
-        """TODO."""
+        gaussian_model: t.Optional[
+            sklearn.gaussian_process.GaussianProcessRegressor] = None,
+    ) -> float:
+        """Ljung–Box test in the residuals of a gaussian process model.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        float
+            Ljung-Box test
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         if gaussian_resid is None:
             ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-            gaussian_resid = _utils.fit_gaussian_mix(
+            gaussian_resid = _utils.fit_gaussian_process(
                 ts=ts_scaled,
-                n_components=n_components,
                 random_state=random_state,
                 gaussian_model=gaussian_model,
                 return_residuals=True)
+
+        import matplotlib.pyplot as plt
+        plt.plot(gaussian_resid)
+        plt.show()
 
         gaussian_lb_test = stat_tests.MFETSStatTests.ft_test_lb(
             ts_residuals=gaussian_resid,
@@ -892,7 +936,51 @@ class MFETSAutocorr:
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
             detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Distance between the autocorrelation with and without outliers.
+
+        This method calculates the time-series autocorrelation function
+        for all observations, and the aucorrelation function of the
+        time-series without a subset of the most extreme values (cut at
+        the ``p`` quantile of all absolute values). It is returned the
+        absolute difference between these two autocorrelations.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        p : float, optional (default=0.8)
+            Quantile of cut in the set of the time-series absolute values to
+            determine which instances are considered outliers.
+
+        max_nlags : int, optional
+            Number of lags to avaluate the autocorrelation function.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Detrended time-series autocorrelation function with each index
+            corresponding to its lag starting from the lag 1.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Absolute difference element-wise between each autocorrelation
+            with and without outliers.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         detrended_acfs = cls._calc_acf(ts=ts,
                                        nlags=max_nlags,
                                        unbiased=unbiased,
@@ -918,6 +1006,10 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
+    res = MFETSAutocorr.ft_test_gaussian_resid(ts, random_state=16)
+    print(res)
+    exit(1)
+
     res = MFETSAutocorr.ft_trev(ts, only_numerator=False)
     print(res)
 
@@ -934,9 +1026,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSAutocorr.ft_first_acf_locmin(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_test_gaussian_resid(ts, random_state=16)
     print(res)
 
     res = MFETSAutocorr.ft_autocorr_gaussian_resid(ts, random_state=16)
