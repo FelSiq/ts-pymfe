@@ -1,3 +1,4 @@
+"""Module dedicated to autocorrelation time-series meta-features."""
 import typing as t
 
 import statsmodels.tsa.stattools
@@ -13,13 +14,38 @@ import _get_data
 
 
 class MFETSAutocorr:
+    """Extract time-series meta-features from Autocorr group."""
     @classmethod
-    def precompute_acf(cls,
-                       ts: np.ndarray,
-                       nlags: t.Optional[int] = None,
-                       unbiased: bool = True,
-                       **kwargs) -> t.Dict[str, np.ndarray]:
-        """TODO."""
+    def precompute_detrended_acf(cls,
+                                 ts: np.ndarray,
+                                 nlags: t.Optional[int] = None,
+                                 unbiased: bool = True,
+                                 **kwargs) -> t.Dict[str, np.ndarray]:
+        """Precompute the detrended autocorrelation function.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        nlags : int, optional
+            Number of lags to calculate the autocorrelation function.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        kwargs:
+            Additional arguments and previous precomputed items. May
+            speed up this precomputation.
+
+        Returns
+        -------
+        dict
+            The following precomputed item is returned:
+                * ``detrended_acfs`` (:obj:`np.ndarray`): the autocorrelation
+                    function from the detrended time-series.
+        """
         precomp_vals = {}
 
         if "detrended_acfs" not in kwargs:
@@ -36,7 +62,39 @@ class MFETSAutocorr:
                   detrend: bool = True,
                   detrended_acfs: t.Optional[np.ndarray] = None,
                   ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Precompute the autocorrelation function.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        nlags : int, optional
+            Number of lags to calculate the autocorrelation function.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        detrend : bool, optional (default=True)
+            If True, detrend the time-series using Friedman's Super Smoother
+            before calculating the autocorrelation function, or the user
+            given detrended time-series from ``ts_detrended`` argument.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            This method's return value. Used to take advantage of
+            precomputations.
+
+        ts_detrended : :obj:`np.ndarray`, optional
+            Detrended time-series. Used only if `detrend` is False.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            If `detrend` is True, the autocorrelation function up to `nlags`
+            lags of the detrended time-series. If `detrend` is False, the
+            autocorrelation function up to `nlags` lags of the time-series.
+        """
         if detrended_acfs is not None and (nlags is None
                                            or tc_acfs.size == nlags):
             return detrended_acfs
@@ -64,7 +122,38 @@ class MFETSAutocorr:
                    method: str = "ols-unbiased",
                    detrend: bool = True,
                    ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Precompute the partial autocorrelation function.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        nlags : int, optional
+            Number of lags to calculate the partial autocorrelation function.
+
+        method : str, optional (default="ols-unbiased")
+            Method used to estimate the partial autocorrelations. Check the
+            `statsmodels.tsa.stattools.pacf` documentation for the complete
+            list of the available methods.
+
+        detrend : bool, optional (default=True)
+            If True, detrend the time-series using Friedman's Super Smoother
+            before calculating the autocorrelation function, or the user
+            given detrended time-series from ``ts_detrended`` argument.
+
+        ts_detrended : :obj:`np.ndarray`, optional
+            Detrended time-series. Used only if `detrend` is False. If not
+            given, the time-series is detrended within this method using
+            Friedman's Super Smoother.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            If `detrend` is True, the partial autocorrelation function up to
+            `nlags` lags of the detrended time-series. If `detrend` is False,
+            the autocorrelation function up to `nlags` lags of the time-series.
+        """
         if nlags is None:
             nlags = ts.size // 2
 
@@ -88,7 +177,38 @@ class MFETSAutocorr:
             unbiased: bool = True,
             detrended_acfs: t.Optional[np.ndarray] = None
     ) -> t.Union[int, float]:
-        """TODO."""
+        """First autocorrelation lag below a given threshold.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        threshold : float
+            The threshold to find the first lag below it.
+
+        abs_acf_vals : bool, optional (default=False)
+            If True, avaliate the aboslute value of the autocorrelation
+            function.
+
+        max_nlags : int, optional
+            Number of lags to avaluate the autocorrelation function.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            This method's return value. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        int or float
+            Lag corresponding to the first autocorrelation function the
+            given ``threshold``, if any. Return `np.nan` if no such index is
+            found.
+        """
         detrended_acfs = cls._calc_acf(ts=ts,
                                        nlags=max_nlags,
                                        unbiased=unbiased,
@@ -112,7 +232,25 @@ class MFETSAutocorr:
                ts: np.ndarray,
                nlags: t.Optional[int] = None,
                unbiased: bool = True) -> np.ndarray:
-        """TODO."""
+        """Autocorrelation function of the time-series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        nlags : int, optional
+            Number of lags to calculate the autocorrelation function.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The autocorrelation function up to `nlags` lags of the time-series.
+        """
         return cls._calc_acf(ts=ts,
                              nlags=nlags,
                              unbiased=unbiased,
@@ -126,7 +264,34 @@ class MFETSAutocorr:
             unbiased: bool = True,
             ts_detrended: t.Optional[np.ndarray] = None,
             detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Autocorrelation function of the detrended time-series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        nlags : int, optional
+            Number of lags to calculate the autocorrelation function.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        ts_detrended : :obj:`np.ndarray`, optional
+            Detrended time-series. If not given, the time-series is detrended
+            within this method using Friedman's Super Smoother.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            This method's return value. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The autocorrelation function up to `nlags` lags of the detrended
+            time-series.
+        """
         return cls._calc_acf(ts=ts,
                              nlags=nlags,
                              unbiased=unbiased,
@@ -142,7 +307,39 @@ class MFETSAutocorr:
                     detrend: bool = True,
                     ts_detrended: t.Optional[np.ndarray] = None,
                     unbiased: bool = True) -> np.ndarray:
-        """TODO."""
+        """Autocorrelation function of the differenced time-series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_diff : int, optional (default=1)
+            Order of differentiation.
+
+        nlags : int, optional
+            Number of lags to calculate the autocorrelation function.
+
+        detrend : bool, optional (default=True)
+            If True, detrend the time-series using Friedman's Super Smoother
+            before calculating the autocorrelation function, or the user
+            given detrended time-series from ``ts_detrended`` argument.
+
+        ts_detrended : :obj:`np.ndarray`, optional
+            Detrended time-series. If not given and ``detrend`` is True, the
+            time-series is detrended within this method using Friedman's Super
+            Smoother.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The autocorrelation function up to `nlags` lags of the differenced
+            time-series.
+        """
         return cls._calc_acf(ts=np.diff(ts, n=num_diff),
                              detrend=detrend,
                              nlags=nlags,
@@ -154,7 +351,26 @@ class MFETSAutocorr:
                 ts: np.ndarray,
                 nlags: t.Optional[int] = None,
                 method: str = "ols-unbiased") -> np.ndarray:
-        """TODO."""
+        """Partial autocorrelation function of the time-series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        nlags : int, optional
+            Number of lags to calculate the partial autocorrelation function.
+
+        method : str, optional (default="ols-unbiased")
+            Method used to estimate the partial autocorrelations. Check the
+            `statsmodels.tsa.stattools.pacf` documentation for the complete
+            list of the available methods.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The autocorrelation function up to `nlags` lags of the time-series.
+        """
         return cls._calc_pacf(ts=ts, nlags=nlags, method=method, detrend=False)
 
     @classmethod
@@ -164,7 +380,31 @@ class MFETSAutocorr:
             nlags: t.Optional[int] = None,
             method: str = "ols-unbiased",
             ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Partial autocorrelation function of the detrended time-series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        nlags : int, optional
+            Number of lags to calculate the partial autocorrelation function.
+
+        method : str, optional (default="ols-unbiased")
+            Method used to estimate the partial autocorrelations. Check the
+            `statsmodels.tsa.stattools.pacf` documentation for the complete
+            list of the available methods.
+
+        ts_detrended : :obj:`np.ndarray`, optional
+            Detrended time-series. If not given, the time-series is detrended
+            within this method using Friedman's Super Smoother.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The partial autocorrelation function up to `nlags` lags of the
+            detrended time-series.
+        """
         return cls._calc_pacf(ts=ts,
                               nlags=nlags,
                               method=method,
@@ -180,7 +420,38 @@ class MFETSAutocorr:
             method: str = "ols-unbiased",
             detrend: bool = True,
             ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Partial autocorrelation function of the differenced time-series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        nlags : int, optional
+            Number of lags to calculate the partial autocorrelation function.
+
+        method : str, optional (default="ols-unbiased")
+            Method used to estimate the partial autocorrelations. Check the
+            `statsmodels.tsa.stattools.pacf` documentation for the complete
+            list of the available methods.
+
+        detrend : bool, optional (default=True)
+            If True, detrend the time-series using Friedman's Super Smoother
+            before calculating the autocorrelation function, or the user
+            given detrended time-series from ``ts_detrended`` argument.
+
+        ts_detrended : :obj:`np.ndarray`, optional
+            Detrended time-series. Used only if `detrend` is False. If not
+            given, the time-series is detrended within this method using
+            Friedman's Super Smoother.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            If `detrend` is True, the partial autocorrelation function up to
+            `nlags` lags of the detrended time-series. If `detrend` is False,
+            the autocorrelation function up to `nlags` lags of the time-series.
+        """
         return cls._calc_pacf(ts=np.diff(ts, n=num_diff),
                               nlags=nlags,
                               method=method,
@@ -193,10 +464,47 @@ class MFETSAutocorr:
             ts: np.ndarray,
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
+            threshold: t.Optional[t.Union[int, float]] = None,
             detrended_acfs: t.Optional[np.ndarray] = None
     ) -> t.Union[int, float]:
-        """TODO."""
-        threshold = 1.96 / np.sqrt(ts.size)
+        """First non-significative detrended autocorrelation lag.
+
+        The critical value to determine if a autocorrelation is significative
+        is 1.96 / sqrt(len(ts)), but can be changed using the ``threshold``
+        parameter.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        max_nlags : int, optional
+            Number of lags to avaluate the autocorrelation function.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        threshold : int or float, default
+            The critical value to determine if a autocorrelation value is
+            significative or not. This means that any autocorrelation with
+            absolute value higher than is considered significative. If None,
+            then the threshold used will be 1.96 / sqrt(len(ts)).
+
+        ts_detrended : :obj:`np.ndarray`, optional
+            Detrended time-series. Used only if `detrend` is False. If not
+            given, the time-series is detrended within this method using
+            Friedman's Super Smoother.
+
+        Returns
+        -------
+        int or float
+            Lag corresponding to the first autocorrelation with absolute value
+            below the given ``threshold``, if any. Return `np.nan` if no such
+            index is found.
+        """
+        if threshold is None:
+            threshold = 1.96 / np.sqrt(ts.size)
 
         res = cls._first_acf_below_threshold(ts=ts,
                                              threshold=threshold,
@@ -214,7 +522,30 @@ class MFETSAutocorr:
             unbiased: bool = True,
             detrended_acfs: t.Optional[np.ndarray] = None
     ) -> t.Union[int, float]:
-        """TODO."""
+        """First non-positive detrended autocorrelation lag.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        max_nlags : int, optional
+            Number of lags to avaluate the autocorrelation function.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        ts_detrended : :obj:`np.ndarray`, optional
+            Detrended time-series autocorrelation function with each index
+            corresponding to its lag starting from the lag 1.
+
+        Returns
+        -------
+        int or float
+            Lag corresponding to the first autocorrelation below or equal
+            zero, if any. Return `np.nan` if no such index is found.
+        """
         res = cls._first_acf_below_threshold(ts=ts,
                                              threshold=0,
                                              abs_acf_vals=False,
@@ -254,11 +585,64 @@ class MFETSAutocorr:
                 max_nlags: t.Optional[int] = None,
                 detrended_acfs: t.Optional[np.ndarray] = None,
                 detrended_ami: t.Optional[np.ndarray] = None) -> float:
-        """TODO.
+        """Normalized nonlinear autocorrelation Trev statistic.
 
-        Normalized nonlinear autocorrelation.
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
 
-        https://github.com/benfulcher/hctsa/blob/master/Operations/CO_trev.m
+        lag : int or str, optional
+            Lag to calculate the statistic. It must be a strictly positive
+            value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
+            last two type of options, the lag is estimated within this method
+            using the given strategy method (or, if None, it is used the
+            strategy `acf-nonsig` by default) up to ``max_nlags``.
+                1. `acf`: the lag corresponds to the first non-positive value
+                    in the autocorrelation function.
+                2. `acf-nonsig`: lag corresponds to the first non-significant
+                    value in the autocorrelation function (absolute value below
+                    the critical value of 1.96 / sqrt(ts.size)).
+                3. `ami`: lag corresponds to the first local minimum of the
+                    time-series automutual information function.
+
+        only_numerator : bool, optional (default=False)
+            If True, return only the numerator from this statistic definition.
+            Check `autocorr.MFETSAutocorr.ft_trev` documentation for more
+            information.
+
+        max_nlags : int, optional
+            If ``lag`` is not a numeric value, than it will be estimated using
+            either the time-series autocorrelation or mutual information
+            function estimated up to this argument value.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags) of the detrended time-series. Used only if ``lag`` is any of
+            `acf`, `acf-nonsig` or None.  If this argument is not given and the
+            previous condiditon is meet, the autocorrelation function will be
+            calculated inside this method up to ``max_nlags``.
+
+        detrended_ami : :obj:`np.ndarray`, optional
+            Array of time-series automutual information function (for distinct
+            ordered lags). Used only if ``lag`` is `ami`. If not given and the
+            previous condiditon is meet, the automutual information function
+            will be calculated inside this method up to ``max_nlags``.
+
+        Returns
+        ------
+        float
+            Trev statistic.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
         """
         lag = _embed.embed_lag(ts=ts,
                                lag=lag,
@@ -286,7 +670,65 @@ class MFETSAutocorr:
                max_nlags: t.Optional[int] = None,
                detrended_acfs: t.Optional[np.ndarray] = None,
                detrended_ami: t.Optional[np.ndarray] = None) -> float:
-        """TODO."""
+        """Normalized nonlinear autocorrelation Tc3 statistic.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        lag : int or str, optional
+            Lag to calculate the statistic. It must be a strictly positive
+            value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
+            last two type of options, the lag is estimated within this method
+            using the given strategy method (or, if None, it is used the
+            strategy `acf-nonsig` by default) up to ``max_nlags``.
+                1. `acf`: the lag corresponds to the first non-positive value
+                    in the autocorrelation function.
+                2. `acf-nonsig`: lag corresponds to the first non-significant
+                    value in the autocorrelation function (absolute value below
+                    the critical value of 1.96 / sqrt(ts.size)).
+                3. `ami`: lag corresponds to the first local minimum of the
+                    time-series automutual information function.
+
+        only_numerator : bool, optional (default=False)
+            If True, return only the numerator from this statistic definition.
+            Check `autocorr.MFETSAutocorr.ft_tc3` documentation for more
+            information.
+
+        max_nlags : int, optional
+            If ``lag`` is not a numeric value, than it will be estimated using
+            either the time-series autocorrelation or mutual information
+            function estimated up to this argument value.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags) of the detrended time-series. Used only if ``lag`` is any of
+            `acf`, `acf-nonsig` or None.  If this argument is not given and the
+            previous condiditon is meet, the autocorrelation function will be
+            calculated inside this method up to ``max_nlags``.
+
+        detrended_ami : :obj:`np.ndarray`, optional
+            Array of time-series automutual information function (for distinct
+            ordered lags). Used only if ``lag`` is `ami`. If not given and the
+            previous condiditon is meet, the automutual information function
+            will be calculated inside this method up to ``max_nlags``.
+
+        Returns
+        ------
+        float
+            Tc3 statistic.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+        """
         lag = _embed.embed_lag(ts=ts,
                                lag=lag,
                                max_nlags=max_nlags,
@@ -327,12 +769,10 @@ class MFETSAutocorr:
             value magnitudes, Physica A: Statistical Mechanics and its
             Applications, Volume 383, Issue 1, 2007, Pages 10-15, ISSN
             0378-4371, https://doi.org/10.1016/j.physa.2007.04.082.
-
         .. [2] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
             for Automated Time-Series Phenotyping Using Massive Feature
             Extraction, Cell Systems 5: 527 (2017).
             DOI: 10.1016/j.cels.2017.10.001
-
         .. [3] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
@@ -370,7 +810,7 @@ class MFETSAutocorr:
             unbiased: bool = True,
             max_nlags: t.Optional[int] = None,
             detrended_acfs: t.Optional[np.ndarray] = None
-    ) -> t.Union[int, float]:
+    ) -> np.ndarray:
         """TODO."""
         detrended_acfs = cls._calc_acf(ts=ts,
                                        nlags=max_nlags,

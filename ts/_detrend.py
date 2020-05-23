@@ -1,3 +1,4 @@
+"""Time-series decomposition and detrending functions."""
 import typing as t
 
 import numpy as np

@@ -1,3 +1,4 @@
+"""Orthogonal polynomial in concordance with R `poly` implementation."""
 import numpy as np
 
 
