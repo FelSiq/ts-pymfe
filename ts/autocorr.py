@@ -783,7 +783,59 @@ class MFETSAutocorr:
                         max_nlags: t.Optional[int] = None,
                         detrended_acfs: t.Optional[np.ndarray] = None,
                         detrended_ami: t.Optional[np.ndarray] = None) -> float:
-        """TODO.
+        """Generalized autocorrelation of the time-series.
+
+        If alpha = beta, estimates how values of the same order of magnitude
+        are related in time. Otherwise, estimates correlations between
+        different magnitudes of the time series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        alpha : float, optional (default=1)
+            Non-zero parameter.
+
+        beta : float, optional (default=1)
+            Non-zero parameter.
+
+        lag : int or str, optional
+            Lag to calculate the statistic. It must be a strictly positive
+            value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
+            last two type of options, the lag is estimated within this method
+            using the given strategy method (or, if None, it is used the
+            strategy `acf-nonsig` by default) up to ``max_nlags``.
+                1. `acf`: the lag corresponds to the first non-positive value
+                    in the autocorrelation function.
+                2. `acf-nonsig`: lag corresponds to the first non-significant
+                    value in the autocorrelation function (absolute value below
+                    the critical value of 1.96 / sqrt(ts.size)).
+                3. `ami`: lag corresponds to the first local minimum of the
+                    time-series automutual information function.
+
+        max_nlags : int, optional
+            If ``lag`` is not a numeric value, than it will be estimated using
+            either the time-series autocorrelation or mutual information
+            function estimated up to this argument value.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags) of the detrended time-series. Used only if ``lag`` is any of
+            `acf`, `acf-nonsig` or None.  If this argument is not given and the
+            previous condiditon is meet, the autocorrelation function will be
+            calculated inside this method up to ``max_nlags``.
+
+        detrended_ami : :obj:`np.ndarray`, optional
+            Array of time-series automutual information function (for distinct
+            ordered lags). Used only if ``lag`` is `ami`. If not given and the
+            previous condiditon is meet, the automutual information function
+            will be calculated inside this method up to ``max_nlags``.
+
+        Returns
+        -------
+        float
+            Generalized autocorrelation of the time-series.
 
         References
         ----------
@@ -801,6 +853,14 @@ class MFETSAutocorr:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
+        if np.isclose(alpha, 0.0):
+            raise ValueError("'alpha' parameter must be nonzero (got {})."
+                             "".format(alpha))
+
+        if np.isclose(beta, 0.0):
+            raise ValueError("'beta' parameter must be nonzero (got {})."
+                             "".format(beta))
+
         lag = _embed.embed_lag(ts=ts,
                                lag=lag,
                                max_nlags=max_nlags,
@@ -830,10 +890,58 @@ class MFETSAutocorr:
             cls,
             ts: np.ndarray,
             crit_point_type: str = "non-plateau",
-            unbiased: bool = True,
+            return_lags: bool = True,
             max_nlags: t.Optional[int] = None,
+            unbiased: bool = True,
             detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Lags corresponding to minima or maxima of autocorrelation function.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        crit_point_type : str, optional (default="non-plateau")
+            Critical point type. Must be a value in {`non-plateau`, `plateau`,
+            `min`, `max`, `any`}.
+
+        return_lags : bool, optional (default=True)
+            If True, return the lags corresponding to the autocorrelation
+            function critical points. If False, return a binary array marking
+            with `1` the positions corresponding to the critical points, and
+            `0` otherwise.
+
+        max_nlags : int, optional
+            Number of lags to avaluate the autocorrelation function.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Detrended time-series autocorrelation function with each index
+            corresponding to its lag starting from the lag 1.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            If `return_lags` is True, return the lags corresponding to the
+            autocorrelation function critical points. If `return_lags` is
+            False, return a binary array marking with `1` the lag indices
+            (starting from lag 1) corresponding to the autocorrelation function
+            critical points.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         detrended_acfs = cls._calc_acf(ts=ts,
                                        nlags=max_nlags,
                                        unbiased=unbiased,
@@ -845,7 +953,11 @@ class MFETSAutocorr:
         # Note: in 'hctsa', either the sum or the mean is returned.
         # However, to enable summarization, here we return the whole
         # array.
-        return ac_shape
+
+        if return_lags:
+            return np.flatnonzero(ac_shape)
+
+        return ac_shape.astype(int)
 
     @classmethod
     def ft_autocorr_gaussian_resid(
@@ -859,7 +971,53 @@ class MFETSAutocorr:
         gaussian_model: t.Optional[
             sklearn.gaussian_process.GaussianProcessRegressor] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Autocorrelation function of the gaussian process model residuals.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        nlags : int, optional (default=8)
+            Number of lags evaluated in the autocorrelation function.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        random_state : int, optional
+            Random seed to optimize the gaussian process model, to keep
+            the results reproducible.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations. Used only if ``gaussian_resid`` is None.
+
+        gaussian_resid : :obj:`np.ndarray`, optional
+            Residuals of a gaussian process. Used to take advantage of
+            precomputations.
+
+        gaussian_model : :obj:`GaussianProcessRegressor`, optional
+            A fitted model of a gaussian process. Used to take advantage of
+            precomputations. Used only if ``gaussian_resid`` is None.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Autocorrelation function of the gaussian process residuals up
+            to ``nlags``.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         if gaussian_resid is None:
             ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
@@ -891,11 +1049,36 @@ class MFETSAutocorr:
 
         Parameters
         ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        nlags : int, optional (default=8)
+            Number of lags evaluated in the Ljung-Box test.
+
+        return_pval : bool, optional (default=True)
+            If True, return the p-value of the test instead of the test
+            statistic.
+
+        random_state : int, optional
+            Random seed to optimize the gaussian process model, to keep
+            the results reproducible.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations. Used only if ``gaussian_resid`` is None.
+
+        gaussian_resid : :obj:`np.ndarray`, optional
+            Residuals of a gaussian process. Used to take advantage of
+            precomputations.
+
+        gaussian_model : :obj:`GaussianProcessRegressor`, optional
+            A fitted model of a gaussian process. Used to take advantage of
+            precomputations. Used only if ``gaussian_resid`` is None.
 
         Returns
         -------
         float
-            Ljung-Box test
+            Ljung-Box test of the gaussian process residuals.
 
         References
         ----------
@@ -916,10 +1099,6 @@ class MFETSAutocorr:
                 random_state=random_state,
                 gaussian_model=gaussian_model,
                 return_residuals=True)
-
-        import matplotlib.pyplot as plt
-        plt.plot(gaussian_resid)
-        plt.show()
 
         gaussian_lb_test = stat_tests.MFETSStatTests.ft_test_lb(
             ts_residuals=gaussian_resid,
@@ -1006,9 +1185,11 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
+    res = MFETSAutocorr.ft_gen_autocorr(ts)
+    print(res)
+
     res = MFETSAutocorr.ft_test_gaussian_resid(ts, random_state=16)
     print(res)
-    exit(1)
 
     res = MFETSAutocorr.ft_trev(ts, only_numerator=False)
     print(res)
@@ -1032,9 +1213,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSAutocorr.ft_autocorr_crit_pt(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_gen_autocorr(ts)
     print(res)
 
     res = MFETSAutocorr.ft_acf_first_nonpos(ts)
