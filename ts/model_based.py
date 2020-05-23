@@ -103,11 +103,11 @@ class MFETSModelBased:
         -------
         dict
             The following precomputed item is returned:
-                * ``res_model_ets_double`` (:obj:`HoltWintersResultsWrapper`):
+                * ``res_model_des`` (:obj:`HoltWintersResultsWrapper`):
                     Double exponential smoothing model (exponential smoothing
                     model without the seasonal component) with additive trend
                     results.
-                * ``res_model_ets_triple`` (:obj:`HoltWintersResultsWrapper`):
+                * ``res_model_ets`` (:obj:`HoltWintersResultsWrapper`):
                     Triple exponential smoothing model (exponential smoothing
                     model with the seasonal component) with additive components
                     results.
@@ -135,19 +135,19 @@ class MFETSModelBased:
 
         ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])
 
-        if "res_model_ets_double" not in kwargs:
-            model = cls._fit_res_model_ets_double(ts=ts_scaled, damped=damped)
-            precomp_vals["res_model_ets_double"] = model
+        if "res_model_des" not in kwargs:
+            model = cls._fit_res_model_des(ts=ts_scaled, damped=damped)
+            precomp_vals["res_model_des"] = model
 
         if ts_period is None:
             precomp_vals.update(cls.precompute_period(ts=ts))
             ts_period = precomp_vals["ts_period"]
 
-        if "res_model_ets_triple" not in kwargs:
-            model = cls._fit_res_model_ets_triple(ts=ts_scaled,
-                                                  ts_period=ts_period,
-                                                  damped=damped)
-            precomp_vals["res_model_ets_triple"] = model
+        if "res_model_ets" not in kwargs:
+            model = cls._fit_res_model_ets(ts=ts_scaled,
+                                           ts_period=ts_period,
+                                           damped=damped)
+            precomp_vals["res_model_ets"] = model
 
         return precomp_vals
 
@@ -183,10 +183,10 @@ class MFETSModelBased:
         -------
         dict
             The following precomputed item is returned:
-                * ``res_ioe_std_lin_model`` (:obj:`RegressionResults`):
-                    Results of the regression model of iterative outlier
-                    exclusion timestamps standard deviation regression on
-                    the thresholds.
+                * ``res_ioe_std_linreg`` (:obj:`RegressionResults`): Results
+                    from the linear regression model of iterative outlier
+                    exclusion timestamps standard deviation regression on the
+                    thresholds.
 
             The following item is necessary and, therefore, also precomputed
             if necessary:
@@ -211,11 +211,11 @@ class MFETSModelBased:
 
         ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])
 
-        if "res_ioe_std_lin_model" not in kwargs:
+        if "res_ioe_std_linreg" not in kwargs:
             lin_reg_res = cls._fit_ioe_std_lin_model(ts=ts,
                                                      ts_scaled=ts_scaled,
                                                      step_size=step_size)
-            precomp_vals["res_ioe_std_lin_model"] = lin_reg_res
+            precomp_vals["res_ioe_std_linreg"] = lin_reg_res
 
         return precomp_vals
 
@@ -251,8 +251,9 @@ class MFETSModelBased:
         Returns
         -------
         :obj:`statsmodels.regression.linear_model.RegressionResults`
-            Results of the regression model of iterative outlier exclusion
-            timestamps standard deviation regression on the thresholds.
+            Results from the linear regression model of iterative outlier
+            exclusion timestamps standard deviation regression on the
+            thresholds.
 
         References
         ----------
@@ -281,7 +282,7 @@ class MFETSModelBased:
         return lin_reg_res
 
     @staticmethod
-    def _fit_res_model_ets_double(
+    def _fit_res_model_des(
         ts: np.ndarray,
         damped: bool = False,
         ts_scaled: t.Optional[np.ndarray] = None,
@@ -321,7 +322,7 @@ class MFETSModelBased:
         return model
 
     @staticmethod
-    def _fit_res_model_ets_triple(
+    def _fit_res_model_ets(
         ts: np.ndarray,
         damped: bool = False,
         ts_period: t.Optional[int] = None,
@@ -407,95 +408,334 @@ class MFETSModelBased:
                                                        X).fit()
 
     @classmethod
-    def ft_ets_double_level(
+    def ft_des_level(
         cls,
         ts: np.ndarray,
         damped: bool = False,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_ets_double: t.Optional[
+        res_model_des: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None
     ) -> float:
-        """TODO."""
-        if res_model_ets_double is None:
-            res_model_ets_double = cls._fit_res_model_ets_double(
-                ts=ts, ts_scaled=ts_scaled, damped=damped)
+        """Double exponential smoothing model (additive trend) level parameter.
 
-        param_level = res_model_ets_double.params["smoothing_level"]
+        The `level` parameter is also known as the `alpha` parameter, from the
+        traditional Double Exponential Smoothing definition formula. It is the
+        `smoothing` factor of the model.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        damped : bool, optional (default=False)
+            Whether or not the exponential smoothing model should include a
+            damping component.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        res_model_des : :obj:`HoltWintersResultsWrapper`, optional
+            Results after fitting a double exponential smoothing model. Used
+            to take advantage of precomputations.
+
+        Returns
+        -------
+        float
+            `Level` (or `alpha`) parameter from a double exponential smoothing
+            model.
+
+        References
+        ----------
+        .. [1] Winters, Peter R. Forecasting Sales by Exponentially Weighted
+            Moving Averages, 1960, INFORMS, Linthicum, MD, USA
+            https://doi.org/10.1287/mnsc.6.3.324
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
+        """
+        if res_model_des is None:
+            res_model_des = cls._fit_res_model_des(ts=ts,
+                                                   ts_scaled=ts_scaled,
+                                                   damped=damped)
+
+        param_level = res_model_des.params["smoothing_level"]
 
         return param_level
 
     @classmethod
-    def ft_ets_double_slope(
+    def ft_des_slope(
         cls,
         ts: np.ndarray,
         damped: bool = False,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_ets_double: t.Optional[
+        res_model_des: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
-        """TODO."""
-        if res_model_ets_double is None:
-            res_model_ets_double = cls._fit_res_model_ets_double(
-                ts=ts, ts_scaled=ts_scaled, damped=damped)
+        """Double exponential smoothing model (additive trend) slope parameter.
 
-        param_slope = res_model_ets_double.params["smoothing_slope"]
+        The `slope` parameter is also known as the `beta` parameter, from the
+        traditional Double Exponential Smoothing definition formula. This
+        parameter controls the decay of the influence of the trend change into
+        the model.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        damped : bool, optional (default=False)
+            Whether or not the exponential smoothing model should include a
+            damping component.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        res_model_des : :obj:`HoltWintersResultsWrapper`, optional
+            Results after fitting a double exponential smoothing model. Used
+            to take advantage of precomputations.
+
+        Returns
+        -------
+        float
+            `Slope` (or `beta`) parameter from a double exponential smoothing
+            model.
+
+        References
+        ----------
+        .. [1] Winters, Peter R. Forecasting Sales by Exponentially Weighted
+            Moving Averages, 1960, INFORMS, Linthicum, MD, USA
+            https://doi.org/10.1287/mnsc.6.3.324
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
+        """
+        if res_model_des is None:
+            res_model_des = cls._fit_res_model_des(ts=ts,
+                                                   ts_scaled=ts_scaled,
+                                                   damped=damped)
+
+        param_slope = res_model_des.params["smoothing_slope"]
 
         return param_slope
 
     @classmethod
-    def ft_ets_triple_level(
+    def ft_ets_level(
         cls,
         ts: np.ndarray,
         damped: bool = True,
         ts_period: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_ets_triple: t.Optional[
+        res_model_ets: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
-        """TODO."""
-        if res_model_ets_triple is None:
-            res_model_ets_triple = cls._fit_res_model_ets_triple(
-                ts=ts, ts_scaled=ts_scaled, ts_period=ts_period, damped=damped)
+        """ETS (additive components) model level parameter.
 
-        param_level = res_model_ets_triple.params["smoothing_level"]
+        ETS models are also known as `Holt-Winters Exponential Smoothing`.
+
+        The `level` parameter is also known as the `alpha` parameter, from the
+        traditional Triple Exponential Smoothing definition formula. It is the
+        `smoothing` factor of the model.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        damped : bool, optional (default=False)
+            Whether or not the exponential smoothing model should include a
+            damping component.
+
+        ts_period : int, optional
+            Time-series period.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        res_model_ets : :obj:`HoltWintersResultsWrapper`, optional
+            Results after fitting a triple exponential smoothing model. Used
+            to take advantage of precomputations.
+
+        Returns
+        -------
+        float
+            `Level` (or `alpha`) parameter from a ETS model.
+
+        References
+        ----------
+        .. [1] Winters, Peter R. Forecasting Sales by Exponentially Weighted
+            Moving Averages, 1960, INFORMS, Linthicum, MD, USA
+            https://doi.org/10.1287/mnsc.6.3.324
+        .. [2] Charles C. Holt, Forecasting seasonals and trends by
+            exponentially weighted moving averages, International Journal of
+            Forecasting, Volume 20, Issue 1, 2004, Pages 5-10, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2003.09.015.
+        .. [3] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+        .. [4] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
+        """
+        if res_model_ets is None:
+            res_model_ets = cls._fit_res_model_ets(ts=ts,
+                                                   ts_scaled=ts_scaled,
+                                                   ts_period=ts_period,
+                                                   damped=damped)
+
+        param_level = res_model_ets.params["smoothing_level"]
 
         return param_level
 
     @classmethod
-    def ft_ets_triple_slope(
+    def ft_ets_slope(
         cls,
         ts: np.ndarray,
         damped: bool = True,
         ts_period: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_ets_triple: t.Optional[
+        res_model_ets: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
-        """TODO."""
-        if res_model_ets_triple is None:
-            res_model_ets_triple = cls._fit_res_model_ets_triple(
-                ts=ts, ts_scaled=ts_scaled, ts_period=ts_period, damped=damped)
+        """ETS (additive components) model slope parameter.
 
-        param_slope = res_model_ets_triple.params["smoothing_slope"]
+        ETS models are also known as `Holt-Winters Exponential Smoothing`.
+
+        The `slope` parameter is also known as the `beta` parameter, from the
+        traditional Triple Exponential Smoothing definition formula. This
+        parameter controls the decay of the influence of the trend change into
+        the model.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        damped : bool, optional (default=False)
+            Whether or not the exponential smoothing model should include a
+            damping component.
+
+        ts_period : int, optional
+            Time-series period.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        res_model_ets : :obj:`HoltWintersResultsWrapper`, optional
+            Results after fitting a triple exponential smoothing model. Used
+            to take advantage of precomputations.
+
+        Returns
+        -------
+        float
+            `Slope` (or `beta`) parameter from a ETS model.
+
+        References
+        ----------
+        .. [1] Winters, Peter R. Forecasting Sales by Exponentially Weighted
+            Moving Averages, 1960, INFORMS, Linthicum, MD, USA
+            https://doi.org/10.1287/mnsc.6.3.324
+        .. [2] Charles C. Holt, Forecasting seasonals and trends by
+            exponentially weighted moving averages, International Journal of
+            Forecasting, Volume 20, Issue 1, 2004, Pages 5-10, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2003.09.015.
+        .. [3] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+        .. [4] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
+        """
+        if res_model_ets is None:
+            res_model_ets = cls._fit_res_model_ets(ts=ts,
+                                                   ts_scaled=ts_scaled,
+                                                   ts_period=ts_period,
+                                                   damped=damped)
+
+        param_slope = res_model_ets.params["smoothing_slope"]
 
         return param_slope
 
     @classmethod
-    def ft_ets_triple_season(
+    def ft_ets_season(
         cls,
         ts: np.ndarray,
         damped: bool = True,
         ts_period: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_ets_triple: t.Optional[
+        res_model_ets: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
-        """TODO."""
-        if res_model_ets_triple is None:
-            res_model_ets_triple = cls._fit_res_model_ets_triple(
-                ts=ts, ts_scaled=ts_scaled, ts_period=ts_period, damped=damped)
+        """ETS (additive components) model seasonal parameter.
 
-        param_season = res_model_ets_triple.params["smoothing_seasonal"]
+        ETS models are also known as `Holt-Winters Exponential Smoothing`.
+
+        The `seasonal` parameter is also known as the `gamma` parameter, from the
+        traditional Triple Exponential Smoothing definition formula. It controls
+        the influence of the seasonal component into the model.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        damped : bool, optional (default=False)
+            Whether or not the exponential smoothing model should include a
+            damping component.
+
+        ts_period : int, optional
+            Time-series period.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        res_model_ets : :obj:`HoltWintersResultsWrapper`, optional
+            Results after fitting a triple exponential smoothing model. Used
+            to take advantage of precomputations.
+
+        Returns
+        -------
+        float
+            `Seasonal` (or `gamma`) parameter from a ETS model.
+
+        References
+        ----------
+        .. [1] Winters, Peter R. Forecasting Sales by Exponentially Weighted
+            Moving Averages, 1960, INFORMS, Linthicum, MD, USA
+            https://doi.org/10.1287/mnsc.6.3.324
+        .. [2] Charles C. Holt, Forecasting seasonals and trends by
+            exponentially weighted moving averages, International Journal of
+            Forecasting, Volume 20, Issue 1, 2004, Pages 5-10, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2003.09.015.
+        .. [3] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+        .. [4] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
+        """
+        if res_model_ets is None:
+            res_model_ets = cls._fit_res_model_ets(ts=ts,
+                                                   ts_scaled=ts_scaled,
+                                                   ts_period=ts_period,
+                                                   damped=damped)
+
+        param_season = res_model_ets.params["smoothing_seasonal"]
 
         return param_season
 
@@ -503,14 +743,49 @@ class MFETSModelBased:
     def ft_linearity(
         cls,
         ts_trend: np.ndarray,
-        res_model_orthop_reg: t.Optional[
+        res_model_orthoreg: t.Optional[
             statsmodels.regression.linear_model.RegressionResults] = None
     ) -> float:
-        """TODO."""
-        if res_model_orthop_reg is None:
-            res_model_orthop_reg = cls._fit_ortho_pol_reg(ts_trend=ts_trend)
+        """Linearity measure from a orthogonal polynomial linear regression.
 
-        _, linearity, _ = res_model_orthop_reg.params
+        The linearity measure is defined as the coefficient associated with
+        the first order orthogonal polynomial from a linear regression of the
+        time-series trend component onto a pair of orthogonal polynomials of
+        order 1 and 2.
+
+        Parameters
+        ----------
+        ts_trend : :obj:`np.ndarray`
+            Unidimensional time-series trend component.
+
+        res_model_orthoreg : :obj:`RegressionResults`, optional
+            Linear regression results from the time-series trend component
+            regressed onto a pair of orthogonal polynomials of order 1 and
+            2. Used to take advantage of precomputations.
+
+        Returns
+        -------
+        float
+            Linearity measure.
+
+        References
+        ----------
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
+        """
+        if res_model_orthoreg is None:
+            res_model_orthoreg = cls._fit_ortho_pol_reg(ts_trend=ts_trend)
+
+        _, linearity, _ = res_model_orthoreg.params
 
         return linearity
 
@@ -518,27 +793,85 @@ class MFETSModelBased:
     def ft_curvature(
         cls,
         ts_trend: np.ndarray,
-        res_model_orthop_reg: t.Optional[
+        res_model_orthoreg: t.Optional[
             statsmodels.regression.linear_model.RegressionResults] = None
     ) -> float:
-        """TODO."""
-        if res_model_orthop_reg is None:
-            res_model_orthop_reg = cls._fit_ortho_pol_reg(ts_trend=ts_trend)
+        """Curvature measure from a orthogonal polynomial linear regression.
 
-        _, _, curvature = res_model_orthop_reg.params
+        The curvature measure is defined as the coefficient associated with
+        the second order orthogonal polynomial from a linear regression of the
+        time-series trend component onto a pair of orthogonal polynomials of
+        order 1 and 2.
+
+        Parameters
+        ----------
+        ts_trend : :obj:`np.ndarray`
+            Unidimensional time-series trend component.
+
+        res_model_orthoreg : :obj:`RegressionResults`, optional
+            Linear regression results from the time-series trend component
+            regressed onto a pair of orthogonal polynomials of order 1 and
+            2. Used to take advantage of precomputations.
+
+        Returns
+        -------
+        float
+            Curvature measure.
+
+        References
+        ----------
+        .. [1] R. J. Hyndman, E. Wang and N. Laptev, "Large-Scale Unusual Time
+            Series Detection," 2015 IEEE International Conference on Data
+            Mining Workshop (ICDMW), Atlantic City, NJ, 2015, pp. 1616-1619,
+            doi: 10.1109/ICDMW.2015.104.
+        .. [2] Hyndman, R. J., Wang, E., Kang, Y., & Talagala, T. (2018).
+            tsfeatures: Time series feature extraction. R package version 0.1.
+        .. [3] Pablo Montero-Manso, George Athanasopoulos, Rob J. Hyndman,
+            Thiyanga S. Talagala, FFORMA: Feature-based forecast model
+            averaging, International Journal of Forecasting, Volume 36, Issue
+            1, 2020, Pages 86-92, ISSN 0169-2070,
+            https://doi.org/10.1016/j.ijforecast.2019.02.011.
+        """
+        if res_model_orthoreg is None:
+            res_model_orthoreg = cls._fit_ortho_pol_reg(ts_trend=ts_trend)
+
+        _, _, curvature = res_model_orthoreg.params
 
         return curvature
 
     @classmethod
-    def ft_avg_cycle_period(cls, ts_residuals: np.ndarray) -> float:
-        """TODO.
+    def ft_avg_cycle_period(cls, ts: np.ndarray) -> float:
+        r"""Average cycle period from a AR(2) model.
 
-        https://otexts.com/fpp2/non-seasonal-arima.html
+        The average cycle period is defined as:
+        $$
+            \frac{2 * pi}{\arccos{-4 * phi_1 * (1 - \phi_2) / \phi_2}}
+        $$
+        If and only if $phi_1^{2} + 4 * phi_2 < 0$, where $\phi_1$ and
+        $\phi_2$ are the parameters of the AR model associated with,
+        respectivelly, the $y_{t-1}$ and $y_{t-2}$ previous observations
+        from a time series $y$.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        Returns
+        -------
+        float
+            Time-series average cycle period, if any. Return `np.nan` if no
+            cycle is detected by the AR(2) model.
+
+        References
+        ----------
+        .. [1] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on May 23 2020.
+            URL to this fomula: https://otexts.com/fpp2/non-seasonal-arima.html
         """
-        model_res = statsmodels.tsa.arima_model.ARIMA(ts_residuals,
-                                                      order=(2, 0, 0)).fit(
-                                                          disp=-1,
-                                                          full_output=False)
+        model_res = statsmodels.tsa.arima_model.ARIMA(ts, order=(2, 0, 0)).fit(
+            disp=-1, full_output=False)
         theta_a, theta_b = model_res.arparams
 
         has_cycle = theta_a**2 + 4 * theta_b < 0
@@ -552,7 +885,7 @@ class MFETSModelBased:
         return avg_cycle_period
 
     @classmethod
-    def ft_gaussian_mle(
+    def ft_gaussian_r_sqr(
         cls,
         ts: np.ndarray,
         random_state: t.Optional[int] = None,
@@ -560,7 +893,41 @@ class MFETSModelBased:
         gaussian_model: t.Optional[
             sklearn.gaussian_process.GaussianProcessRegressor] = None,
     ) -> float:
-        """TODO."""
+        """R^2 from a gaussian process model.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        random_state : int, optional
+            Random seed to optimize the gaussian process model, to keep
+            the results reproducible.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        gaussian_model : :obj:`GaussianProcessRegressor`, optional
+            A fitted model of a gaussian process. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        float
+            R^2 of a gaussian process model.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         gaussian_model = _utils.fit_gaussian_process(
@@ -575,23 +942,66 @@ class MFETSModelBased:
         return r_squared
 
     @classmethod
-    def ft_ioe_std_curvature(
+    def ft_ioe_std_slope(
         cls,
         ts: np.ndarray,
         step_size: float = 0.05,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_ioe_std_lin_model: t.Optional[
+        res_ioe_std_linreg: t.Optional[
             statsmodels.regression.linear_model.RegressionResults] = None
     ) -> float:
-        """TODO."""
-        if res_ioe_std_lin_model is None:
-            res_ioe_std_lin_model = cls._fit_ioe_std_lin_model(
-                ts=ts, step_size=step_size,
-                ts_scaled=ts_scaled)
+        """Linear model of IOE standard deviations onto thresholds slope.
 
-        _, curvature = res_ioe_std_lin_model.params
+        In the iterative outlier exclusion, a uniformly spaced set of
+        thresholds over the time-series range is build in increasing order.
+        For each threshold it is calculated a statistic of the timestamp
+        values of instances larger or equal than the current threshold.
 
-        return curvature
+        This method calculates the slope coefficient of a linear model of the
+        standard deviation of the timestamps regressed on the thresholds of
+        each iteration.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        step_size : float, optional (default=0.05)
+            Increase of the outlier threshold in each iteration. Must be a
+            number strictly positive.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        res_ioe_std_linreg : :obj:`RegressionResults`, optional
+            Results from the linear regression model of iterative outlier
+            exclusion timestamps standard deviation regression on the
+            thresholds.
+
+        Returns
+        -------
+        float
+            Slope from the linear regression model.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
+        if res_ioe_std_linreg is None:
+            res_ioe_std_linreg = cls._fit_ioe_std_lin_model(
+                ts=ts, step_size=step_size, ts_scaled=ts_scaled)
+
+        _, slope = res_ioe_std_linreg.params
+
+        return slope
 
     @classmethod
     def ft_ioe_std_adj_r_sqr(
@@ -599,16 +1009,59 @@ class MFETSModelBased:
         ts: np.ndarray,
         step_size: float = 0.05,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_ioe_std_lin_model: t.Optional[
+        res_ioe_std_linreg: t.Optional[
             statsmodels.regression.linear_model.RegressionResults] = None
     ) -> float:
-        """TODO."""
-        if res_ioe_std_lin_model is None:
-            res_ioe_std_lin_model = cls._fit_ioe_std_lin_model(
-                ts=ts, step_size=step_size,
-                ts_scaled=ts_scaled)
+        """Linear model of IOE standard deviations onto thresholds Adj. R^2.
 
-        adj_r_sqr = res_ioe_std_lin_model.rsquared_adj
+        In the iterative outlier exclusion, a uniformly spaced set of
+        thresholds over the time-series range is build in increasing order.
+        For each threshold it is calculated a statistic of the timestamp
+        values of instances larger or equal than the current threshold.
+
+        This method calculates the Adjusted R^2 from the linear model of the
+        standard deviation of the timestamps regressed on the thresholds of
+        each iteration.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        step_size : float, optional (default=0.05)
+            Increase of the outlier threshold in each iteration. Must be a
+            number strictly positive.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        res_ioe_std_linreg : :obj:`RegressionResults`, optional
+            Results from the linear regression model of iterative outlier
+            exclusion timestamps standard deviation regression on the
+            thresholds.
+
+        Returns
+        -------
+        float
+            Adjusted R^2 from the linear regression model.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
+        if res_ioe_std_linreg is None:
+            res_ioe_std_linreg = cls._fit_ioe_std_lin_model(
+                ts=ts, step_size=step_size, ts_scaled=ts_scaled)
+
+        adj_r_sqr = res_ioe_std_linreg.rsquared_adj
 
         return adj_r_sqr
 
@@ -623,21 +1076,22 @@ def _test() -> None:
     plt.plot(ts)
     plt.show()
     """
+
     ts_period = _period.ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
+    res = MFETSModelBased.ft_avg_cycle_period(ts_residuals)
+    print(res)
+
     res = MFETSModelBased.ft_ioe_std_adj_r_sqr(ts)
     print(res)
 
-    res = MFETSModelBased.ft_ioe_std_curvature(ts)
+    res = MFETSModelBased.ft_ioe_std_slope(ts)
     print(res)
 
-    res = MFETSModelBased.ft_gaussian_mle(ts)
-    print(res)
-
-    res = MFETSModelBased.ft_avg_cycle_period(ts_residuals)
+    res = MFETSModelBased.ft_gaussian_r_sqr(ts)
     print(res)
 
     res = MFETSModelBased.ft_linearity(ts_trend)
@@ -646,19 +1100,19 @@ def _test() -> None:
     res = MFETSModelBased.ft_curvature(ts_trend)
     print("curvature", res)
 
-    res = MFETSModelBased.ft_ets_double_level(ts)
+    res = MFETSModelBased.ft_des_level(ts)
     print(res)
 
-    res = MFETSModelBased.ft_ets_double_slope(ts)
+    res = MFETSModelBased.ft_des_slope(ts)
     print(res)
 
-    res = MFETSModelBased.ft_ets_triple_level(ts)
+    res = MFETSModelBased.ft_ets_level(ts)
     print(res)
 
-    res = MFETSModelBased.ft_ets_triple_slope(ts)
+    res = MFETSModelBased.ft_ets_slope(ts)
     print(res)
 
-    res = MFETSModelBased.ft_ets_triple_season(ts)
+    res = MFETSModelBased.ft_ets_season(ts)
     print(res)
 
 
