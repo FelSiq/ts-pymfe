@@ -1016,7 +1016,7 @@ class MFETSAutocorr:
         return ac_shape.astype(int)
 
     @classmethod
-    def ft_autocorr_gaussian_resid(
+    def ft_gresid_autocorr(
         cls,
         ts: np.ndarray,
         nlags: int = 8,
@@ -1089,7 +1089,7 @@ class MFETSAutocorr:
         return gaussian_resid_acf
 
     @classmethod
-    def ft_test_gaussian_resid(
+    def ft_gresid_lbtest(
         cls,
         ts: np.ndarray,
         nlags: int = 8,
@@ -1242,7 +1242,7 @@ def _test() -> None:
     res = MFETSAutocorr.ft_gen_autocorr(ts)
     print(res)
 
-    res = MFETSAutocorr.ft_test_gaussian_resid(ts, random_state=16)
+    res = MFETSAutocorr.ft_gresid_lbtest(ts, random_state=16)
     print(res)
 
     res = MFETSAutocorr.ft_trev(ts, only_numerator=False)
@@ -1263,7 +1263,7 @@ def _test() -> None:
     res = MFETSAutocorr.ft_first_acf_locmin(ts)
     print(res)
 
-    res = MFETSAutocorr.ft_autocorr_gaussian_resid(ts, random_state=16)
+    res = MFETSAutocorr.ft_gresid_autocorr(ts, random_state=16)
     print(res)
 
     res = MFETSAutocorr.ft_autocorr_crit_pt(ts)
