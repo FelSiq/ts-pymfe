@@ -180,7 +180,7 @@ def find_plateau_pt(arr: np.ndarray,
     res = np.logical_and(np.isclose(arr_diff_2, 0),
                          np.isclose(arr_diff[:-1], 0))
 
-    return np.hstack((0, res.astype(int), 0))
+    return np.hstack((False, res, False))
 
 
 def find_crit_pt(arr: np.ndarray, type_: str) -> np.ndarray:
@@ -207,11 +207,11 @@ def find_crit_pt(arr: np.ndarray, type_: str) -> np.ndarray:
     turning_pt = arr_diff_1[1:] * arr_diff_1[:-1] < 0
 
     if type_ == "non-plateau":
-        return np.hstack((0, turning_pt.astype(int), 0))
+        return np.hstack((False, turning_pt, False))
 
     if type_ == "any":
         plat = find_plateau_pt(arr, arr_diff_1)
-        turning_pt = np.hstack((0, turning_pt.astype(int), 0))
+        turning_pt = np.hstack((False, turning_pt, False))
         res = np.logical_or(turning_pt, plat)
         return res
 
@@ -223,7 +223,7 @@ def find_crit_pt(arr: np.ndarray, type_: str) -> np.ndarray:
     interest_pt = rel(arr_diff_2, 0)
     local_m = np.logical_and(turning_pt, interest_pt)
 
-    return np.hstack((0, local_m.astype(int), 0))
+    return np.hstack((False, local_m, False))
 
 
 def fit_gaussian_process(
