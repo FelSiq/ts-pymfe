@@ -1,10 +1,11 @@
+"""Module dedicated to model-based time-series meta-features."""
 import typing as t
 
 import sklearn.gaussian_process
 import sklearn.preprocessing
 import statsmodels.tsa.holtwinters
-import statsmodels.regression
 import statsmodels.tsa.arima_model
+import statsmodels.regression
 import statsmodels.tools
 import numpy as np
 
@@ -16,27 +17,121 @@ import _get_data
 
 
 class MFETSModelBased:
+    """Extract time-series meta-features from Model-Based group."""
+    @classmethod
+    def precompute_ts_scaled(cls, ts: np.ndarray,
+                             **kwargs) -> t.Dict[str, np.ndarray]:
+        """Precompute a standardized time series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        kwargs:
+            Additional arguments and previous precomputed items. May
+            speed up this precomputation.
+
+        Returns
+        -------
+        dict
+            The following precomputed item is returned:
+                * ``ts_scaled`` (:obj:`np.ndarray`): standardized time-series
+                    values (z-score).
+        """
+        precomp_vals = {}  # type: t.Dict[str, np.ndarray]
+
+        if "ts_scaled" not in kwargs:
+            precomp_vals["ts_scaled"] = _utils.standardize_ts(ts=ts)
+
+        return precomp_vals
+
+    @classmethod
+    def precompute_period(cls, ts: np.ndarray, **kwargs) -> t.Dict[str, int]:
+        """Precompute the time-series period.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        kwargs:
+            Additional arguments and previous precomputed items. May
+            speed up this precomputation.
+
+        Returns
+        -------
+        dict
+            The following precomputed item is returned:
+                * ``ts_period`` (:obj:`int`): time-series period.
+        """
+        precomp_vals = {}  # type: t.Dict[str, int]
+
+        if ts_period not in kwargs:
+            ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
+            precomp_vals["ts_period"] = ts_period
+
+        return precomp_vals
+
     @classmethod
     def precompute_model_ets(
         cls,
         ts: np.ndarray,
-        ts_period: int,
         damped: bool = False,
+        ts_period: t.Optional[int] = None,
         **kwargs,
-    ) -> t.Dict[str, statsmodels.tsa.holtwinters.HoltWintersResultsWrapper]:
-        """TODO."""
-        precomp_vals = {}
+    ) -> t.Dict[str, t.Any]:
+        """Precompute a standardized time series.
 
-        ts_scaled = kwargs.get("ts_scaled")
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
 
-        if ts_scaled is None:
-            ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-            precomp_vals["ts_scaled"] = ts_scaled
+        damped : bool, optional (default=False)
+            If True, the exponential smoothing models will be have damping
+            effects.
+
+        ts_period : int, optional
+            Time-series period. Used to take advantage of precomputations.
+
+        kwargs:
+            Additional arguments and previous precomputed items. May
+            speed up this precomputation.
+
+        Returns
+        -------
+        dict
+            The following precomputed item is returned:
+                * ``res_model_ets_double`` (:obj:`HoltWintersResultsWrapper`):
+                    Double exponential smoothing model (exponential smoothing
+                    model without the seasonal component) results.
+                * ``res_model_ets_triple`` (:obj:`HoltWintersResultsWrapper`):
+                    Triple exponential smoothing model (exponential smoothing
+                    model with the seasonal component) results.
+
+            The following items are necessary and, therefore, also precomputed
+            if necessary:
+                * ``ts_scaled`` (:obj:`np.ndarray`): standardized time-series
+                    values (z-score).
+                * ``ts_period`` (:obj:`int`): time-series period.
+        """
+        precomp_vals = {}  # type: t.Dict[str, t.Any]
+
+        if ts_scaled not in kwargs:
+            precomp_vals["ts_scaled"] = _utils.standardize_ts(ts=ts)
+
+        ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])
 
         if "res_model_ets_double" not in kwargs:
             model = cls._fit_res_model_ets_double(ts=ts_scaled, damped=damped)
             precomp_vals["res_model_ets_double"] = model
 
+        if ts_period is None:
+            precomp_vals.update(cls.precompute_period(ts=ts))
+            ts_period = precomp_vals["ts_period"]
+
+        if "res_model_ets_triple" not in kwargs:
             model = cls._fit_res_model_ets_triple(ts=ts_scaled,
                                                   ts_period=ts_period,
                                                   damped=damped)
@@ -45,7 +140,7 @@ class MFETSModelBased:
         return precomp_vals
 
     @classmethod
-    def precompute_ioi_std_linear_model(
+    def precompute_ioe_std_linear_model(
         cls,
         ts: np.ndarray,
         step_size: float = 0.05,
@@ -55,19 +150,19 @@ class MFETSModelBased:
         """TODO."""
         precomp_vals = {}
 
-        if "res_ioi_std_lin_model" not in kwargs:
-            ioi_std_func = lambda arr: np.std(arr, ddof=1) / np.sqrt(arr.size)
+        if "res_ioe_std_lin_model" not in kwargs:
+            ioe_std_func = lambda arr: np.std(arr, ddof=1) / np.sqrt(arr.size)
 
-            ioi_std = _utils.calc_ioi_stats(ts=ts,
-                                            funcs=ioi_std_func,
+            ioe_std = _utils.calc_ioe_stats(ts=ts,
+                                            funcs=ioe_std_func,
                                             ts_scaled=ts_scaled,
                                             step_size=step_size)
 
             thresholds = statsmodels.tools.add_constant(
-                np.arange(ioi_std.size) * step_size)
+                np.arange(ioe_std.size) * step_size)
 
-            precomp_vals["res_ioi_std_lin_model"] = (
-                statsmodels.regression.linear_model.OLS(ioi_std,
+            precomp_vals["res_ioe_std_lin_model"] = (
+                statsmodels.regression.linear_model.OLS(ioe_std,
                                                         thresholds).fit())
 
         return precomp_vals
@@ -75,23 +170,32 @@ class MFETSModelBased:
     @staticmethod
     def _fit_res_model_ets_double(
         ts: np.ndarray,
-        damped: bool = False
+        damped: bool = False,
+        ts_scaled: t.Optional[np.ndarray] = None,
     ) -> statsmodels.tsa.holtwinters.HoltWintersResultsWrapper:
         """TODO."""
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
         model = statsmodels.tsa.holtwinters.ExponentialSmoothing(
-            endog=ts, trend="additive", damped=damped, seasonal=None).fit()
+            endog=ts_scaled, trend="additive", damped=damped,
+            seasonal=None).fit()
 
         return model
 
     @staticmethod
     def _fit_res_model_ets_triple(
         ts: np.ndarray,
-        ts_period: int,
+        ts_period: t.Optional[int] = None,
         damped: bool = False,
+        ts_scaled: t.Optional[np.ndarray] = None,
     ) -> statsmodels.tsa.holtwinters.HoltWintersResultsWrapper:
         """TODO."""
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        ts_period = _period.ts_period(ts=ts_scaled, ts_period=ts_period)
+
         model = statsmodels.tsa.holtwinters.ExponentialSmoothing(
-            endog=ts,
+            endog=ts_scaled,
             trend="additive",
             seasonal="additive",
             damped=damped,
@@ -105,14 +209,13 @@ class MFETSModelBased:
         degree: int = 2
     ) -> statsmodels.regression.linear_model.RegressionResults:
         """TODO."""
-        X = _orthopoly.ortho_poly(ts=np.arange(ts_trend.size),
+        X = _orthopoly.ortho_poly(ts=np.linspace(0, 1, ts_trend.size),
                                   degree=degree,
                                   return_coeffs=False)
 
         X = statsmodels.tools.add_constant(X)
 
-        ts_trend_scaled = sklearn.preprocessing.StandardScaler().fit_transform(
-            ts_trend.reshape(-1, 1)).ravel()
+        ts_trend_scaled = _utils.standardize_ts(ts=ts_trend)
 
         return statsmodels.regression.linear_model.OLS(ts_trend_scaled,
                                                        X).fit()
@@ -126,11 +229,10 @@ class MFETSModelBased:
         res_model_ets_double: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None
     ) -> float:
-        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-
+        """TODO."""
         if res_model_ets_double is None:
-            res_model_ets_double = cls._fit_res_model_ets_double(ts=ts_scaled,
-                                                                 damped=damped)
+            res_model_ets_double = cls._fit_res_model_ets_double(
+                ts=ts, ts_scaled=ts_scaled, damped=damped)
 
         alpha = res_model_ets_double.params_formatted["param"][
             "smoothing_level"]
@@ -146,12 +248,10 @@ class MFETSModelBased:
         res_model_ets_double: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
-        if ts_scaled is None:
-            ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-
+        """TODO."""
         if res_model_ets_double is None:
-            res_model_ets_double = cls._fit_res_model_ets_double(ts=ts_scaled,
-                                                                 damped=damped)
+            res_model_ets_double = cls._fit_res_model_ets_double(
+                ts=ts, ts_scaled=ts_scaled, damped=damped)
 
         beta = res_model_ets_double.params_formatted["param"][
             "smoothing_slope"]
@@ -162,17 +262,16 @@ class MFETSModelBased:
     def ft_ets_triple_alpha(
         cls,
         ts: np.ndarray,
-        ts_period: int,
         damped: bool = True,
+        ts_period: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
         res_model_ets_triple: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
-        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-
+        """TODO."""
         if res_model_ets_triple is None:
             res_model_ets_triple = cls._fit_res_model_ets_triple(
-                ts=ts_scaled, ts_period=ts_period, damped=damped)
+                ts=ts, ts_scaled=ts_scaled, ts_period=ts_period, damped=damped)
 
         alpha = res_model_ets_triple.params_formatted["param"][
             "smoothing_level"]
@@ -183,17 +282,16 @@ class MFETSModelBased:
     def ft_ets_triple_beta(
         cls,
         ts: np.ndarray,
-        ts_period: int,
         damped: bool = True,
+        ts_period: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
         res_model_ets_triple: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
-        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-
+        """TODO."""
         if res_model_ets_triple is None:
             res_model_ets_triple = cls._fit_res_model_ets_triple(
-                ts=ts_scaled, ts_period=ts_period, damped=damped)
+                ts=ts, ts_scaled=ts_scaled, ts_period=ts_period, damped=damped)
 
         beta = res_model_ets_triple.params_formatted["param"][
             "smoothing_slope"]
@@ -204,18 +302,16 @@ class MFETSModelBased:
     def ft_ets_triple_gamma(
         cls,
         ts: np.ndarray,
-        ts_period: int,
         damped: bool = True,
+        ts_period: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
         res_model_ets_triple: t.Optional[
             statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
-        if ts_scaled is None:
-            ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-
+        """TODO."""
         if res_model_ets_triple is None:
             res_model_ets_triple = cls._fit_res_model_ets_triple(
-                ts=ts_scaled, ts_period=ts_period, damped=damped)
+                ts=ts, ts_scaled=ts_scaled, ts_period=ts_period, damped=damped)
 
         gamma = res_model_ets_triple.params_formatted["param"][
             "smoothing_seasonal"]
@@ -298,59 +394,59 @@ class MFETSModelBased:
         return r_squared
 
     @classmethod
-    def ft_ioi_std_curvature(
+    def ft_ioe_std_curvature(
         cls,
         ts: np.ndarray,
         step_size: float = 0.05,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_ioi_std_lin_model: t.Optional[
+        res_ioe_std_lin_model: t.Optional[
             statsmodels.regression.linear_model.RegressionResults] = None
     ) -> float:
         """TODO."""
-        if res_ioi_std_lin_model is None:
-            res_ioi_std_lin_model = cls.precompute_ioi_std_linear_model(
+        if res_ioe_std_lin_model is None:
+            res_ioe_std_lin_model = cls.precompute_ioe_std_linear_model(
                 ts=ts, step_size=step_size,
-                ts_scaled=ts_scaled)["res_ioi_std_lin_model"]
+                ts_scaled=ts_scaled)["res_ioe_std_lin_model"]
 
-        curvature = res_ioi_std_lin_model.params[0]
+        curvature = res_ioe_std_lin_model.params[0]
 
         return curvature
 
     @classmethod
-    def ft_ioi_std_curvature(
+    def ft_ioe_std_curvature(
         cls,
         ts: np.ndarray,
         step_size: float = 0.05,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_ioi_std_lin_model: t.Optional[
+        res_ioe_std_lin_model: t.Optional[
             statsmodels.regression.linear_model.RegressionResults] = None
     ) -> float:
         """TODO."""
-        if res_ioi_std_lin_model is None:
-            res_ioi_std_lin_model = cls.precompute_ioi_std_linear_model(
+        if res_ioe_std_lin_model is None:
+            res_ioe_std_lin_model = cls.precompute_ioe_std_linear_model(
                 ts=ts, step_size=step_size,
-                ts_scaled=ts_scaled)["res_ioi_std_lin_model"]
+                ts_scaled=ts_scaled)["res_ioe_std_lin_model"]
 
-        _, curvature = res_ioi_std_lin_model.params
+        _, curvature = res_ioe_std_lin_model.params
 
         return curvature
 
     @classmethod
-    def ft_ioi_std_adj_r_sqr(
+    def ft_ioe_std_adj_r_sqr(
         cls,
         ts: np.ndarray,
         step_size: float = 0.05,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_ioi_std_lin_model: t.Optional[
+        res_ioe_std_lin_model: t.Optional[
             statsmodels.regression.linear_model.RegressionResults] = None
     ) -> float:
         """TODO."""
-        if res_ioi_std_lin_model is None:
-            res_ioi_std_lin_model = cls.precompute_ioi_std_linear_model(
+        if res_ioe_std_lin_model is None:
+            res_ioe_std_lin_model = cls.precompute_ioe_std_linear_model(
                 ts=ts, step_size=step_size,
-                ts_scaled=ts_scaled)["res_ioi_std_lin_model"]
+                ts_scaled=ts_scaled)["res_ioe_std_lin_model"]
 
-        adj_r_sqr = res_ioi_std_lin_model.rsquared_adj
+        adj_r_sqr = res_ioe_std_lin_model.rsquared_adj
 
         return adj_r_sqr
 
@@ -370,10 +466,10 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
-    res = MFETSModelBased.ft_ioi_std_adj_r_sqr(ts)
+    res = MFETSModelBased.ft_ioe_std_adj_r_sqr(ts)
     print(res)
 
-    res = MFETSModelBased.ft_ioi_std_curvature(ts)
+    res = MFETSModelBased.ft_ioe_std_curvature(ts)
     print(res)
 
     res = MFETSModelBased.ft_gaussian_mle(ts)
@@ -383,10 +479,10 @@ def _test() -> None:
     print(res)
 
     res = MFETSModelBased.ft_linearity(ts_trend)
-    print(res)
+    print("linearity", res)
 
     res = MFETSModelBased.ft_curvature(ts_trend)
-    print(res)
+    print("curvature", res)
 
     res = MFETSModelBased.ft_ets_double_alpha(ts)
     print(res)
@@ -394,13 +490,13 @@ def _test() -> None:
     res = MFETSModelBased.ft_ets_double_beta(ts)
     print(res)
 
-    res = MFETSModelBased.ft_ets_triple_alpha(ts, ts_period)
+    res = MFETSModelBased.ft_ets_triple_alpha(ts)
     print(res)
 
-    res = MFETSModelBased.ft_ets_triple_beta(ts, ts_period)
+    res = MFETSModelBased.ft_ets_triple_beta(ts)
     print(res)
 
-    res = MFETSModelBased.ft_ets_triple_gamma(ts, ts_period)
+    res = MFETSModelBased.ft_ets_triple_gamma(ts)
     print(res)
 
 
