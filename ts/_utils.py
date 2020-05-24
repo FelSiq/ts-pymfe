@@ -75,12 +75,12 @@ def standardize_ts(ts: np.ndarray,
 
 
 def get_rolling_window(
-        ts: np.ndarray,
-        window_size: t.Union[float, int],
-        center: bool = True,
-        scale: bool = True,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+    ts: np.ndarray,
+    window_size: t.Union[float, int],
+    center: bool = True,
+    scale: bool = True,
+    ts_scaled: t.Optional[np.ndarray] = None,
+    ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
 ) -> pd.core.window.rolling.Rolling:
     """Apply a function on time-series rolling (overlapping) windows.
 
@@ -231,7 +231,8 @@ def fit_gaussian_process(
     random_state: t.Optional[int] = None,
     return_residuals: bool = False,
     ts_scaled: t.Optional[np.ndarray] = None,
-    gaussian_model: t.Optional[sklearn.gaussian_process.GaussianProcessRegressor] = None
+    gaussian_model: t.Optional[
+        sklearn.gaussian_process.GaussianProcessRegressor] = None
 ) -> t.Union[np.ndarray, sklearn.gaussian_process.GaussianProcessRegressor]:
     """Fit a Gaussian Process model to the time-series data.
 

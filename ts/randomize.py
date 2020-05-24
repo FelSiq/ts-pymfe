@@ -141,12 +141,14 @@ class MFETSRandomize:
 
         ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])
 
-        stats = collections.OrderedDict((
-            ("mean", np.mean),
-            ("std", np.std),
-            ("acf", lambda arr: statsmodels.tsa.stattools.acf(
-                arr, nlags=1, fft=True)[1]),
-        ))  # type: collections.OrderedDict[str, t.Callable[[np.ndarray], float]]
+        stats = collections.OrderedDict(
+            (
+                ("mean", np.mean),
+                ("std", np.std),
+                ("acf", lambda arr: statsmodels.tsa.stattools.acf(
+                    arr, nlags=1, fft=True)[1]),
+            )
+        )  # type: collections.OrderedDict[str, t.Callable[[np.ndarray], float]]
 
         stat_names = list(map("itrand_stat_{}".format, stats.keys()))
 

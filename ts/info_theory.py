@@ -472,9 +472,9 @@ class MFETSInfoTheory:
 
         if lags is None:
             lags = _embed.embed_lag(ts=ts,
-                                     lag="acf",
-                                     max_nlags=max_nlags,
-                                     detrended_acfs=detrended_acfs)
+                                    lag="acf",
+                                    max_nlags=max_nlags,
+                                    detrended_acfs=detrended_acfs)
             lags = np.asarray([lags], dtype=int)
 
         elif np.isscalar(lags):
