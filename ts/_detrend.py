@@ -116,8 +116,10 @@ def _decompose_ssmoother(ts: t.Union[np.ndarray, pd.core.series.Series],
     """
     timestamp = np.arange(ts.size)
     model = supersmoother.SuperSmoother().fit(timestamp, ts, presorted=True)
-    trend = model.predict(timestamp)
-    residual = ts - trend
+
+    comp_trend = model.predict(timestamp)
+    comp_resid = ts - comp_trend
+    comp_season = np.zeros(ts.size, dtype=float)
 
     if plot:
         fig, (ax_raw, ax_trend, ax_resid) = plt.subplots(3, 1)
@@ -127,15 +129,15 @@ def _decompose_ssmoother(ts: t.Union[np.ndarray, pd.core.series.Series],
         ax_raw.plot(ts)
         ax_raw.set_title("Original time-series")
 
-        ax_trend.plot(trend)
+        ax_trend.plot(comp_trend)
         ax_trend.set_title("Trend component")
 
-        ax_resid.plot(residual)
+        ax_resid.plot(comp_resid)
         ax_resid.set_title("Residual component")
 
         plt.show()
 
-    return trend, np.zeros(ts.size, dtype=float), residual
+    return comp_trend, comp_season, comp_resid
 
 
 def _decompose_stl(ts: t.Union[np.ndarray, pd.core.series.Series],
@@ -168,16 +170,13 @@ def _decompose_stl(ts: t.Union[np.ndarray, pd.core.series.Series],
         (1990). STL: A Seasonal-Trend Decomposition Procedure Based on
         Loess (with Discussion). Journal of Official Statistics, 6, 3--73.
     """
-    res = statsmodels.tsa.seasonal.STL(ts, period=ts_period).fit()
+    components = statsmodels.tsa.seasonal.STL(ts, period=ts_period).fit()
 
     if plot:
-        res.plot()
+        components.plot()
         plt.show()
 
-    if isinstance(ts, pd.core.series.Series):
-        return res.trend.values, res.seasonal.values, res.resid.values
-
-    return res.trend, res.seasonal, res.resid
+    return components.trend, components.seasonal, components.resid
 
 
 def decompose(ts: t.Union[np.ndarray, pd.core.series.Series],
@@ -221,15 +220,29 @@ def decompose(ts: t.Union[np.ndarray, pd.core.series.Series],
 
     if ts_period is None:
         ssmoother_comps = _decompose_ssmoother(ts=ts)
-        ts_period = _period.ts_period(ts, ts_detrended=ssmoother_comps[0])
+        ts_period = _period.ts_period(ts, ts_detrended=ssmoother_comps[2])
 
     if ts_period <= 1:
-        if ssmoother_comps is not None:
-            return ssmoother_comps
+        if ssmoother_comps is None:
+            ssmoother_comps = _decompose_ssmoother(ts=ts, plot=plot)
 
-        return _decompose_ssmoother(ts=ts, plot=plot)
+        components = ssmoother_comps
 
-    return _decompose_stl(ts=ts, ts_period=ts_period, plot=plot)
+    else:
+        components = _decompose_stl(ts=ts, ts_period=ts_period, plot=plot)
+
+    comp_trend, comp_season, comp_resid = components
+
+    if isinstance(comp_trend, pd.core.series.Series):
+        comp_trend = comp_trend.values
+
+    if isinstance(comp_season, pd.core.series.Series):
+        comp_season = comp_season.values
+
+    if isinstance(comp_resid, pd.core.series.Series):
+        comp_resid = comp_resid.values
+
+    return comp_trend, comp_season, comp_resid
 
 
 def _test() -> None:
