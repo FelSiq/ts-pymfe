@@ -413,8 +413,12 @@ class MFETSInfoTheory:
             of each lagged component, and the joint probability distribution,
             which are all necessary to the automutual information computation.
 
-        lags : sequence of int, optional
+        lags : int or sequence of int, optional
             Lags to calculate the automutual information.
+            If int, calculate the automutual information from lag 1 to up to
+            the given ``lags`` value.
+            If sequence of integers, calculate the automutual information for
+            each of the given lags.
 
         return_dist : bool, optional (default=False)
             If True, return the automutual information distance for every lag,
@@ -478,7 +482,7 @@ class MFETSInfoTheory:
             lags = np.asarray([lags], dtype=int)
 
         elif np.isscalar(lags):
-            lags = np.arange(1, 1 + int(lags))
+            lags = np.arange(1, 1 + int(lags))  # type: ignore
 
         if ts_detrended is None:
             ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
