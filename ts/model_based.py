@@ -68,7 +68,7 @@ class MFETSModelBased:
         precomp_vals = {}  # type: t.Dict[str, int]
 
         if "ts_period" not in kwargs:
-            ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
+            ts_period = _period.ts_period(ts=ts)
             precomp_vals["ts_period"] = ts_period
 
         return precomp_vals

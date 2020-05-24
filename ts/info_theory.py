@@ -1,3 +1,4 @@
+"""Module dedicated to information theoretic time-series meta-features."""
 import typing as t
 
 import numpy as np
@@ -14,6 +15,7 @@ import _get_data
 
 
 class MFETSInfoTheory:
+    """Extract time-series meta-features from Information Theory group."""
     @classmethod
     def precompute_calc_ami(cls,
                             ts: np.ndarray,
@@ -23,7 +25,7 @@ class MFETSInfoTheory:
                             unbiased: bool = True,
                             **kwargs) -> t.Dict[str, np.ndarray]:
         """TODO."""
-        precomp_vals = {}
+        precomp_vals = {}  # type: t.Dict[str, np.ndarray]
 
         detrended_acfs = None
 
@@ -32,9 +34,9 @@ class MFETSInfoTheory:
 
             if detrended_acfs is None:
                 precomp_vals.update(
-                    autocorr.precompute_acf(ts=ts,
-                                            nlags=max_nlags,
-                                            unbiased=unbiased))
+                    autocorr.precompute_detrended_acf(ts=ts,
+                                                      nlags=max_nlags,
+                                                      unbiased=unbiased))
                 detrended_acfs = kwargs["detrended_acfs"]
 
         if "detrended_ami" in kwargs:
@@ -43,7 +45,6 @@ class MFETSInfoTheory:
                 num_bins=num_bins,
                 max_nlags=max_nlags,
                 return_dist=return_dist,
-                unbiased=unbiased,
                 detrended_acfs=detrended_acfs)
 
         return precomp_vals
@@ -54,7 +55,48 @@ class MFETSInfoTheory:
                   lag: int,
                   num_bins: int = 64,
                   return_dist: bool = False) -> float:
-        """TODO."""
+        """Calculate the Automutual Information of a time-series for a lag.
+
+        The automutual information AMI is defined as:
+        $$
+            AMI(ts) = H(ts_A) + H(ts_B) - H(ts_A, ts_B)
+        $$
+        where `ts` is the time-series, $H$ is the Shannon entropy function, and
+        $H(A, B)$ is the Shannon entropy of the joint probability of A and B.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        lag : int
+            Lag of the automutual information.
+
+        num_bins : int, optional (default=64)
+            Number of histogram bins to estimate both the probability density
+            of each lagged component, and the joint probability distribution,
+            all necessary to the automutual information calculus.
+
+        return_dist : bool, optional (default=False)
+            If True, return the automutual information distance defined as
+            $$
+                DAMI(ts) = 1 - AMI(ts) / H(ts_A, ts_B)
+                         = (H(ts_A) + H(ts_B)) / H(ts_A, ts_B)
+            $$
+
+        Returns
+        -------
+        float
+            If `return_dist` is False, return the automutual information of
+            the time-series with the given lag. If `return_dist` is True,
+            return the distance metric version of the automutual information.
+
+        References
+        ----------
+        .. [1] Fraser AM, Swinney HL. Independent coordinates for strange
+            attractors from mutual information. Phys Rev A Gen Phys.
+            1986;33(2):1134‐1140. doi:10.1103/physreva.33.1134
+        """
         ts_x = ts[:-lag]
         ts_y = ts[lag:]
 
@@ -81,7 +123,30 @@ class MFETSInfoTheory:
                         ts: np.ndarray,
                         num_bins: int = 10,
                         normalize: bool = True) -> float:
-        """TODO."""
+        """Shannon's Entropy from a histogram frequencies.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_bins : int, optional (default=10)
+            Number of histogram bins.
+
+        normalize : bool, optional (default=True)
+            If True, normalize the result in the [0, 1] range.
+
+        Returns
+        -------
+        float
+            Histogram Shannon's entropy.
+
+        References
+        ----------
+        .. [1] Shannon, C.E. (1948), A Mathematical Theory of Communication.
+            Bell System Technical Journal, 27: 379-423.
+            doi:10.1002/j.1538-7305.1948.tb01338.x
+        """
         freqs = np.histogram(ts, density=True)[0]
 
         entropy = scipy.stats.entropy(freqs, base=2)
@@ -97,7 +162,40 @@ class MFETSInfoTheory:
                              num_bins: int = 10,
                              pcut: float = 0.05,
                              normalize: bool = True) -> float:
-        """TODO."""
+        """Difference of histogram entropy with and without outliers.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_bins : int, optional (default=10)
+            Number of histogram bins.
+
+        pcut : float, optional (default=0.05)
+            Proportion of outlier cut, in both extremes. Must be a value
+            in (0.0, 0.5) range.
+
+        normalize : bool, optional (default=True)
+            If True, normalize the result in the [0, 1] range.
+
+        Returns
+        -------
+        float
+            Difference of histogram Shannon's entropy with and without outlier
+            observations.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         if not 0 < pcut < 0.5:
             raise ValueError("'pcut' must be in (0.0, 0.5) (got "
                              "{}).".format(pcut))
@@ -124,7 +222,71 @@ class MFETSInfoTheory:
                return_dist: bool = False,
                max_nlags: t.Optional[int] = None,
                detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Automutual information of the time-series.
+
+        The automutual information AMI is defined as:
+        $$
+            AMI(ts) = H(ts_A) + H(ts_B) - H(ts_A, ts_B)
+        $$
+        where `ts` is the time-series, $H$ is the Shannon entropy function, and
+        $H(A, B)$ is the Shannon entropy of the joint probability of A and B.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_bins : int, optional (default=64)
+            Number of histogram bins to estimate both the probability density
+            of each lagged component, and the joint probability distribution,
+            which are all necessary to the automutual information computation.
+
+        lags : sequence of int, optional
+            Lags to calculate the automutual information.
+
+        return_dist : bool, optional (default=False)
+            If True, return the automutual information distance for every lag,
+            defined as:
+            $$
+                DAMI(ts) = 1 - AMI(ts) / H(ts_A, ts_B)
+                         = (H(ts_A) + H(ts_B)) / H(ts_A, ts_B)
+            $$
+
+        max_nlags : int, optional
+            If ``lag`` is None, then a single lag will be estimated from the
+            first negative value of the detrended time-series autocorrelation
+            function up to `max_nlags`, if any. Otherwise, lag 1 will be used.
+            Used only if ``detrended_acfs`` is None.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags) of the detrended time-series. Used only if ``lag`` is None.
+            If this argument is not given and the previous condiditon is meet,
+            the autocorrelation function will be calculated inside this method
+            up to ``max_nlags``.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            If `return_dist` is False, return the automutual information of
+            the time-series for all given lags. If `return_dist` is True,
+            return the distance metric version of the automutual information
+            for all given lags.
+
+        References
+        ----------
+        .. [1] Fraser AM, Swinney HL. Independent coordinates for strange
+            attractors from mutual information. Phys Rev A Gen Phys.
+            1986;33(2):1134‐1140. doi:10.1103/physreva.33.1134
+        .. [2] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [3] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         # Note: using ts_detrended=ts to avoid detrending.
         non_detrended_ami = cls.ft_ami_detrended(ts=ts,
                                                  num_bins=num_bins,
@@ -147,7 +309,79 @@ class MFETSInfoTheory:
             ts_detrended: t.Optional[np.ndarray] = None,
             detrended_acfs: t.Optional[np.ndarray] = None,
             detrended_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
-        """TODO."""
+        """Automutual information of the detrended time-series.
+
+        The automutual information AMI is defined as:
+        $$
+            AMI(ts) = H(ts_A) + H(ts_B) - H(ts_A, ts_B)
+        $$
+        where `ts` is the time-series, $H$ is the Shannon entropy function, and
+        $H(A, B)$ is the Shannon entropy of the joint probability of A and B.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_bins : int, optional (default=64)
+            Number of histogram bins to estimate both the probability density
+            of each lagged component, and the joint probability distribution,
+            which are all necessary to the automutual information computation.
+
+        lags : sequence of int, optional
+            Lags to calculate the automutual information.
+
+        return_dist : bool, optional (default=False)
+            If True, return the automutual information distance for every lag,
+            defined as:
+            $$
+                DAMI(ts) = 1 - AMI(ts) / H(ts_A, ts_B)
+                         = (H(ts_A) + H(ts_B)) / H(ts_A, ts_B)
+            $$
+
+        max_nlags : int, optional
+            If ``lag`` is None, then a single lag will be estimated from the
+            first negative value of the detrended time-series autocorrelation
+            function up to `max_nlags`, if any. Otherwise, lag 1 will be used.
+            Used only if ``detrended_acfs`` is None.
+
+        ts_detrended : :obj:`np.ndarray`, optional
+            Detrended time-series. If None, the time-series will be detrended
+            using Friedman's Super Smoother.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags) of the detrended time-series. Used only if ``lag`` is None.
+            If this argument is not given and the previous condiditon is meet,
+            the autocorrelation function will be calculated inside this method
+            up to ``max_nlags``.
+
+        detrended_ami : :obj:`np.ndarray`, optional
+            This method's return value. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            If `return_dist` is False, return the automutual information of
+            the time-series for all given lags. If `return_dist` is True,
+            return the distance metric version of the automutual information
+            for all given lags.
+
+        References
+        ----------
+        .. [1] Fraser AM, Swinney HL. Independent coordinates for strange
+            attractors from mutual information. Phys Rev A Gen Phys.
+            1986;33(2):1134‐1140. doi:10.1103/physreva.33.1134
+        .. [2] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [3] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         if detrended_ami is not None:
             return detrended_ami
 
@@ -180,22 +414,81 @@ class MFETSInfoTheory:
             ts: np.ndarray,
             num_bins: int = 64,
             max_nlags: t.Optional[int] = None,
-            return_dist: bool = False,
+            dist_ami: bool = False,
             detrended_ami: t.Optional[np.ndarray] = None
     ) -> t.Union[int, float]:
-        """TODO."""
-        if max_nlags is None:
-            max_nlags = max(64, ts.size // 2)
+        """First critical point of the automutual information function.
 
+        If `return_dist` is False, then it is search for the first local
+        minima in the automutual information function. If `return_dist` is
+        True, then search for the first local maxima in the automutual
+        information distance function.
+
+        Check `ft_ami` documentation for more information.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_bins : int, optional (default=64)
+            Number of histogram bins to estimate both the probability density
+            of each lagged component, and the joint probability distribution,
+            which are all necessary to the automutual information computation.
+            Used only if ``detrended_ami`` is None.
+
+        dist_ami : bool, optional (default=False)
+            If True, check for critical points on the automutual information
+            distance function. Check `ft_ami` documentation for more
+            information.
+
+        max_nlags : int, optional
+            Maximum number of lags to estimate the automutual information. Is
+            None, then the default value will be min(64, floor(len(ts) / 2)).
+            Used only if ``detrended_ami`` is None.
+
+        detrended_ami : :obj:`np.ndarray`, optional
+            If `dist_ami` is False, automutual information function from the
+            detrended time-series.
+            If `dist_ami` is True, automutual information distance function
+            from the detrended time-series.
+            Used to take advantage of precomputations.
+
+        Returns
+        -------
+        int or float
+            If `dist_ami` False, lag corresponding to the first local minima
+            in the automutual information function. If `dist_ami` is True, lag
+            corresponding to the first local maxima of the automutual
+            information distance function. If no critical point of interest is
+            found, this method will return `np.nan`.
+
+        References
+        ----------
+        .. [1] Fraser AM, Swinney HL. Independent coordinates for strange
+            attractors from mutual information. Phys Rev A Gen Phys.
+            1986;33(2):1134‐1140. doi:10.1103/physreva.33.1134
+        .. [2] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [3] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         if detrended_ami is None:
+            if max_nlags is None:
+                max_nlags = min(64, ts.size // 2)
+
             detrended_ami = cls.ft_ami_detrended(ts=ts,
                                                  num_bins=num_bins,
                                                  lags=max_nlags,
-                                                 return_dist=return_dist)
+                                                 return_dist=dist_ami)
 
         # Note: if 'return_dist=True', return the first local maximum.
         # If otherwise, return the first local minimum.
-        type_ = "max" if return_dist else "min"
+        type_ = "max" if dist_ami else "min"
 
         crit_point = _utils.find_crit_pt(arr=detrended_ami, type_=type_)
 
@@ -211,15 +504,113 @@ class MFETSInfoTheory:
         ts: np.ndarray,
         noise_range: t.Tuple[float, float] = (0, 3),
         noise_inc_num: float = 10,
+        lag: t.Optional[t.Union[str, int]] = None,
         random_state: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
+        max_nlags: t.Optional[int] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> float:
-        """TODO."""
+        """Estimate the Automutual information curvature.
+
+        The Automutual information curvature is estimated using iterative noise
+        amplification strategy.
+
+        In the iterative noise amplification strategy, a random white noise
+        is sampled from a normal distribution (mean 0 and variance 1). Then,
+        this same noise is iteratively amplified from a uniformly spaced
+        scales in ``noise_range`` range and added to the time-series. The
+        automutual information is calculated from the perturbed time-series
+        for each noise amplification.
+
+        The automutual information curvature is the angular coefficient of a
+        linear regression of the automutual information onto the noise scales.
+
+        The lag used for every iteration is fixed from the start and, if not
+        fixed by the user, it is estimated from the autocorrelation function
+        by default.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        noise_range : tuple of float, optional (default=(0, 3))
+            A tuple of floats in the form (min_scale, max_scale) for the noise
+            amplication range.
+
+        noise_inc_num: float, optional (default=10)
+            Number of noise amplifications. The parameter ``noise_range`` will
+            be split evenly into ``noise_inc_num`` parts.
+
+        lag : int or str, optional
+            Lag to calculate the statistic. It must be a strictly positive
+            value, None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
+            last two type of options, the lag is estimated within this method
+            using the given strategy method (or, if None, it is used the
+            strategy `acf-nonsig` by default) up to ``max_nlags``.
+                1. `acf`: the lag corresponds to the first non-positive value
+                    in the autocorrelation function.
+                2. `acf-nonsig`: lag corresponds to the first non-significant
+                    value in the autocorrelation function (absolute value below
+                    the critical value of 1.96 / sqrt(ts.size)).
+                3. `ami`: lag corresponds to the first local minimum of the
+                    time-series automutual information function.
+
+        random_state : int, optional
+            Random seed to ensure reproducibility.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        max_nlags : int, optional
+            If ``lag`` is None, then a single lag will be estimated from the
+            first negative value of the detrended time-series autocorrelation
+            function up to `max_nlags`, if any. Otherwise, lag 1 will be used.
+            Used only if ``detrended_acfs`` is None.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags) of the detrended time-series. Used only if ``lag`` is None.
+            If this argument is not given and the previous condiditon is meet,
+            the autocorrelation function will be calculated inside this method
+            up to ``max_nlags``.
+
+        Returns
+        -------
+        float
+            Estimated automutual information curvature.
+
+        References
+        ----------
+        .. [1] Fraser AM, Swinney HL. Independent coordinates for strange
+            attractors from mutual information. Phys Rev A Gen Phys.
+            1986;33(2):1134‐1140. doi:10.1103/physreva.33.1134
+        .. [2] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [3] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        # Note: casting lag to an array since 'ft_ami_detrended' demands
+        # a sequence of lags.
+        lag = np.asarray([
+            _embed.embed_lag(ts=ts_scaled,
+                             lag=lag,
+                             max_nlags=max_nlags,
+                             detrended_acfs=detrended_acfs)
+        ])
 
         if random_state is not None:
             np.random.seed(random_state)
 
+        # Note: the noise is fixed from the start, and amplified at each
+        # iteration.
         gaussian_noise = np.random.randn(ts_scaled.size)
         noise_std = np.linspace(*noise_range, noise_inc_num)
 
@@ -230,6 +621,7 @@ class MFETSInfoTheory:
 
             ami[ind] = cls.ft_ami_detrended(ts=ts_corrupted,
                                             num_bins=32,
+                                            lags=lag,
                                             return_dist=False)
 
         model = sklearn.linear_model.LinearRegression().fit(
@@ -248,7 +640,56 @@ class MFETSInfoTheory:
                           metric: str = "chebyshev",
                           p: t.Union[int, float] = 2,
                           ts_scaled: t.Optional[np.ndarray] = None) -> float:
-        """TODO."""
+        """Approximate entropy of the time-series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        embed_dim : int, optional (default=2)
+            Embedding dimension.
+
+        embed_dim : int, optional (default=1)
+            Embedding lag.
+
+        threshold : float, optional (default=0.2)
+            Threshold to consider which observations are next to each other
+            after embedding.
+
+        metric : str, optional (default="chebyshev")
+            Distance metric to calculate the pairwise distance of the
+            observations after each embedding.
+            Check `scipy.spatial.distance.cdist` documentation for the complete
+            list of available distance metrics.
+
+        p : int or float, optional (default=2)
+            Power parameter for the minkowski metric. Used only if metric is
+            `minkowski`.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        float
+            Estimated approximate entropy.
+
+        References
+        ----------
+        .. [1] Pincus, S.M., Gladstone, I.M. & Ehrenkranz, R.A. A regularity
+            statistic for medical data analysis. J Clin Monitor Comput 7,
+            335–345 (1991). https://doi.org/10.1007/BF01619355
+        .. [2] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [3] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         def neigh_num(dim: int) -> int:
             embed = _embed.embed_ts(ts_scaled, dim=dim, lag=embed_lag)
             dist_mat = scipy.spatial.distance.cdist(embed,
@@ -272,7 +713,57 @@ class MFETSInfoTheory:
                           metric: str = "chebyshev",
                           p: t.Union[int, float] = 2,
                           ts_scaled: t.Optional[np.ndarray] = None) -> float:
-        """TODO."""
+        """Sample entropy of the time-series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        embed_dim : int, optional (default=2)
+            Embedding dimension.
+
+        embed_dim : int, optional (default=1)
+            Embedding lag.
+
+        threshold : float, optional (default=0.2)
+            Threshold to consider which observations are next to each other
+            after embedding.
+
+        metric : str, optional (default="chebyshev")
+            Distance metric to calculate the pairwise distance of the
+            observations after each embedding.
+            Check `scipy.spatial.distance.cdist` documentation for the complete
+            list of available distance metrics.
+
+        p : int or float, optional (default=2)
+            Power parameter for the minkowski metric. Used only if metric is
+            `minkowski`.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        float
+            Estimated sample entropy.
+
+        References
+        ----------
+        .. [1] Physiological time-series analysis using approximate entropy and
+            sample entropy Joshua S. Richman and J. Randall Moorman, American
+            Journal of Physiology-Heart and Circulatory Physiology 2000 278:6,
+            H2039-H2049
+        .. [2] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [3] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         def log_neigh_num(dim: int) -> int:
             embed = _embed.embed_ts(ts_scaled, dim=dim, lag=embed_lag)
             dist_mat = scipy.spatial.distance.pdist(embed, metric=metric, p=p)
@@ -294,7 +785,57 @@ class MFETSInfoTheory:
                            p: t.Union[int, float] = 2,
                            embed_lag: int = 1,
                            ts_scaled: t.Optional[np.ndarray] = None) -> float:
-        """TODO."""
+        """Control entropy of the time-series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        embed_dim : int, optional (default=2)
+            Embedding dimension.
+
+        embed_dim : int, optional (default=1)
+            Embedding lag.
+
+        threshold : float, optional (default=0.2)
+            Threshold to consider which observations are next to each other
+            after embedding.
+
+        metric : str, optional (default="chebyshev")
+            Distance metric to calculate the pairwise distance of the
+            observations after each embedding.
+            Check `scipy.spatial.distance.cdist` documentation for the complete
+            list of available distance metrics.
+
+        p : int or float, optional (default=2)
+            Power parameter for the minkowski metric. Used only if metric is
+            `minkowski`.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        float
+            Estimated control entropy.
+
+        References
+        ----------
+        .. [1] Erik M. Bollt and Joseph D. Skufca, Control Entropy: a
+            complexity measure for nonstationary signals Mathematical
+            Biosciences and Engineering Volume 6, Number 1, January 2009
+            doi:10.3934/mbe.2009.6.1 pp. 1–25
+        .. [2] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [3] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         control_entropy = cls.ft_sample_entropy(ts=np.diff(ts),
                                                 embed_dim=embed_dim,
                                                 embed_lag=embed_lag,
@@ -312,9 +853,73 @@ class MFETSInfoTheory:
                     memory_size: t.Union[float, int] = 0.1,
                     num_it: int = 128,
                     method: str = "distribution",
-                    epsilon: float = 1.0e-8,
+                    epsilon: float = 1e-8,
                     random_state: t.Optional[int] = None) -> np.ndarray:
-        """TODO."""
+        """Surprise measure.
+
+        The surprise measure is an estimation of the negative log-probablity of
+        a given random reference observation have its value given a `short-term`
+        memory of `ceil(memory_size * len(ts))` most recent values.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_bins : int, optional (default=10)
+            Number of histogram bins to time-series discretization. The data is
+            discretized using an equiprobable histogram (i.e., all bins have
+            the same number of instances).
+
+        memory_size : float or int, optional (default=0.1)
+            Recent memory size S.
+            If 0 < S < 1, the proportion of the time-series length as the
+            memory size.
+            If S >= 1, length of the memory.
+            Must be a value stricly positive and, if ``method`` value is
+            `1-transition`, then it must be larger or equal than 2.
+
+        num_it : int, optional (default=128)
+            Number of reference observations sampled.
+
+        method : str, optional (default="distribution")
+            Defines the probability function to determine how much surprise
+            a given value causes given the past values in the recent memory.
+            Must be either `distribution` or `1-transition`.
+            1. `distribution`: The ``memory_size`` previous values immediately
+                before the reference value are compared to it.
+            2. `1-transition`: compare the current reference value to the
+                values one time unit after the values equal to the previous
+                value of the current reference value within the recent memory.
+                This means that we are searching for transitions `B -> A`, from
+                the previous value `B` to the current value `A`, in the recent
+                memory, and calculating the probability of that event happens.
+                In other words, we are calculating the conditional probability
+                P(y[t] = A | y[t-1] = B).
+
+        epsilon : float, optional (default=1e-8)
+            Tiny threshold value to consider probabilities as zero.
+
+        random_state : int, optional
+            Random seed to ensure reproducibility.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Surprise (-1.0 * log-probability) for each random reference
+            instance.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         VALID_METHODS = ("distribution", "1-transition")
 
         if method not in VALID_METHODS:
@@ -357,6 +962,9 @@ class MFETSInfoTheory:
                                       memory_size:ref_ind] == ts_bin[ref_ind])
 
         else:
+            if memory_size <= 1:
+                raise ValueError("'memory_size' must be >= 2 with "
+                                 "'1-transition' method.")
 
             def prob_func(ref_ind: int, ts_bin: np.ndarray):
                 mem_data = ts_bin[ref_ind - memory_size:ref_ind]
@@ -385,10 +993,47 @@ class MFETSInfoTheory:
 
         return surprise
 
-    def ft_lz_complexity(ts: np.ndarray,
+    @classmethod
+    def ft_lz_complexity(cls,
+                         ts: np.ndarray,
                          num_bins: int = 10,
                          normalize: bool = True) -> float:
-        """TODO."""
+        """Lempel-Ziv complexity of the discretized time-series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_bins : int, optional (default=10)
+            Number of histogram bins to discretize the time-series. It is
+            used a histogram with bins of equal width.
+
+        normalize : bool, optional (default=True)
+            If True, normalize the final measure in [0, 1] range.
+
+        Returns
+        -------
+        float
+            If `normalize` is False, Lempel-Ziv complexity estimation for the
+            discretized time-series. If `normalize` is True, then the measure
+            will be normalized accordingly to the number of histogram bins
+            used.
+
+        References
+        ----------
+        .. [1] A. Lempel and J. Ziv, "On the Complexity of Finite Sequences,"
+            in IEEE Transactions on Information Theory, vol. 22, no. 1, pp.
+            75-81, January 1976, doi: 10.1109/TIT.1976.1055501.
+        .. [2] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [3] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        """
         ts_bin = tuple(
             _utils.discretize(ts=ts,
                               num_bins=num_bins,
@@ -451,7 +1096,7 @@ def _test() -> None:
     res = MFETSInfoTheory.ft_ami_curvature(ts, random_state=16)
     print(res)
 
-    res = MFETSInfoTheory.ft_ami_first_critpt(ts, return_dist=True)
+    res = MFETSInfoTheory.ft_ami_first_critpt(ts)
     print(res)
 
     res = MFETSInfoTheory.ft_hist_entropy(ts)

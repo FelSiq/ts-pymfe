@@ -242,7 +242,7 @@ def fit_gaussian_process(
 
     timestamps = np.linspace(0, 1, ts_scaled.size).reshape(-1, 1)
 
-    if gaussian_model is None or gaussian_model.n_components != n_components:
+    if gaussian_model is None:
         gaussian_model = sklearn.gaussian_process.GaussianProcessRegressor(
             copy_X_train=False, random_state=random_state)
 
