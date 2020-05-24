@@ -17,14 +17,99 @@ import _get_data
 class MFETSInfoTheory:
     """Extract time-series meta-features from Information Theory group."""
     @classmethod
-    def precompute_calc_ami(cls,
-                            ts: np.ndarray,
-                            num_bins: int = 64,
-                            max_nlags: t.Optional[int] = None,
-                            return_dist: bool = False,
-                            unbiased: bool = True,
-                            **kwargs) -> t.Dict[str, np.ndarray]:
-        """TODO."""
+    def precompute_ts_scaled(cls, ts: np.ndarray,
+                             **kwargs) -> t.Dict[str, np.ndarray]:
+        """Precompute a standardized time series.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        kwargs:
+            Additional arguments and previous precomputed items. May
+            speed up this precomputation.
+
+        Returns
+        -------
+        dict
+            The following precomputed item is returned:
+                * ``ts_scaled`` (:obj:`np.ndarray`): standardized time-series
+                    values (z-score).
+        """
+        precomp_vals = {}  # type: t.Dict[str, np.ndarray]
+
+        if "ts_scaled" not in kwargs:
+            precomp_vals["ts_scaled"] = _utils.standardize_ts(ts=ts)
+
+        return precomp_vals
+
+    @classmethod
+    def precompute_detrended_ami(cls,
+                                 ts: np.ndarray,
+                                 num_bins: int = 64,
+                                 max_nlags: t.Optional[int] = None,
+                                 return_dist: bool = False,
+                                 unbiased: bool = True,
+                                 **kwargs) -> t.Dict[str, np.ndarray]:
+        """Precompute detrended time-series Automutual Information function.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        num_bins : int, optional (default=64)
+            Number of histogram bins to estimate both the probability density
+            of each lagged component, and the joint probability distribution,
+            which are all necessary to the automutual information computation.
+
+        lags : sequence of int, optional
+            Lags to calculate the automutual information.
+
+        return_dist : bool, optional (default=False)
+            If True, return the automutual information distance for every lag,
+            defined as:
+            $$
+                DAMI(ts) = 1 - AMI(ts) / H(ts_A, ts_B)
+                         = (H(ts_A) + H(ts_B)) / H(ts_A, ts_B)
+            $$
+
+        max_nlags : int, optional
+            If ``lag`` is None, then a single lag will be estimated from the
+            first negative value of the detrended time-series autocorrelation
+            function up to `max_nlags`, if any. Otherwise, lag 1 will be used.
+            Used only if ``detrended_acfs`` is None.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags) of the detrended time-series. Used only if ``lag`` is None.
+            If this argument is not given and the previous condiditon is meet,
+            the autocorrelation function will be calculated inside this method
+            up to ``max_nlags``.
+
+        kwargs:
+            Additional arguments and previous precomputed items. May
+            speed up this precomputation.
+
+        Returns
+        -------
+        dict
+            The following precomputed item is returned:
+                * ``detrended_ami`` (:obj:`np.ndarray`): the automutual
+                    information function of the detrended time-series.
+
+            The following item is necessary and, therefore, also precomputed
+            if necessary:
+                * ``detrended_acfs`` (:obj:`np.ndarray`): the autocorrelation
+                    function from the detrended time-series.
+
+        References
+        ----------
+        .. [1] Fraser AM, Swinney HL. Independent coordinates for strange
+            attractors from mutual information. Phys Rev A Gen Phys.
+            1986;33(2):1134‐1140. doi:10.1103/physreva.33.1134
+        """
         precomp_vals = {}  # type: t.Dict[str, np.ndarray]
 
         detrended_acfs = None
@@ -37,13 +122,13 @@ class MFETSInfoTheory:
                     autocorr.precompute_detrended_acf(ts=ts,
                                                       nlags=max_nlags,
                                                       unbiased=unbiased))
+
                 detrended_acfs = kwargs["detrended_acfs"]
 
-        if "detrended_ami" in kwargs:
+        if "detrended_ami" not in kwargs:
             precomp_vals["detrended_ami"] = cls.ft_ami_detrended(
                 ts=ts,
                 num_bins=num_bins,
-                max_nlags=max_nlags,
                 return_dist=return_dist,
                 detrended_acfs=detrended_acfs)
 

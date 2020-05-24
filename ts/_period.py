@@ -12,14 +12,14 @@ def ts_period(ts: np.ndarray,
               ts_period: t.Optional[int] = None) -> int:
     """Return the time-series periodicity, if any.
 
-    The time-series is detrended first using the Friedman's Super
-    Smoother (if ``ts_detrended`` is None).
+    The time-series is detrended first using the Friedman's Super Smoother
+    (if ``ts_detrended`` is None).
 
     It is calculated the autocorrelation of the time-series up to
     1 + floor(ts.size / 2), using the fast-fourier transform method.
 
-    The time-series period is the argument where the autocorrelation
-    function assumed maximal absolute value.
+    The time-series period is the argument where the autocorrelation function
+    assumed maximal absolute value.
     """
     if ts_period is not None:
         return max(int(ts_period), 1)
