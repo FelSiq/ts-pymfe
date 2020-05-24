@@ -5,7 +5,6 @@ import numpy as np
 import scipy.spatial
 
 import _utils
-import _detrend
 
 try:
     import autocorr
@@ -140,10 +139,10 @@ def embed_dim_fnn(ts: np.ndarray,
 
 
 def embed_dim_cao(
-    ts: np.ndarray,
-    lag: int,
-    dims: t.Union[int, t.Sequence[int]] = 16,
-    ts_scaled: t.Optional[np.ndarray] = None
+        ts: np.ndarray,
+        lag: int,
+        dims: t.Union[int, t.Sequence[int]] = 16,
+        ts_scaled: t.Optional[np.ndarray] = None,
 ) -> t.Tuple[np.ndarray, np.ndarray]:
     """TODO.
 
@@ -210,7 +209,6 @@ def embed_dim_cao(
 
 
 def embed_lag(ts: np.ndarray,
-              ts_detrended: t.Optional[np.ndarray] = None,
               lag: t.Optional[t.Union[str, int]] = None,
               default_lag: int = 1,
               max_nlags: t.Optional[int] = None,
@@ -223,13 +221,6 @@ def embed_lag(ts: np.ndarray,
     ----------
     ts : :obj:`np.ndarray`
         Unidimensional time-series values.
-
-    ts_detrended : :ob:`np.ndarray`, optional
-        Time-series detrended. If None, the given time-series will
-        be detrended using Friedman's Super Smoother. If you don't
-        want your time-series detrended for this procedure (not
-        recommended), simply use the original time-series in this
-        argument also.
 
     lag : int or str, optional (default = None)
         If scalar, return its own value casted to integer,
@@ -312,12 +303,3 @@ def embed_lag(ts: np.ndarray,
 
     raise TypeError("'lag' type must be a scalar, a string or None (got {})."
                     "".format(type(lag)))
-
-
-def _test() -> None:
-    ts = np.arange(10)
-    print(embed_ts(ts, dim=2, lag=1))
-
-
-if __name__ == "__main__":
-    _test()

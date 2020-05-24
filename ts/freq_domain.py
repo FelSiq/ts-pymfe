@@ -50,11 +50,11 @@ class MFETSFreqDomain:
 
     @classmethod
     def _calc_ps_residuals(
-        cls,
-        ts_residuals: np.ndarray,
-        window: str = "hamming",
-        scaling: str = "spectrum",
-        return_freqs: bool = False
+            cls,
+            ts_residuals: np.ndarray,
+            window: str = "hamming",
+            scaling: str = "spectrum",
+            return_freqs: bool = False,
     ) -> t.Union[np.ndarray, t.Tuple[np.ndarray, np.ndarray]]:
         """Calculate the positive side power spectrum of a fourier signal.
 
@@ -78,12 +78,12 @@ class MFETSFreqDomain:
 
     @classmethod
     def ft_ps_residuals(
-        cls,
-        ts_residuals: np.ndarray,
-        ps_residuals: t.Optional[np.ndarray] = None,
+            cls,
+            ts_residuals: np.ndarray,
+            ps_residuals: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Power spectrum frequency of the given time-series residuals.
-        
+
         Parameters
         ----------
         ts_residuals : :obj:`np.ndarray`
@@ -118,13 +118,13 @@ class MFETSFreqDomain:
 
     @classmethod
     def ft_ps_freqs(
-        cls,
-        ts_residuals: np.ndarray,
-        freq_num: t.Union[int, float] = 0.05,
-        ps_residuals: t.Optional[np.ndarray] = None,
+            cls,
+            ts_residuals: np.ndarray,
+            freq_num: t.Union[int, float] = 0.05,
+            ps_residuals: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Largest power spectrum frequencies of the given time-series.
-        
+
         Parameters
         ----------
         ts_residuals : :obj:`np.ndarray`
@@ -170,10 +170,10 @@ class MFETSFreqDomain:
 
     @classmethod
     def ft_ps_peaks(
-        cls,
-        ts_residuals: np.ndarray,
-        factor: float = 0.6,
-        ps_residuals: t.Optional[np.ndarray] = None,
+            cls,
+            ts_residuals: np.ndarray,
+            factor: float = 0.6,
+            ps_residuals: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Number of significative power spectrum frequencies.
 
@@ -181,7 +181,7 @@ class MFETSFreqDomain:
         frequency `f_i` is considered significative if and only if
         `f_i` >= factor * max(p), where `factor` is a user-defined
         parameter.
-        
+
         Parameters
         ----------
         ts_residuals : :obj:`np.ndarray`
@@ -229,11 +229,11 @@ class MFETSFreqDomain:
 
     @classmethod
     def ft_ps_entropy(
-        cls,
-        ts_residuals: np.ndarray,
-        normalize: bool = True,
-        base: int = 2,
-        ps_residuals: t.Optional[np.ndarray] = None,
+            cls,
+            ts_residuals: np.ndarray,
+            normalize: bool = True,
+            base: int = 2,
+            ps_residuals: t.Optional[np.ndarray] = None,
     ) -> float:
         """Spectral entropy of time-series residuals.
 
@@ -349,7 +349,7 @@ class MFETSFreqDomain:
 
 def _test() -> None:
     ts = _get_data.load_data(3)
-    ts_period = _period.ts_period(ts=ts)
+    ts_period = _period.get_ts_period(ts=ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
 

@@ -222,7 +222,7 @@ class MFETSStatTests:
 
 def _test() -> None:
     ts = _get_data.load_data(3)
-    ts_period = _period.ts_period(ts)
+    ts_period = _period.get_ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy().astype(float)

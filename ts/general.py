@@ -372,8 +372,7 @@ class MFETSGeneral:
         int
             Time-series period.
         """
-        _ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
-        return _ts_period
+        return _period.get_ts_period(ts=ts, ts_period=ts_period)
 
     @classmethod
     def ft_turning_points(cls, ts: np.ndarray) -> np.ndarray:
@@ -873,7 +872,7 @@ class MFETSGeneral:
             1, 2020, Pages 86-92, ISSN 0169-2070,
             https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
-        _ts_period = _period.ts_period(ts=ts_season, ts_period=ts_period)
+        _ts_period = _period.get_ts_period(ts=ts_season, ts_period=ts_period)
 
         if _ts_period <= 1:
             return np.nan
@@ -939,7 +938,7 @@ class MFETSGeneral:
             1, 2020, Pages 86-92, ISSN 0169-2070,
             https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
-        _ts_period = _period.ts_period(ts=ts_season, ts_period=ts_period)
+        _ts_period = _period.get_ts_period(ts=ts_season, ts_period=ts_period)
 
         if _ts_period <= 1:
             return np.nan
@@ -1878,7 +1877,7 @@ def _test() -> None:
     import matplotlib.pyplot as plt
     ts = _get_data.load_data(3)
 
-    ts_period = _period.ts_period(ts)
+    ts_period = _period.get_ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()

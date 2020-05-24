@@ -3,85 +3,17 @@ import typing as t
 
 import numpy as np
 import matplotlib.pyplot as plt
-import sklearn.preprocessing
-import sklearn.pipeline
-import sklearn.linear_model
 import statsmodels.stats.stattools
 import statsmodels.tsa.stattools
 import statsmodels.tsa.seasonal
 import pandas as pd
 import supersmoother
 
-import _get_data
-
 try:
     import _period
 
 except ImportError:
     pass
-
-
-def detrend(ts: np.ndarray,
-            degrees: t.Union[int, t.Sequence[int]] = (1, 2, 3),
-            sig_level: t.Optional[float] = None,
-            plot: bool = False,
-            verbose: bool = False) -> np.ndarray:
-    """Detrend a time series with a polynomial regression for each ``degree``."""
-    if plot and sig_level is not None:
-        raise ValueError("Can't 'plot' with 'sig_level' given.")
-
-    if isinstance(degrees, int):
-        degrees = [degrees]
-
-    t = np.arange(ts.size).reshape(-1, 1)
-
-    res = np.zeros((len(degrees), 2 * ts.size))
-
-    for i, deg in enumerate(degrees):
-        pip = sklearn.pipeline.make_pipeline(
-            sklearn.preprocessing.PolynomialFeatures(deg),
-            sklearn.linear_model.Ridge())
-
-        pip.fit(t, ts)
-        trend_pred = pip.predict(t)
-        residuals = ts - trend_pred
-
-        if verbose or sig_level is not None:
-            adfuller_res = statsmodels.tsa.stattools.adfuller(residuals)
-            adfuller_pval = adfuller_res[1]
-
-        if verbose:
-            print(f"Durbin-Watson test for degree {deg}:",
-                  statsmodels.stats.stattools.durbin_watson(residuals))
-
-            print(f"Augmented Dickey-Fuller test for degree {deg}:",
-                  adfuller_res)
-
-        if sig_level is not None and adfuller_pval <= sig_level:
-            return residuals, trend_pred
-
-        if plot:
-            plt.subplot(2, 2, deg + 1)
-            plt.title(f"Detrended w/ degree {deg}")
-            plt.plot(t, residuals)
-
-        res[i, :] = np.hstack((residuals, trend_pred))
-
-    if plot:
-        plt.subplot(221)
-        plt.title("With trend")
-        plt.plot(t, ts)
-
-        plt.show()
-
-    if sig_level is not None:
-        raise RuntimeError("Can't detrend series. Please choose "
-                           "more degrees.")
-
-    if len(degrees) == 1:
-        return np.split(res[0, :], 2)
-
-    return np.split(res, 2, axis=1)
 
 
 def _decompose_ssmoother(ts: t.Union[np.ndarray, pd.core.series.Series],
@@ -220,7 +152,7 @@ def decompose(ts: t.Union[np.ndarray, pd.core.series.Series],
 
     if ts_period is None:
         ssmoother_comps = _decompose_ssmoother(ts=ts)
-        ts_period = _period.ts_period(ts, ts_detrended=ssmoother_comps[2])
+        ts_period = _period.get_ts_period(ts, ts_detrended=ssmoother_comps[2])
 
     if ts_period <= 1:
         if ssmoother_comps is None:
@@ -243,11 +175,3 @@ def decompose(ts: t.Union[np.ndarray, pd.core.series.Series],
         comp_resid = comp_resid.values
 
     return comp_trend, comp_season, comp_resid
-
-
-def _test() -> None:
-    detrend(_get_data.load_data(3), plot=True)
-
-
-if __name__ == "__main__":
-    _test()

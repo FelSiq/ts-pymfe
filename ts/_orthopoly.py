@@ -34,13 +34,3 @@ def ortho_poly(ts: np.ndarray,
         return res, alpha, np.hstack((1, sum_raw_sqr))
 
     return res
-
-
-def _test():
-    ts = 1 + np.arange(10)
-    res = ortho_poly(ts=ts, degree=2)
-    print(res)
-
-
-if __name__ == "__main__":
-    _test()

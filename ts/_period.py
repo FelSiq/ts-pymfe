@@ -7,9 +7,9 @@ import statsmodels.tsa.stattools
 import _detrend
 
 
-def ts_period(ts: np.ndarray,
-              ts_detrended: t.Optional[np.ndarray] = None,
-              ts_period: t.Optional[int] = None) -> int:
+def get_ts_period(ts: np.ndarray,
+                  ts_detrended: t.Optional[np.ndarray] = None,
+                  ts_period: t.Optional[int] = None) -> int:
     """Return the time-series periodicity, if any.
 
     The time-series is detrended first using the Friedman's Super Smoother
@@ -35,13 +35,3 @@ def ts_period(ts: np.ndarray,
     period = np.argmax(np.abs(autocorr)) + 1
 
     return period
-
-
-def _test() -> None:
-    import _get_data
-    ts = _get_data.load_data(3)
-    print(ts_period(ts))
-
-
-if __name__ == "__main__":
-    _test()

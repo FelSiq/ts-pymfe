@@ -75,12 +75,12 @@ def standardize_ts(ts: np.ndarray,
 
 
 def get_rolling_window(
-    ts: np.ndarray,
-    window_size: t.Union[float, int],
-    center: bool = True,
-    scale: bool = True,
-    ts_scaled: t.Optional[np.ndarray] = None,
-    ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        ts: np.ndarray,
+        window_size: t.Union[float, int],
+        center: bool = True,
+        scale: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
 ) -> pd.core.window.rolling.Rolling:
     """Apply a function on time-series rolling (overlapping) windows.
 
@@ -227,12 +227,12 @@ def find_crit_pt(arr: np.ndarray, type_: str) -> np.ndarray:
 
 
 def fit_gaussian_process(
-    ts: np.ndarray,
-    random_state: t.Optional[int] = None,
-    return_residuals: bool = False,
-    ts_scaled: t.Optional[np.ndarray] = None,
-    gaussian_model: t.Optional[
-        sklearn.gaussian_process.GaussianProcessRegressor] = None
+        ts: np.ndarray,
+        random_state: t.Optional[int] = None,
+        return_residuals: bool = False,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        gaussian_model: t.Optional[
+            sklearn.gaussian_process.GaussianProcessRegressor] = None,
 ) -> t.Union[np.ndarray, sklearn.gaussian_process.GaussianProcessRegressor]:
     """Fit a Gaussian Process model to the time-series data.
 
@@ -293,7 +293,7 @@ def calc_ioe_stats(ts: np.ndarray,
     Returns
     -------
     :obj:`np.ndarray`
-        Array where each row corresponds to a distinct statistisc extracted 
+        Array where each row corresponds to a distinct statistisc extracted
         from the timestamps, and each column corresponds to each iteration
         of the iterative outlier inclusive process. If ``funcs`` is a single
         function, then the return value will be flattened to a 1-D array.
@@ -316,7 +316,7 @@ def calc_ioe_stats(ts: np.ndarray,
         if len(funcs) == 0:
             raise ValueError("'funcs' is empty.")
 
-    except:
+    except TypeError:
         funcs = [funcs]  # type: ignore
 
     ts_scaled = standardize_ts(ts=ts, ts_scaled=ts_scaled)
@@ -453,43 +453,3 @@ def discretize(ts: np.ndarray,
     ts_disc = np.digitize(ts, bins)
 
     return ts_disc.astype(dtype)
-
-
-def _test() -> None:
-    import matplotlib.pyplot as plt
-    np.random.seed(16)
-    arr = 10 * np.random.random(15)
-    arr[5] = arr[6] = arr[7]
-
-    pts_1 = find_crit_pt(arr, "any")
-    pts_2 = find_crit_pt(arr, "non-plateau")
-    pts_3 = find_crit_pt(arr, "plateau")
-    pts_4 = find_crit_pt(arr, "min")
-    pts_5 = find_crit_pt(arr, "max")
-
-    print(pts_1.shape)
-    print(pts_2.shape)
-    print(pts_3.shape)
-    print(pts_4.shape)
-    print(pts_5.shape)
-
-    time = np.arange(arr.size)
-    plt.vlines(x=time, ymin=0, ymax=21, linestyle="dotted", color="gray")
-    plt.hlines(y=np.arange(10),
-               xmin=0,
-               xmax=arr.size - 1,
-               linestyle="dotted",
-               color="black")
-    plt.plot(time, 10 + arr, label="time series")
-    plt.scatter(time, 8 + pts_1, label="any")
-    plt.scatter(time, 6 + pts_2, label="non-plateau")
-    plt.scatter(time, 4 + pts_3, label="plateau")
-    plt.scatter(time, 2 + pts_4, label="min")
-    plt.scatter(time, 0 + pts_5, label="max")
-    plt.ylim((-10, 21.0))
-    plt.legend(loc="lower center")
-    plt.show()
-
-
-if __name__ == "__main__":
-    _test()

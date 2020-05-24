@@ -3,8 +3,6 @@ import typing as t
 import collections
 
 import numpy as np
-import scipy.signal
-import scipy.stats
 import statsmodels.tsa
 
 import _utils
@@ -161,9 +159,7 @@ class MFETSRandomize:
                                          random_state=random_state,
                                          ts_scaled=ts_scaled)
 
-            precomp_vals.update(
-                {name: val
-                 for name, val in zip(stat_names, stat_vals)})
+            precomp_vals.update(zip(stat_names, stat_vals))
 
         return precomp_vals
 
@@ -979,7 +975,7 @@ class MFETSRandomize:
 
 def _test() -> None:
     ts = _get_data.load_data(3)
-    ts_period = _period.ts_period(ts=ts)
+    ts_period = _period.get_ts_period(ts=ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
 

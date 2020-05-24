@@ -231,7 +231,7 @@ class MFETSAutocorr:
             abs_acf_vals: bool = False,
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
-            detrended_acfs: t.Optional[np.ndarray] = None
+            detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> t.Union[int, float]:
         """First autocorrelation lag below a given threshold.
 
@@ -521,7 +521,7 @@ class MFETSAutocorr:
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
             threshold: t.Optional[t.Union[int, float]] = None,
-            detrended_acfs: t.Optional[np.ndarray] = None
+            detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> t.Union[int, float]:
         """First non-significative detrended autocorrelation lag.
 
@@ -576,7 +576,7 @@ class MFETSAutocorr:
             ts: np.ndarray,
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
-            detrended_acfs: t.Optional[np.ndarray] = None
+            detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> t.Union[int, float]:
         """First non-positive detrended autocorrelation lag.
 
@@ -616,7 +616,7 @@ class MFETSAutocorr:
             ts: np.ndarray,
             max_nlags: t.Optional[int] = None,
             unbiased: bool = True,
-            detrended_acfs: t.Optional[np.ndarray] = None
+            detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> t.Union[int, float]:
         """First local minima detrended autocorrelation lag.
 
@@ -1017,15 +1017,15 @@ class MFETSAutocorr:
 
     @classmethod
     def ft_gresid_autocorr(
-        cls,
-        ts: np.ndarray,
-        nlags: int = 8,
-        unbiased: bool = True,
-        random_state: t.Optional[int] = None,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        gaussian_resid: t.Optional[np.ndarray] = None,
-        gaussian_model: t.Optional[
-            sklearn.gaussian_process.GaussianProcessRegressor] = None,
+            cls,
+            ts: np.ndarray,
+            nlags: int = 8,
+            unbiased: bool = True,
+            random_state: t.Optional[int] = None,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            gaussian_resid: t.Optional[np.ndarray] = None,
+            gaussian_model: t.Optional[
+                sklearn.gaussian_process.GaussianProcessRegressor] = None,
     ) -> np.ndarray:
         """Autocorrelation function of the gaussian process model residuals.
 
@@ -1090,15 +1090,15 @@ class MFETSAutocorr:
 
     @classmethod
     def ft_gresid_lbtest(
-        cls,
-        ts: np.ndarray,
-        nlags: int = 8,
-        return_pval: bool = True,
-        random_state: t.Optional[int] = None,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        gaussian_resid: t.Optional[np.ndarray] = None,
-        gaussian_model: t.Optional[
-            sklearn.gaussian_process.GaussianProcessRegressor] = None,
+            cls,
+            ts: np.ndarray,
+            nlags: int = 8,
+            return_pval: bool = True,
+            random_state: t.Optional[int] = None,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            gaussian_resid: t.Optional[np.ndarray] = None,
+            gaussian_model: t.Optional[
+                sklearn.gaussian_process.GaussianProcessRegressor] = None,
     ) -> float:
         """Ljung–Box test in the residuals of a gaussian process model.
 
@@ -1234,7 +1234,7 @@ class MFETSAutocorr:
 
 def _test() -> None:
     ts = _get_data.load_data(3)
-    ts_period = _period.ts_period(ts)
+    ts_period = _period.get_ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()

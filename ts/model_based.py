@@ -68,8 +68,7 @@ class MFETSModelBased:
         precomp_vals = {}  # type: t.Dict[str, int]
 
         if "ts_period" not in kwargs:
-            ts_period = _period.ts_period(ts=ts)
-            precomp_vals["ts_period"] = ts_period
+            precomp_vals["ts_period"] = _period.get_ts_period(ts=ts)
 
         return precomp_vals
 
@@ -363,7 +362,7 @@ class MFETSModelBased:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        ts_period = _period.ts_period(ts=ts_scaled, ts_period=ts_period)
+        ts_period = _period.get_ts_period(ts=ts_scaled, ts_period=ts_period)
 
         model = statsmodels.tsa.holtwinters.ExponentialSmoothing(
             endog=ts_scaled,
@@ -1069,7 +1068,7 @@ class MFETSModelBased:
 def _test() -> None:
     ts = _get_data.load_data(3)
 
-    ts_period = _period.ts_period(ts)
+    ts_period = _period.get_ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()

@@ -153,17 +153,12 @@ def apply_on_surrogates(ts: np.ndarray,
             # determinism of the procedure.
             random_state += 1
 
-        ts_surr = iaaft(ts=ts, max_iter=max_iter, random_state=random_state)
+        ts_surr = iaaft(ts=ts,
+                        max_iter=max_iter,
+                        random_state=random_state,
+                        atol=atol,
+                        rtol=rtol)
 
         stats[ind] = func(ts_surr, **kwargs)
 
     return stats
-
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    np.random.seed(32)
-    ts = np.random.randn(100) + 0.05 * np.arange(100)
-    plt.plot(ts, label="time-series")
-    plt.plot(iaaft(ts, random_state=16), label="surrogate")
-    plt.show()

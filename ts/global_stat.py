@@ -37,7 +37,7 @@ class MFETSGlobalStats:
         precomp_vals = {}  # type: t.Dict[str, int]
 
         if "ts_period" not in kwargs:
-            precomp_vals["ts_period"] = _period.ts_period(ts=ts)
+            precomp_vals["ts_period"] = _period.get_ts_period(ts=ts)
 
         return precomp_vals
 
@@ -268,8 +268,8 @@ class MFETSGlobalStats:
             Standard deviation of the first-order difference of the lagged
             time-series by its own period.
         """
-        ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
-        ts_sdiff = ts[ts_period:] - ts[:-ts_period]  # type: ignore
+        _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
+        ts_sdiff = ts[_ts_period:] - ts[:-_ts_period]
         return np.std(ts_sdiff, ddof=ddof)
 
     @classmethod
@@ -443,10 +443,8 @@ class MFETSGlobalStats:
             Skewness of the first-order difference of the lagged time-series
             by its own period.
         """
-        ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
-
-        ts_sdiff = ts[ts_period:] - ts[:-ts_period]  # type: ignore
-
+        _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
+        ts_sdiff = ts[_ts_period:] - ts[:-_ts_period]
         ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_sdiff,
                                                                method=method,
                                                                bias=~unbiased)
@@ -624,10 +622,8 @@ class MFETSGlobalStats:
             Kurtosis of the first-order difference of the lagged time-series
             by its own period.
         """
-        ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
-
-        ts_sdiff = ts[ts_period:] - ts[:-ts_period]  # type: ignore
-
+        _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
+        ts_sdiff = ts[_ts_period:] - ts[:-_ts_period]
         ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_sdiff,
                                                                method=method,
                                                                bias=~unbiased)
@@ -867,7 +863,7 @@ class MFETSGlobalStats:
 def _test() -> None:
     ts = _get_data.load_data(3)
 
-    ts_period = _period.ts_period(ts)
+    ts_period = _period.get_ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
