@@ -1,14 +1,11 @@
 """Module dedicated to general time-series meta-features."""
 import typing as t
 
-import sklearn.preprocessing
 import numpy as np
 import scipy.spatial
 import scipy.odr
-import pandas as pd
 import scipy.signal
 
-import autocorr
 import _detrend
 import _embed
 import _period
@@ -354,7 +351,7 @@ class MFETSGeneral:
         :obj:`np.ndarray`
             `n`th-order differenced time-series values.
         """
-        return np.diff(ts)
+        return np.diff(ts, n=order)
 
     @classmethod
     def ft_period(cls,
