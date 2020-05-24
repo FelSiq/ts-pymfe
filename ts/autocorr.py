@@ -105,7 +105,11 @@ class MFETSAutocorr:
 
         if "gaussian_resid" not in kwargs:
             gaussian_resid = _utils.fit_gaussian_process(
-                ts=ts, ts_scaled=ts_scaled, gaussian_model=gaussian_model)
+                ts=ts,
+                ts_scaled=ts_scaled,
+                gaussian_model=gaussian_model,
+                return_residuals=True)
+
             precomp_vals["gaussian_resid"] = gaussian_resid
 
         return precomp_vals
@@ -165,7 +169,7 @@ class MFETSAutocorr:
         if nlags is None:
             nlags = ts.size // 2
 
-        acf = statsmodels.tsa.stattools.acf(ts,
+        acf = statsmodels.tsa.stattools.acf(ts_detrended,
                                             nlags=nlags,
                                             unbiased=unbiased,
                                             fft=True)
@@ -220,7 +224,9 @@ class MFETSAutocorr:
         except ValueError:
             ts_detrended = ts
 
-        pacf = statsmodels.tsa.stattools.pacf(ts, nlags=nlags, method=method)
+        pacf = statsmodels.tsa.stattools.pacf(ts_detrended,
+                                              nlags=nlags,
+                                              method=method)
         return pacf[1:]
 
     @classmethod
@@ -1238,6 +1244,13 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res = MFETSAutocorr.precompute_detrended_acf(ts)
+    print(res)
+
+    res = MFETSAutocorr.precompute_gaussian_model(ts)
+    print(res)
+    exit(1)
 
     res = MFETSAutocorr.ft_gen_autocorr(ts)
     print(res)

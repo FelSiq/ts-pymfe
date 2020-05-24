@@ -1073,6 +1073,20 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
+    res = MFETSModelBased.precompute_ts_scaled(ts)
+    print(res)
+
+    res = MFETSModelBased.precompute_period(ts)
+    print(res)
+
+    res = MFETSModelBased.precompute_model_ets(ts)
+    print(res)
+
+    res = MFETSModelBased.precompute_ioe_std_linear_model(ts)
+    print(res)
+
+    exit(1)
+
     res = MFETSModelBased.ft_avg_cycle_period(ts_residuals)
     print(res)
 

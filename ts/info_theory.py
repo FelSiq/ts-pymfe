@@ -44,13 +44,15 @@ class MFETSInfoTheory:
         return precomp_vals
 
     @classmethod
-    def precompute_detrended_ami(cls,
-                                 ts: np.ndarray,
-                                 num_bins: int = 64,
-                                 max_nlags: t.Optional[int] = None,
-                                 return_dist: bool = False,
-                                 unbiased: bool = True,
-                                 **kwargs) -> t.Dict[str, np.ndarray]:
+    def precompute_detrended_ami(
+            cls,
+            ts: np.ndarray,
+            num_bins: int = 64,
+            lags: t.Optional[t.Union[int, t.Sequence[int]]] = None,
+            return_dist: bool = False,
+            max_nlags: t.Optional[int] = None,
+            unbiased: bool = True,
+            **kwargs) -> t.Dict[str, np.ndarray]:
         """Precompute detrended time-series Automutual Information function.
 
         Parameters
@@ -63,8 +65,12 @@ class MFETSInfoTheory:
             of each lagged component, and the joint probability distribution,
             which are all necessary to the automutual information computation.
 
-        lags : sequence of int, optional
+        lags : int or sequence of int, optional
             Lags to calculate the automutual information.
+            If int, calculate the automutual information from lag 1 to up to
+            the given ``lags`` value.
+            If sequence of integers, calculate the automutual information for
+            each of the given lags.
 
         return_dist : bool, optional (default=False)
             If True, return the automutual information distance for every lag,
@@ -75,17 +81,14 @@ class MFETSInfoTheory:
             $$
 
         max_nlags : int, optional
-            If ``lag`` is None, then a single lag will be estimated from the
+            If ``lags`` is None, then a single lag will be estimated from the
             first negative value of the detrended time-series autocorrelation
             function up to `max_nlags`, if any. Otherwise, lag 1 will be used.
-            Used only if ``detrended_acfs`` is None.
+            Used only if ``lags`` is None.
 
-        detrended_acfs : :obj:`np.ndarray`, optional
-            Array of time-series autocorrelation function (for distinct ordered
-            lags) of the detrended time-series. Used only if ``lag`` is None.
-            If this argument is not given and the previous condiditon is meet,
-            the autocorrelation function will be calculated inside this method
-            up to ``max_nlags``.
+        unbiased : bool, optional (default=True)
+            If True, correct the autocorrelation function for statistical
+            bias. Used only if ``lags`` is None.
 
         kwargs:
             Additional arguments and previous precomputed items. May
@@ -111,22 +114,21 @@ class MFETSInfoTheory:
         """
         precomp_vals = {}  # type: t.Dict[str, np.ndarray]
 
-        detrended_acfs = None
+        detrended_acfs = kwargs.get("detrended_acfs")
 
-        if max_nlags is None:
-            detrended_acfs = kwargs.get("detrended_acfs")
+        if lags is None and detrended_acfs is None:
+            precomp_vals.update(
+                autocorr.MFETSAutocorr.precompute_detrended_acf(
+                    ts=ts,
+                    nlags=max_nlags,
+                    unbiased=unbiased))
 
-            if detrended_acfs is None:
-                precomp_vals.update(
-                    autocorr.precompute_detrended_acf(ts=ts,
-                                                      nlags=max_nlags,
-                                                      unbiased=unbiased))
-
-                detrended_acfs = kwargs["detrended_acfs"]
+            detrended_acfs = precomp_vals["detrended_acfs"]
 
         if "detrended_ami" not in kwargs:
             precomp_vals["detrended_ami"] = cls.ft_ami_detrended(
                 ts=ts,
+                lags=lags,
                 num_bins=num_bins,
                 return_dist=return_dist,
                 detrended_acfs=detrended_acfs)
@@ -337,7 +339,7 @@ class MFETSInfoTheory:
             $$
 
         max_nlags : int, optional
-            If ``lag`` is None, then a single lag will be estimated from the
+            If ``lags`` is None, then a single lag will be estimated from the
             first negative value of the detrended time-series autocorrelation
             function up to `max_nlags`, if any. Otherwise, lag 1 will be used.
             Used only if ``detrended_acfs`` is None.
@@ -428,7 +430,7 @@ class MFETSInfoTheory:
             $$
 
         max_nlags : int, optional
-            If ``lag`` is None, then a single lag will be estimated from the
+            If ``lags`` is None, then a single lag will be estimated from the
             first negative value of the detrended time-series autocorrelation
             function up to `max_nlags`, if any. Otherwise, lag 1 will be used.
             Used only if ``detrended_acfs`` is None.
@@ -1174,6 +1176,14 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
     print("TS period:", ts_period)
+
+    res = MFETSInfoTheory.precompute_ts_scaled(ts)
+    print(res)
+
+    res = MFETSInfoTheory.precompute_detrended_ami(ts)
+    print(res)
+
+    exit(1)
 
     res = MFETSInfoTheory.ft_ami_detrended(ts, return_dist=True)
     print(res)

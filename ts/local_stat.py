@@ -1827,6 +1827,12 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts)
     ts = ts.to_numpy()
 
+    res = MFETSLocalStats.precompute_ts_scaled(ts)
+    print(res)
+    res = MFETSLocalStats.precompute_rolling_window(ts)
+    print(res)
+    exit(1)
+
     res = MFETSLocalStats.ft_moving_lilliefors(ts)
     print(res)
 

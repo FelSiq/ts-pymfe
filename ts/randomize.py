@@ -979,6 +979,13 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
 
+    res = MFETSRandomize.precompute_ts_scaled(ts)
+    print(res)
+
+    res = MFETSRandomize.precompute_itrand_stats(ts, random_state=16)
+    print(res)
+    exit(1)
+
     res = MFETSRandomize.ft_resample_first_acf_nonpos(ts, random_state=16)
     print(res)
 
@@ -989,9 +996,6 @@ def _test() -> None:
     print(res)
 
     res = MFETSRandomize.ft_surr_trev(ts, random_state=16)
-    print(res)
-
-    res = MFETSRandomize.precompute_itrand_stats(ts, random_state=16)
     print(res)
 
     res = MFETSRandomize.ft_itrand_mean(ts, random_state=16)
