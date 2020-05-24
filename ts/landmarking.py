@@ -75,11 +75,11 @@ class MFETSLandmarking:
                 y_pred = model.predict(X_test).ravel()
                 res[ind_fold] = score(y_pred, y_test)
 
-                import matplotlib.pyplot as plt
-                plt.plot(X_train, y_train)
-                plt.plot(X_test, y_test)
-                plt.plot(X_test, y_pred)
-                plt.show()
+                # import matplotlib.pyplot as plt
+                # plt.plot(X_train, y_train)
+                # plt.plot(X_test, y_test)
+                # plt.plot(X_test, y_pred)
+                # plt.show()
 
             except (TypeError, ValueError):
                 res[ind_fold] = np.nan
@@ -917,13 +917,8 @@ def _test() -> None:
     score = lambda *args: sklearn.metrics.mean_squared_error(*args,
                                                              squared=False)
 
-    res = MFETSLandmarking.ft_model_gaussian(ts, score=score, random_state=16)
-    print(4, res)
-    exit(1)
-
     res = MFETSLandmarking.ft_model_exp(ts, score=score)
     print(4, res)
-    exit(1)
 
     res = MFETSLandmarking.ft_model_sine(ts - ts_trend, score=score)
     print(4, res)
@@ -934,6 +929,19 @@ def _test() -> None:
 
     res = MFETSLandmarking.ft_model_loc_mean(ts, score=score)
     print(4, res)
+    exit(1)
+
+    res = MFETSLandmarking.ft_model_naive_seasonal(ts, ts_period, score=score)
+    print(15, res)
+    exit(1)
+
+    res = MFETSLandmarking.ft_model_naive_drift(ts, score=score)
+    print(14, res)
+    exit(1)
+
+    res = MFETSLandmarking.ft_model_gaussian(ts, score=score, random_state=16)
+    print(4, res)
+    exit(1)
 
     res = MFETSLandmarking.ft_model_hwes_ada(ts, ts_period, score=score)
     print(4, res)
@@ -958,12 +966,6 @@ def _test() -> None:
 
     res = MFETSLandmarking.ft_model_linear_seasonal(ts, ts_period, score=score)
     print(17, res)
-
-    res = MFETSLandmarking.ft_model_naive_drift(ts, score=score)
-    print(14, res)
-
-    res = MFETSLandmarking.ft_model_naive_seasonal(ts, ts_period, score=score)
-    print(15, res)
 
     res = MFETSLandmarking.ft_model_naive(ts, score=score)
     print(16, res)
