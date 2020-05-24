@@ -75,11 +75,11 @@ class MFETSModelBased:
 
     @classmethod
     def precompute_model_ets(
-        cls,
-        ts: np.ndarray,
-        damped: bool = False,
-        ts_period: t.Optional[int] = None,
-        **kwargs,
+            cls,
+            ts: np.ndarray,
+            damped: bool = False,
+            ts_period: t.Optional[int] = None,
+            **kwargs
     ) -> t.Dict[str, t.Any]:
         """Precompute a standardized time series.
 
@@ -221,9 +221,9 @@ class MFETSModelBased:
 
     @staticmethod
     def _fit_ioe_std_lin_model(
-        ts: np.ndarray,
-        step_size: float = 0.05,
-        ts_scaled: t.Optional[np.ndarray] = None
+            ts: np.ndarray,
+            step_size: float = 0.05,
+            ts_scaled: t.Optional[np.ndarray] = None,
     ) -> statsmodels.regression.linear_model.RegressionResults:
         """Fit a linear model of IOE standard deviations onto thresholds.
 
@@ -283,9 +283,9 @@ class MFETSModelBased:
 
     @staticmethod
     def _fit_res_model_des(
-        ts: np.ndarray,
-        damped: bool = False,
-        ts_scaled: t.Optional[np.ndarray] = None,
+            ts: np.ndarray,
+            damped: bool = False,
+            ts_scaled: t.Optional[np.ndarray] = None,
     ) -> statsmodels.tsa.holtwinters.HoltWintersResultsWrapper:
         """Fit a double exponential smoothing model with additive trend.
 
@@ -323,10 +323,10 @@ class MFETSModelBased:
 
     @staticmethod
     def _fit_res_model_ets(
-        ts: np.ndarray,
-        damped: bool = False,
-        ts_period: t.Optional[int] = None,
-        ts_scaled: t.Optional[np.ndarray] = None,
+            ts: np.ndarray,
+            damped: bool = False,
+            ts_period: t.Optional[int] = None,
+            ts_scaled: t.Optional[np.ndarray] = None,
     ) -> statsmodels.tsa.holtwinters.HoltWintersResultsWrapper:
         """Fit a triple exponential smoothing model with additive components.
 
@@ -376,8 +376,8 @@ class MFETSModelBased:
 
     @staticmethod
     def _fit_ortho_pol_reg(
-        ts_trend: np.ndarray,
-        degree: int = 2
+            ts_trend: np.ndarray,
+            degree: int = 2
     ) -> statsmodels.regression.linear_model.RegressionResults:
         """Regress the time-series trend on orthogonal polinomials.
 
@@ -409,12 +409,12 @@ class MFETSModelBased:
 
     @classmethod
     def ft_des_level(
-        cls,
-        ts: np.ndarray,
-        damped: bool = False,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_des: t.Optional[
-            statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None
+            cls,
+            ts: np.ndarray,
+            damped: bool = False,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            res_model_des: t.Optional[
+                statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
         """Double exponential smoothing model (additive trend) level parameter.
 
@@ -469,12 +469,12 @@ class MFETSModelBased:
 
     @classmethod
     def ft_des_slope(
-        cls,
-        ts: np.ndarray,
-        damped: bool = False,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_des: t.Optional[
-            statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
+            cls,
+            ts: np.ndarray,
+            damped: bool = False,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            res_model_des: t.Optional[
+                statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
         """Double exponential smoothing model (additive trend) slope parameter.
 
@@ -530,13 +530,13 @@ class MFETSModelBased:
 
     @classmethod
     def ft_ets_level(
-        cls,
-        ts: np.ndarray,
-        damped: bool = True,
-        ts_period: t.Optional[int] = None,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_ets: t.Optional[
-            statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
+            cls,
+            ts: np.ndarray,
+            damped: bool = True,
+            ts_period: t.Optional[int] = None,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            res_model_ets: t.Optional[
+                statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
         """ETS (additive components) model level parameter.
 
@@ -600,13 +600,13 @@ class MFETSModelBased:
 
     @classmethod
     def ft_ets_slope(
-        cls,
-        ts: np.ndarray,
-        damped: bool = True,
-        ts_period: t.Optional[int] = None,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_ets: t.Optional[
-            statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
+            cls,
+            ts: np.ndarray,
+            damped: bool = True,
+            ts_period: t.Optional[int] = None,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            res_model_ets: t.Optional[
+                statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
         """ETS (additive components) model slope parameter.
 
@@ -671,13 +671,13 @@ class MFETSModelBased:
 
     @classmethod
     def ft_ets_season(
-        cls,
-        ts: np.ndarray,
-        damped: bool = True,
-        ts_period: t.Optional[int] = None,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_ets: t.Optional[
-            statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
+            cls,
+            ts: np.ndarray,
+            damped: bool = True,
+            ts_period: t.Optional[int] = None,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            res_model_ets: t.Optional[
+                statsmodels.tsa.holtwinters.HoltWintersResultsWrapper] = None,
     ) -> float:
         """ETS (additive components) model seasonal parameter.
 
@@ -741,10 +741,10 @@ class MFETSModelBased:
 
     @classmethod
     def ft_linearity(
-        cls,
-        ts_trend: np.ndarray,
-        res_model_orthoreg: t.Optional[
-            statsmodels.regression.linear_model.RegressionResults] = None
+            cls,
+            ts_trend: np.ndarray,
+            res_model_orthoreg: t.Optional[
+                statsmodels.regression.linear_model.RegressionResults] = None,
     ) -> float:
         """Linearity measure from a orthogonal polynomial linear regression.
 
@@ -791,10 +791,10 @@ class MFETSModelBased:
 
     @classmethod
     def ft_curvature(
-        cls,
-        ts_trend: np.ndarray,
-        res_model_orthoreg: t.Optional[
-            statsmodels.regression.linear_model.RegressionResults] = None
+            cls,
+            ts_trend: np.ndarray,
+            res_model_orthoreg: t.Optional[
+                statsmodels.regression.linear_model.RegressionResults] = None,
     ) -> float:
         """Curvature measure from a orthogonal polynomial linear regression.
 
@@ -886,12 +886,12 @@ class MFETSModelBased:
 
     @classmethod
     def ft_gaussian_r_sqr(
-        cls,
-        ts: np.ndarray,
-        random_state: t.Optional[int] = None,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        gaussian_model: t.Optional[
-            sklearn.gaussian_process.GaussianProcessRegressor] = None,
+            cls,
+            ts: np.ndarray,
+            random_state: t.Optional[int] = None,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            gaussian_model: t.Optional[
+                sklearn.gaussian_process.GaussianProcessRegressor] = None,
     ) -> float:
         """R^2 from a gaussian process model.
 
@@ -943,12 +943,12 @@ class MFETSModelBased:
 
     @classmethod
     def ft_ioe_std_slope(
-        cls,
-        ts: np.ndarray,
-        step_size: float = 0.05,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        res_ioe_std_linreg: t.Optional[
-            statsmodels.regression.linear_model.RegressionResults] = None
+            cls,
+            ts: np.ndarray,
+            step_size: float = 0.05,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            res_ioe_std_linreg: t.Optional[
+                statsmodels.regression.linear_model.RegressionResults] = None,
     ) -> float:
         """Linear model of IOE standard deviations onto thresholds slope.
 
@@ -1005,12 +1005,12 @@ class MFETSModelBased:
 
     @classmethod
     def ft_ioe_std_adj_r_sqr(
-        cls,
-        ts: np.ndarray,
-        step_size: float = 0.05,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        res_ioe_std_linreg: t.Optional[
-            statsmodels.regression.linear_model.RegressionResults] = None
+            cls,
+            ts: np.ndarray,
+            step_size: float = 0.05,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            res_ioe_std_linreg: t.Optional[
+                statsmodels.regression.linear_model.RegressionResults] = None,
     ) -> float:
         """Linear model of IOE standard deviations onto thresholds Adj. R^2.
 
@@ -1068,14 +1068,6 @@ class MFETSModelBased:
 
 def _test() -> None:
     ts = _get_data.load_data(3)
-
-    # Note: add cyclic behaviour to data
-    # ts += -100 * (np.random.random(ts.size) < 0.3)
-    """
-    import matplotlib.pyplot as plt
-    plt.plot(ts)
-    plt.show()
-    """
 
     ts_period = _period.ts_period(ts)
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,

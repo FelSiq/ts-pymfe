@@ -4,7 +4,6 @@ import typing as t
 import numpy as np
 import sklearn.linear_model
 import scipy.stats
-import pandas as pd
 
 import autocorr
 import _detrend
@@ -232,7 +231,7 @@ class MFETSInfoTheory:
             Bell System Technical Journal, 27: 379-423.
             doi:10.1002/j.1538-7305.1948.tb01338.x
         """
-        freqs = np.histogram(ts, density=True)[0]
+        freqs = np.histogram(ts, bins=num_bins, density=True)[0]
 
         entropy = scipy.stats.entropy(freqs, base=2)
 
@@ -590,15 +589,15 @@ class MFETSInfoTheory:
 
     @classmethod
     def ft_ami_curvature(
-        cls,
-        ts: np.ndarray,
-        noise_range: t.Tuple[float, float] = (0, 3),
-        noise_inc_num: float = 10,
-        lag: t.Optional[t.Union[str, int]] = None,
-        random_state: t.Optional[int] = None,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        max_nlags: t.Optional[int] = None,
-        detrended_acfs: t.Optional[np.ndarray] = None,
+            cls,
+            ts: np.ndarray,
+            noise_range: t.Tuple[float, float] = (0, 3),
+            noise_inc_num: float = 10,
+            lag: t.Optional[t.Union[str, int]] = None,
+            random_state: t.Optional[int] = None,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            max_nlags: t.Optional[int] = None,
+            detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> float:
         """Estimate the Automutual information curvature.
 
@@ -943,13 +942,19 @@ class MFETSInfoTheory:
                     memory_size: t.Union[float, int] = 0.1,
                     num_it: int = 128,
                     method: str = "distribution",
+                    diff_order: int = 1,
                     epsilon: float = 1e-8,
                     random_state: t.Optional[int] = None) -> np.ndarray:
-        """Surprise measure.
+        """Surprise factor of a nth-order differenced time-series.
 
         The surprise measure is an estimation of the negative log-probablity of
         a given random reference observation have its value given a `short-term`
         memory of `ceil(memory_size * len(ts))` most recent values.
+
+        This method measures the surprise factor associated with each value on
+        a nth-order differenced time-series. This analysis may also be performed
+        on the original time-series, simply using the 0th-order differenced
+        time-series.
 
         Parameters
         ----------
@@ -986,6 +991,11 @@ class MFETSInfoTheory:
                 memory, and calculating the probability of that event happens.
                 In other words, we are calculating the conditional probability
                 P(y[t] = A | y[t-1] = B).
+
+        diff_order : int, optional (default=1)
+            Order of differentiation of the time-series to carry the analysis.
+            If `0`, then this analysis will be performed on the original
+            time-series value. Must be a non-negative integer.
 
         epsilon : float, optional (default=1e-8)
             Tiny threshold value to consider probabilities as zero.
@@ -1024,9 +1034,9 @@ class MFETSInfoTheory:
             raise ValueError("'num_it' must be positive (got {})."
                              "".format(num_it))
 
-        def get_reference_inds(inds_num: int) -> np.ndarray:
+        def get_reference_inds(inds_num: int, max_ind: int) -> np.ndarray:
             """Get min(ts.size - memory_size, inds_num) random reference indices."""
-            if ts.size - memory_size > num_it:
+            if max_ind - memory_size > num_it:
                 if random_state is not None:
                     np.random.seed(random_state)
 
@@ -1035,12 +1045,12 @@ class MFETSInfoTheory:
                 # 'memory_size' (i.e., we need at least 'memory_size' past
                 # indices). Therefore, we always skip they.
                 return memory_size + np.random.choice(
-                    ts.size - memory_size, size=inds_num, replace=False)
+                    max_ind - memory_size, size=inds_num, replace=False)
 
             # Note: the requested number of indices is not smaller than
             # the number of available indices. Therefore, just return
             # all available indices.
-            return np.arange(memory_size, ts.size)
+            return np.arange(memory_size, max_ind)
 
         if 0 < memory_size < 1:
             memory_size = int(np.ceil(ts.size * memory_size))
@@ -1067,19 +1077,18 @@ class MFETSInfoTheory:
                 equal_vals = mem_data[prev_val_inds + 1] == ts_bin[ref_ind]
                 return np.mean(equal_vals) if equal_vals.size else 0.0
 
-        # Note: not necessarily we need to to this on the differenced
-        # time-series. This should be optional in the future.
-        ts_diff = np.diff(ts)
+        ts_diff = np.diff(ts, n=diff_order)
 
         # Note: discretize time-series using an equiprobable histogram
         # (i.e. all bins have approximately the same number of instances).
-        ts_bin = _utils.discretize(ts=ts,
+        ts_bin = _utils.discretize(ts=ts_diff,
                                    num_bins=num_bins,
                                    strategy="equiprobable")
 
         probs = np.zeros(num_it, dtype=float)
+        ref_inds = get_reference_inds(inds_num=num_it, max_ind=ts_diff.size)
 
-        for ind, ref_ind in enumerate(get_reference_inds(inds_num=num_it)):
+        for ind, ref_ind in enumerate(ref_inds):
             probs[ind] = prob_func(ref_ind=ref_ind,
                                    ts_bin=ts_bin,
                                    hor_len=int(memory_size))

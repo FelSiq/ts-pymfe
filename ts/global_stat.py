@@ -87,7 +87,7 @@ class MFETSGlobalStats:
         :obj:`np.ndarray`
             If `differentiate` is False, the mean value of outlier timestamps
             of all iterations of the iterative outlier exclusion process. If
-            `differentiate` is True, the mean value of the timestamps interval 
+            `differentiate` is True, the mean value of the timestamps interval
             of outliers for every iteration. Also, if `normalize` is True,
             every value will be normalized to the [-1, 1] range.
 
@@ -203,7 +203,7 @@ class MFETSGlobalStats:
     @classmethod
     def ft_sd_residuals(cls, ts_residuals: np.ndarray, ddof: int = 1) -> float:
         """Compute the standard deviation of the time-series residuals.
-        
+
         Parameters
         ----------
         ts_residuals : :obj:`np.ndarray`
