@@ -164,7 +164,7 @@ class MFETSLandmarking:
         return res
 
     @classmethod
-    def _model_first_acf_nonpos(
+    def _model_acf_first_nonpos(
             cls,
             ts: np.ndarray,
             perf_ft_method: t.Callable[..., np.ndarray],
@@ -176,7 +176,7 @@ class MFETSLandmarking:
             **kwargs) -> np.ndarray:
         """TODO."""
         score = lambda ts_pred, ts_test: (
-            autocorr.MFETSAutocorr.ft_first_acf_nonpos(
+            autocorr.MFETSAutocorr.ft_acf_first_nonpos(
                 ts=ts_pred - ts_test, unbiased=unbiased, max_nlags=max_nlags))
 
         model_acf_first_nonpos = perf_ft_method(ts=ts,
@@ -857,7 +857,7 @@ class MFETSLandmarking:
         return res
 
     @classmethod
-    def ft_model_mean_first_acf_nonpos(
+    def ft_model_mean_acf_first_nonpos(
         cls,
         ts: np.ndarray,
         tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
@@ -867,7 +867,7 @@ class MFETSLandmarking:
         max_nlags: t.Optional[int] = None,
     ) -> np.ndarray:
         """TODO."""
-        acf_first_nonpos_mean = cls._model_first_acf_nonpos(
+        acf_first_nonpos_mean = cls._model_acf_first_nonpos(
             ts=ts,
             perf_ft_method=cls.ft_model_mean,
             tskf=tskf,
@@ -879,7 +879,7 @@ class MFETSLandmarking:
         return acf_first_nonpos_mean
 
     @classmethod
-    def ft_model_linear_first_acf_nonpos(
+    def ft_model_linear_acf_first_nonpos(
         cls,
         ts: np.ndarray,
         tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
@@ -889,7 +889,7 @@ class MFETSLandmarking:
         max_nlags: t.Optional[int] = None,
     ) -> np.ndarray:
         """TODO."""
-        acf_first_nonpos_linear = cls._model_first_acf_nonpos(
+        acf_first_nonpos_linear = cls._model_acf_first_nonpos(
             ts=ts,
             perf_ft_method=cls.ft_model_linear,
             tskf=tskf,
@@ -922,26 +922,21 @@ def _test() -> None:
 
     res = MFETSLandmarking.ft_model_sine(ts - ts_trend, score=score)
     print(4, res)
-    exit(1)
 
     res = MFETSLandmarking.ft_model_loc_median(ts, score=score)
     print(4, res)
 
     res = MFETSLandmarking.ft_model_loc_mean(ts, score=score)
     print(4, res)
-    exit(1)
 
     res = MFETSLandmarking.ft_model_naive_seasonal(ts, ts_period, score=score)
     print(15, res)
-    exit(1)
 
     res = MFETSLandmarking.ft_model_naive_drift(ts, score=score)
     print(14, res)
-    exit(1)
 
     res = MFETSLandmarking.ft_model_gaussian(ts, score=score, random_state=16)
     print(4, res)
-    exit(1)
 
     res = MFETSLandmarking.ft_model_hwes_ada(ts, ts_period, score=score)
     print(4, res)
@@ -973,7 +968,7 @@ def _test() -> None:
     res = MFETSLandmarking.ft_model_mean(ts, score=score)
     print(13, res)
 
-    res = MFETSLandmarking.ft_model_mean_first_acf_nonpos(ts)
+    res = MFETSLandmarking.ft_model_mean_acf_first_nonpos(ts)
     print(14, res)
 
     res = MFETSLandmarking.ft_model_ses(ts, score=score)
@@ -1007,7 +1002,7 @@ def _test() -> None:
     res = MFETSLandmarking.ft_model_linear(ts, score=score)
     print(15, res)
 
-    res = MFETSLandmarking.ft_model_linear_first_acf_nonpos(ts)
+    res = MFETSLandmarking.ft_model_linear_acf_first_nonpos(ts)
     print(16, res)
 
 

@@ -56,7 +56,7 @@ def iaaft(ts: np.ndarray,
     """
     ampl = np.abs(np.fft.rfft(ts))
     sort = np.sort(ts)
-    err_prev, err_cur = -1, atol + 1
+    err_prev, err_cur = -1.0, atol + 1
 
     if random_state is not None:
         np.random.seed(random_state)
@@ -82,7 +82,7 @@ def iaaft(ts: np.ndarray,
 
 def apply_on_surrogates(ts: np.ndarray,
                         surrogate_num: int,
-                        func: t.Callable[[np.ndarray], float],
+                        func: t.Callable[..., float],
                         max_iter: int = 128,
                         atol: float = 1e-8,
                         rtol: float = 1e-10,

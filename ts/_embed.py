@@ -103,25 +103,28 @@ def embed_dim_fnn(ts: np.ndarray,
     if lag <= 0:
         raise ValueError("'lag' must be positive (got {}).".format(lag))
 
+    _dims: t.Sequence[int]
+
     if np.isscalar(dims):
-        dims = np.arange(1, dims + 1)
+        _dims = np.arange(1, int(dims) + 1)  # type: ignore
+
+    else:
+        _dims = np.asarray(dims, dtype=int)
 
     ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-    fnn_prop = np.zeros(len(dims), dtype=float)
+    fnn_prop = np.zeros(len(_dims), dtype=float)
 
     ts_std = np.std(ts)
 
-    for ind, dim in enumerate(dims):
+    for ind, dim in enumerate(_dims):
         try:
             emb_next = embed_ts(ts=ts_scaled, lag=lag, dim=dim + 1)
             emb_cur = emb_next[:, 1:]
 
         except ValueError:
-            # Note: no need to explore further since all embeds larger than
-            # the current dimension will also fail.
-            fnn_prop[ind:] = np.nan
-            break
+            fnn_prop[ind] = np.nan
+            continue
 
         nn_inds, dist_cur = nn(embed=emb_cur)
 
@@ -136,10 +139,12 @@ def embed_dim_fnn(ts: np.ndarray,
     return fnn_prop
 
 
-def embed_dim_cao(ts: np.ndarray,
-                  lag: int,
-                  dims: t.Union[int, t.Sequence[int]] = 16,
-                  ts_scaled: t.Optional[np.ndarray] = None) -> int:
+def embed_dim_cao(
+    ts: np.ndarray,
+    lag: int,
+    dims: t.Union[int, t.Sequence[int]] = 16,
+    ts_scaled: t.Optional[np.ndarray] = None
+) -> t.Tuple[np.ndarray, np.ndarray]:
     """TODO.
 
     References
@@ -152,24 +157,27 @@ def embed_dim_cao(ts: np.ndarray,
     if lag <= 0:
         raise ValueError("'lag' must be positive (got {}).".format(lag))
 
+    _dims: t.Sequence[int]
+
     if np.isscalar(dims):
-        dims = np.arange(1, dims + 1)
+        _dims = np.arange(1, int(dims) + 1)  # type: ignore
+
+    else:
+        _dims = np.asarray(dims, dtype=int)
 
     ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-    ed, ed_star = np.zeros((2, len(dims)), dtype=float)
+    ed, ed_star = np.zeros((2, len(_dims)), dtype=float)
 
-    for ind, dim in enumerate(dims):
+    for ind, dim in enumerate(_dims):
         try:
             emb_next = embed_ts(ts=ts_scaled, lag=lag, dim=dim + 1)
             emb_cur = emb_next[:, 1:]
 
         except ValueError:
-            # Note: no need to explore further since all embeds larger than
-            # the current dimension will also fail.
-            ed[ind:] = np.nan
-            ed_star[ind:] = np.nan
-            break
+            ed[ind] = np.nan
+            ed_star[ind] = np.nan
+            continue
 
         nn_inds, dist_cur = nn(embed=emb_cur)
 
@@ -269,7 +277,7 @@ def embed_lag(ts: np.ndarray,
         "ami": info_theory.MFETSInfoTheory.ft_ami_first_critpt,
         "acf": autocorr.MFETSAutocorr.ft_acf_first_nonpos,
         "acf-nonsig": autocorr.MFETSAutocorr.ft_acf_first_nonsig,
-    }
+    }  # type: t.Dict[str, t.Callable[..., t.Union[float, int]]]
 
     if lag is None:
         lag = "acf-nonsig"
@@ -290,9 +298,9 @@ def embed_lag(ts: np.ndarray,
 
         kwargs["max_nlags"] = max_nlags
 
-        lag = VALID_OPTIONS[lag](ts, **kwargs)
+        estimated_lag = VALID_OPTIONS[lag](ts, **kwargs)
 
-        return default_lag if np.isnan(lag) else lag
+        return default_lag if np.isnan(estimated_lag) else int(estimated_lag)
 
     if np.isscalar(lag):
         lag = int(lag)

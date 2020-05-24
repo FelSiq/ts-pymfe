@@ -388,7 +388,7 @@ class MFETSInfoTheory:
             cls,
             ts: np.ndarray,
             num_bins: int = 64,
-            lags: t.Optional[t.Sequence[int]] = None,
+            lags: t.Optional[t.Union[int, t.Sequence[int]]] = None,
             return_dist: bool = False,
             max_nlags: t.Optional[int] = None,
             ts_detrended: t.Optional[np.ndarray] = None,
@@ -472,20 +472,21 @@ class MFETSInfoTheory:
 
         if lags is None:
             lags = _embed.embed_lag(ts=ts,
-                                    lag="acf",
-                                    max_nlags=max_nlags,
-                                    detrended_acfs=detrended_acfs)
-            lags = np.asarray([lags])
+                                     lag="acf",
+                                     max_nlags=max_nlags,
+                                     detrended_acfs=detrended_acfs)
+            lags = np.asarray([lags], dtype=int)
 
         elif np.isscalar(lags):
-            lags = np.arange(1, 1 + lags)
-
-        ami = np.zeros(lags.size, dtype=float)
+            lags = np.arange(1, 1 + int(lags))
 
         if ts_detrended is None:
             ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
 
-        for ind, lag in enumerate(lags):
+        _lags: t.Sequence[int] = np.asarray(lags, dtype=int)
+        ami = np.zeros(len(_lags), dtype=float)
+
+        for ind, lag in enumerate(_lags):
             ami[ind] = cls._calc_ami(ts=ts_detrended,
                                      lag=lag,
                                      num_bins=num_bins,
@@ -684,7 +685,7 @@ class MFETSInfoTheory:
 
         # Note: casting lag to an array since 'ft_ami_detrended' demands
         # a sequence of lags.
-        lag = np.asarray([
+        _lag = np.asarray([
             _embed.embed_lag(ts=ts_scaled,
                              lag=lag,
                              max_nlags=max_nlags,
@@ -706,7 +707,7 @@ class MFETSInfoTheory:
 
             ami[ind] = cls.ft_ami_detrended(ts=ts_corrupted,
                                             num_bins=32,
-                                            lags=lag,
+                                            lags=_lag,
                                             return_dist=False)
 
         model = sklearn.linear_model.LinearRegression().fit(
@@ -1042,17 +1043,21 @@ class MFETSInfoTheory:
 
         if method == "distribution":
 
-            def prob_func(ref_ind: int, ts_bin: np.ndarray):
+            def prob_func(ref_ind: int, ts_bin: np.ndarray,
+                          hor_len: int) -> float:
+                """Return probability of the referenced value."""
                 return np.mean(ts_bin[ref_ind -
-                                      memory_size:ref_ind] == ts_bin[ref_ind])
+                                      hor_len:ref_ind] == ts_bin[ref_ind])
 
         else:
             if memory_size <= 1:
                 raise ValueError("'memory_size' must be >= 2 with "
                                  "'1-transition' method.")
 
-            def prob_func(ref_ind: int, ts_bin: np.ndarray):
-                mem_data = ts_bin[ref_ind - memory_size:ref_ind]
+            def prob_func(ref_ind: int, ts_bin: np.ndarray,
+                          hor_len: int) -> float:
+                """Return probability of the referenced transition."""
+                mem_data = ts_bin[ref_ind - hor_len:ref_ind]
                 prev_val = mem_data[-1]
                 prev_val_inds = np.flatnonzero(mem_data[:-1] == prev_val)
                 equal_vals = mem_data[prev_val_inds + 1] == ts_bin[ref_ind]
@@ -1071,7 +1076,9 @@ class MFETSInfoTheory:
         probs = np.zeros(num_it, dtype=float)
 
         for ind, ref_ind in enumerate(get_reference_inds(inds_num=num_it)):
-            probs[ind] = prob_func(ref_ind=ref_ind, ts_bin=ts_bin)
+            probs[ind] = prob_func(ref_ind=ref_ind,
+                                   ts_bin=ts_bin,
+                                   hor_len=int(memory_size))
 
         probs[probs < epsilon] = 1.0
         surprise = -np.log(probs)

@@ -146,7 +146,7 @@ class MFETSRandomize:
             ("std", np.std),
             ("acf", lambda arr: statsmodels.tsa.stattools.acf(
                 arr, nlags=1, fft=True)[1]),
-        ))
+        ))  # type: collections.OrderedDict[str, t.Callable[[np.ndarray], float]]
 
         stat_names = list(map("itrand_stat_{}".format, stats.keys()))
 
@@ -168,7 +168,7 @@ class MFETSRandomize:
     @classmethod
     def _itrand_stat(cls,
                      ts: np.ndarray,
-                     func_stats: t.Sequence[t.Callable[[np.ndarray], float]],
+                     func_stats: t.Collection[t.Callable[[np.ndarray], float]],
                      strategy: str = "dist-dynamic",
                      prop_rep: t.Union[int, float] = 2,
                      prop_interval: float = 0.1,
@@ -261,7 +261,7 @@ class MFETSRandomize:
                              "".format(VALID_STRATEGY, strategy))
 
         if not hasattr(func_stats, "__len__"):
-            func_stats = [func_stats]
+            func_stats = [func_stats]  # type: ignore
 
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
@@ -568,7 +568,7 @@ class MFETSRandomize:
             arr, nlags=1, fft=True)[1]
 
         res = cls._itrand_stat(ts=ts,
-                               func_stats=func_acf,
+                               func_stats=[func_acf],
                                strategy=strategy,
                                prop_rep=prop_rep,
                                prop_interval=prop_interval,

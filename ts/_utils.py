@@ -56,7 +56,7 @@ def process_window_size(ts: np.ndarray, window_size: t.Union[float,
         # possibility of bias towards the larger tail)
         window_size -= 1
 
-    return window_size
+    return int(window_size)
 
 
 def standardize_ts(ts: np.ndarray,
@@ -255,8 +255,7 @@ def fit_gaussian_process(
 
 
 def calc_ioe_stats(ts: np.ndarray,
-                   funcs: t.Union[t.Callable[[np.ndarray], float],
-                                  t.Iterable[t.Callable[[np.ndarray], float]]],
+                   funcs: t.Collection[t.Callable[[np.ndarray], float]],
                    ts_scaled: t.Optional[np.ndarray] = None,
                    step_size: float = 0.05,
                    differentiate: bool = False) -> np.ndarray:
@@ -317,7 +316,7 @@ def calc_ioe_stats(ts: np.ndarray,
             raise ValueError("'funcs' is empty.")
 
     except:
-        funcs = [funcs]
+        funcs = [funcs]  # type: ignore
 
     ts_scaled = standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
@@ -328,8 +327,9 @@ def calc_ioe_stats(ts: np.ndarray,
     ts_abs = np.abs(ts_scaled)
     max_abs_ts = np.max(ts_abs)
 
-    res = []  # type: t.List[float]
+    ioe_stats = np.zeros((int(np.ceil(max_abs_ts / step_size)), len(funcs)))
     threshold = 0.0
+    it = 0
 
     while threshold < max_abs_ts:
         threshold += step_size
@@ -341,20 +341,19 @@ def calc_ioe_stats(ts: np.ndarray,
 
         diff_tsteps = np.diff(outlier_tsteps, int(differentiate))
 
-        res.append([func(diff_tsteps) for func in funcs])
+        ioe_stats[it, :] = [func(diff_tsteps) for func in funcs]
+        it += 1
 
-    res = np.asarray(res, dtype=float)
-
-    if res.shape[1] == 1:
-        return res.ravel()
+    if len(funcs) == 1:
+        return ioe_stats.ravel()
 
     # Note: transposing in order to each statistic be represented by a row,
     # and not a column.
-    return res.T
+    return ioe_stats.T
 
 
 def apply_on_samples(ts: np.ndarray,
-                     func: t.Callable[[np.ndarray], float],
+                     func: t.Callable[..., float],
                      num_samples: int = 128,
                      sample_size_frac: float = 0.2,
                      random_state: t.Optional[int] = None,

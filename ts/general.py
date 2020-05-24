@@ -375,8 +375,8 @@ class MFETSGeneral:
         int
             Time-series period.
         """
-        ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
-        return ts_period
+        _ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
+        return _ts_period
 
     @classmethod
     def ft_turning_points(cls, ts: np.ndarray) -> np.ndarray:
@@ -876,17 +876,17 @@ class MFETSGeneral:
             1, 2020, Pages 86-92, ISSN 0169-2070,
             https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
-        ts_period = _period.ts_period(ts=ts_season, ts_period=ts_period)
+        _ts_period = _period.ts_period(ts=ts_season, ts_period=ts_period)
 
-        if ts_period <= 1:
+        if _ts_period <= 1:
             return np.nan
 
         ind_peak = cls._calc_season_mode_ind(ts_season=ts_season,
-                                             ts_period=ts_period,
+                                             ts_period=_ts_period,
                                              indfunc=np.argmax)
 
         if normalize:
-            ind_peak /= ts_period  # type: ignore
+            ind_peak /= _ts_period
 
         return ind_peak
 
@@ -942,17 +942,17 @@ class MFETSGeneral:
             1, 2020, Pages 86-92, ISSN 0169-2070,
             https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
-        ts_period = _period.ts_period(ts=ts_season, ts_period=ts_period)
+        _ts_period = _period.ts_period(ts=ts_season, ts_period=ts_period)
 
-        if ts_period <= 1:
+        if _ts_period <= 1:
             return np.nan
 
         ind_trough = cls._calc_season_mode_ind(ts_season=ts_season,
-                                               ts_period=ts_period,
+                                               ts_period=_ts_period,
                                                indfunc=np.argmin)
 
         if normalize:
-            ind_trough /= ts_period  # type: ignore
+            ind_trough /= _ts_period
 
         return ind_trough
 
@@ -1380,6 +1380,8 @@ class MFETSGeneral:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
+        alpha: float
+
         # Note: 'DEF_PARAM' is in the following form:
         # potential_name: (default_parameters, force_function)
         DEF_PARAM = dict(
@@ -1444,21 +1446,21 @@ class MFETSGeneral:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
-        def calc_angles(inds: np.ndarray) -> np.ndarray:
-            """TODO."""
+        def calc_angles(arr: np.ndarray, inds: np.ndarray) -> np.ndarray:
+            """Calculate the angle between adjacent ``arr`` indices values."""
             # Note: normalizing the indices in [0, 1] range to avoid too much
             # interference from the artificial timestamps.
-            norm_factor = ts_scaled.size - 1
-            tangent = np.diff(ts_scaled[inds]) / np.diff(inds)
+            norm_factor = arr.size - 1
+            tangent = np.diff(arr[inds]) / np.diff(inds)
             return np.arctan(norm_factor * tangent)
 
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         is_nonneg = ts_scaled >= 0
-        ts_ang_pos = calc_angles(inds=np.flatnonzero(is_nonneg))
-        ts_ang_neg = calc_angles(inds=np.flatnonzero(~is_nonneg))
+        ang_pos = calc_angles(arr=ts_scaled, inds=np.flatnonzero(is_nonneg))
+        ang_neg = calc_angles(arr=ts_scaled, inds=np.flatnonzero(~is_nonneg))
 
-        angles = np.hstack((ts_ang_pos, ts_ang_neg))
+        angles = np.hstack((ang_pos, ang_neg))
 
         return angles
 

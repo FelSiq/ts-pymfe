@@ -1295,18 +1295,18 @@ class MFETSLocalStats:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        window_size = _utils.process_window_size(ts=ts_scaled,
-                                                 window_size=window_size)
+        _window_size = _utils.process_window_size(ts=ts_scaled,
+                                                  window_size=window_size)
 
-        rolling_stat = np.zeros(ts.size - window_size, dtype=float)
+        rolling_stat = np.zeros(ts_scaled.size - _window_size, dtype=float)
 
-        next_wind = ts_scaled[:window_size]
+        next_wind = ts_scaled[:_window_size]
         next_bin = np.histogram(next_wind, density=True)[0]
         i = 1
 
-        while i < ts.size - window_size:
+        while i < ts_scaled.size - _window_size:
             cur_wind, cur_bin = next_wind, next_bin
-            next_wind = ts_scaled[i:i + window_size]
+            next_wind = ts_scaled[i:i + _window_size]
             next_bin = np.histogram(next_wind, density=True)[0]
             rolling_stat[i - 1] = scipy.stats.entropy(next_bin, cur_bin)
             i += 1

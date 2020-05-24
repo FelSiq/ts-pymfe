@@ -152,7 +152,7 @@ class MFETSAutocorr:
             autocorrelation function up to `nlags` lags of the time-series.
         """
         if detrended_acfs is not None and (nlags is None
-                                           or tc_acfs.size == nlags):
+                                           or detrended_acfs.size == nlags):
             return detrended_acfs
 
         try:
@@ -723,13 +723,13 @@ class MFETSAutocorr:
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
         """
-        lag = _embed.embed_lag(ts=ts,
-                               lag=lag,
-                               max_nlags=max_nlags,
-                               detrended_acfs=detrended_acfs,
-                               detrended_ami=detrended_ami)
+        _lag = _embed.embed_lag(ts=ts,
+                                lag=lag,
+                                max_nlags=max_nlags,
+                                detrended_acfs=detrended_acfs,
+                                detrended_ami=detrended_ami)
 
-        diff = ts[lag:] - ts[:-lag]
+        diff = ts[_lag:] - ts[:-_lag]
 
         numen = np.mean(np.power(diff, 3))
 
@@ -808,15 +808,15 @@ class MFETSAutocorr:
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
         """
-        lag = _embed.embed_lag(ts=ts,
-                               lag=lag,
-                               max_nlags=max_nlags,
-                               detrended_acfs=detrended_acfs,
-                               detrended_ami=detrended_ami)
+        _lag = _embed.embed_lag(ts=ts,
+                                lag=lag,
+                                max_nlags=max_nlags,
+                                detrended_acfs=detrended_acfs,
+                                detrended_ami=detrended_ami)
 
-        ts_shift_1 = ts[:-2 * lag]
-        ts_shift_2 = ts[lag:-lag]
-        ts_shift_3 = ts[2 * lag:]
+        ts_shift_1 = ts[:-2 * _lag]
+        ts_shift_2 = ts[_lag:-_lag]
+        ts_shift_3 = ts[2 * _lag:]
 
         _aux = ts_shift_1 * ts_shift_2
         numen = np.mean(_aux * ts_shift_3)
@@ -917,15 +917,15 @@ class MFETSAutocorr:
             raise ValueError("'beta' parameter must be nonzero (got {})."
                              "".format(beta))
 
-        lag = _embed.embed_lag(ts=ts,
-                               lag=lag,
-                               max_nlags=max_nlags,
-                               detrended_acfs=detrended_acfs,
-                               detrended_ami=detrended_ami)
+        _lag = _embed.embed_lag(ts=ts,
+                                lag=lag,
+                                max_nlags=max_nlags,
+                                detrended_acfs=detrended_acfs,
+                                detrended_ami=detrended_ami)
 
         ts_abs = np.abs(ts)
-        ts_sft_1 = ts_abs[:-lag]
-        ts_sft_2 = ts_abs[lag:]
+        ts_sft_1 = ts_abs[:-_lag]
+        ts_sft_2 = ts_abs[_lag:]
 
         ts_sft_1_a = ts_sft_1**alpha
         ts_sft_2_b = ts_sft_2**beta

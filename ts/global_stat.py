@@ -36,9 +36,8 @@ class MFETSGlobalStats:
         """
         precomp_vals = {}  # type: t.Dict[str, int]
 
-        if ts_period not in kwargs:
-            ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
-            precomp_vals["ts_period"] = ts_period
+        if "ts_period" not in kwargs:
+            precomp_vals["ts_period"] = _period.ts_period(ts=ts)
 
         return precomp_vals
 
@@ -270,7 +269,7 @@ class MFETSGlobalStats:
             time-series by its own period.
         """
         ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
-        ts_sdiff = ts[ts_period:] - ts[:-ts_period]
+        ts_sdiff = ts[ts_period:] - ts[:-ts_period]  # type: ignore
         return np.std(ts_sdiff, ddof=ddof)
 
     @classmethod
@@ -446,7 +445,7 @@ class MFETSGlobalStats:
         """
         ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
 
-        ts_sdiff = ts[ts_period:] - ts[:-ts_period]
+        ts_sdiff = ts[ts_period:] - ts[:-ts_period]  # type: ignore
 
         ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_sdiff,
                                                                method=method,
@@ -627,7 +626,7 @@ class MFETSGlobalStats:
         """
         ts_period = _period.ts_period(ts=ts, ts_period=ts_period)
 
-        ts_sdiff = ts[ts_period:] - ts[:-ts_period]
+        ts_sdiff = ts[ts_period:] - ts[:-ts_period]  # type: ignore
 
         ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_sdiff,
                                                                method=method,
