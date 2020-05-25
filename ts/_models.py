@@ -5,7 +5,12 @@ import numpy as np
 import scipy.optimize
 
 
-class TSNaive:
+class BaseModel:
+    """Base model for the custom models of this module."""
+    pass
+
+
+class TSNaive(BaseModel):
     """Naive model for time-series forecasting.
 
     In the Naive model, all forecasted values are equal to the last known
@@ -46,7 +51,7 @@ class TSNaive:
         return np.full(fill_value=self.last_obs, shape=X.shape)
 
 
-class TSNaiveDrift:
+class TSNaiveDrift(BaseModel):
     """Naive model with drift for time-series forecasting.
 
     In the drift model, the forecasts are equal to the last observation of
@@ -105,7 +110,7 @@ class TSNaiveDrift:
         return self.last_obs + diff_timestamps * self.slope
 
 
-class TSNaiveSeasonal:
+class TSNaiveSeasonal(BaseModel):
     """Seasonal Naive model for time-series forecasting.
 
     This model is similar to the Naive model, but instead of using only the
@@ -169,7 +174,7 @@ class TSNaiveSeasonal:
         return self.y[inds]
 
 
-class _TSLocalStat:
+class _TSLocalStat(BaseModel):
     """Local statistical forecasting model for time-series.
 
     This model calculates a statistic from the most recent time-series
@@ -237,7 +242,7 @@ class TSLocalMedian(_TSLocalStat):
         super().__init__(stat_func=np.median, train_prop=train_prop)
 
 
-class TSSine:
+class TSSine(BaseModel):
     """Sine forecasting model.
 
     The sine model is in the form by y(t) = A * sin(w * t + p) + c, where
@@ -316,7 +321,7 @@ class TSSine:
         return self._fit_func(X)
 
 
-class TSExp:
+class TSExp(BaseModel):
     """Exponential forecasting model.
 
     The exponential model is in the form by y(t) = a * exp(b * t) + c, where

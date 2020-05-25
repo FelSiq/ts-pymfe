@@ -1,3 +1,4 @@
+"""Module dedicated to landmarking time-series meta-features."""
 """TODO.
 
 Future refs:
@@ -13,9 +14,10 @@ import sklearn.model_selection
 import statsmodels.tsa.arima_model
 import statsmodels.tsa.holtwinters
 import statsmodels.tools.sm_exceptions
+import statsmodels.base.model
 import sklearn.gaussian_process
+import sklearn.base
 
-import autocorr
 import _utils
 import _period
 import _detrend
@@ -23,23 +25,85 @@ import _get_data
 import _models
 import _embed
 
+try:
+    import autocorr
+
+except ImportError:
+    pass
+
 
 class MFETSLandmarking:
-    """TODO."""
+    """Extract time-series meta-features from Landmarking group."""
     @classmethod
     def _standard_pipeline_sklearn(
             cls,
             y: np.ndarray,
-            model: t.Any,
+            model: t.Union[_models.BaseModel, sklearn.base.BaseEstimator],
             score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
             X: t.Optional[np.ndarray] = None,
             args_fit: t.Optional[t.Dict[str, t.Any]] = None,
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
             num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
-            scale_range: t.Optional[t.Tuple[int, int]] = (0, 1),
+            scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
     ) -> np.ndarray:
-        """TODO."""
+        """Fit a model using a canonical pipeline with models from sklearn.
+
+        In this pipeline, each instance of the time-series `y[i]` will be
+        automatically associated with a value `X[i]` linearly spaced in the
+        [0, 1] range if no `X` is given.
+
+        Let `min` and `max` be the values in the first and second element of
+        ``scale_range`` argument, respectively.  Therefore, `X[i]` is given
+        by:
+        $$
+            X[i] = min + (max - min) * i / (len(y) - 1)`
+        $$
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at
+        each iteration of the validation, a distinct single fold is used as
+        the test set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        y : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        model : :obj:`_models.BaseModel` or :obj:`sklearn.base.BaseEstimator`
+            A sklearn model, or a custom model from the `_models.py` module.
+            Must have `.fit(X, y)` and `.predict(X)` methods implemented.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        X : :obj:`np.ndarray`, optional
+            Time-stamps for each time-series observation.
+
+        args_fit : dict, optional
+            kwargs for fittig the model (`.fit(X, y, **args_fit)`).
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``y``) are used.
+
+        scale_range : tuple of float, optional (default=(0.0, 1.0))
+            Range of ``X`` and ``y`` after normalization. If None, then use
+            the original scale of ``y``, and `X = [0, 1, 2, ..., len(y) - 1]`.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+        """
         if tskf is None:
             tskf = sklearn.model_selection.TimeSeriesSplit(
                 n_splits=num_cv_folds)
@@ -47,10 +111,11 @@ class MFETSLandmarking:
         if args_fit is None:
             args_fit = {}
 
+        # Note: 'X' are the unitless timesteps of the timeseries
         if X is None:
-            # Note: 'X' are the unitless timesteps of the timeseries
             y = _utils.sample_data(ts=y, lm_sample_frac=lm_sample_frac)
-            X = np.linspace(0, 1, y.size).reshape(-1, 1)
+            X_range = scale_range if scale_range is not None else (0, y.size)
+            X = np.linspace(*X_range, y.size).reshape(-1, 1)
 
         else:
             y, X = _utils.sample_data(ts=y, X=X, lm_sample_frac=lm_sample_frac)
@@ -75,12 +140,6 @@ class MFETSLandmarking:
                 y_pred = model.predict(X_test).ravel()
                 res[ind_fold] = score(y_pred, y_test)
 
-                # import matplotlib.pyplot as plt
-                # plt.plot(X_train, y_train)
-                # plt.plot(X_test, y_test)
-                # plt.plot(X_test, y_pred)
-                # plt.show()
-
             except (TypeError, ValueError):
                 res[ind_fold] = np.nan
 
@@ -90,16 +149,60 @@ class MFETSLandmarking:
     def _standard_pipeline_statsmodels(
             cls,
             ts: np.ndarray,
-            model_callable: t.Any,
+            model_callable: statsmodels.base.model.Model,
             score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
             args_inst: t.Optional[t.Dict[str, t.Any]] = None,
             args_fit: t.Optional[t.Dict[str, t.Any]] = None,
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
             num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
-            scale_range: t.Optional[t.Tuple[int, int]] = (0, 1),
+            scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
     ) -> np.ndarray:
-        """TODO."""
+        """Fit a model using a canonical pipeline with models from statsmodels.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at
+        each iteration of the validation, a distinct single fold is used as
+        the test set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        model_callable : :obj:`statsmodels.base.model.Model`
+            TODO.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        args_inst : dict, optional
+            TODO.
+
+        args_fit : dict, optional
+            TODO.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        scale_range : tuple of float, optional (default=(0.0, 1.0))
+            Range of ``ts`` after normalization. If None, then use the original
+            ``ts``.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+        """
         if args_inst is None:
             args_inst = {}
 
@@ -916,6 +1019,8 @@ def _test() -> None:
 
     score = lambda *args: sklearn.metrics.mean_squared_error(*args,
                                                              squared=False)
+
+    res: t.Any
 
     res = MFETSLandmarking.ft_model_exp(ts, score=score)
     print(4, res)

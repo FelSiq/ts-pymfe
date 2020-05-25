@@ -324,6 +324,7 @@ class MFETSModelBased:
     def _fit_res_model_ets(
             ts: np.ndarray,
             damped: bool = False,
+            grid_search_guess: bool = True,
             ts_period: t.Optional[int] = None,
             ts_scaled: t.Optional[np.ndarray] = None,
     ) -> statsmodels.tsa.holtwinters.HoltWintersResultsWrapper:
@@ -337,6 +338,12 @@ class MFETSModelBased:
         damped : bool, optional (default=False)
             Whether or not the exponential smoothing model should include a
             damping component.
+
+        grid_search_guess : bool, optional (default=True)
+            If True, used grid search (a.k.a. brute force) to search for good
+            starting parameters. If False, this method becomes more less
+            computationally intensive, but may fail to converge with higher
+            chances.
 
         ts_period : int, optional
             Time-series period.
@@ -369,7 +376,7 @@ class MFETSModelBased:
             trend="additive",
             seasonal="additive",
             damped=damped,
-            seasonal_periods=ts_period).fit()
+            seasonal_periods=ts_period).fit(use_brute=grid_search_guess)
 
         return model
 
@@ -848,7 +855,7 @@ class MFETSModelBased:
         $$
         If and only if $phi_1^{2} + 4 * phi_2 < 0$, where $\phi_1$ and
         $\phi_2$ are the parameters of the AR model associated with,
-        respectivelly, the $y_{t-1}$ and $y_{t-2}$ previous observations
+        respectively, the $y_{t-1}$ and $y_{t-2}$ previous observations
         from a time series $y$.
 
         Parameters

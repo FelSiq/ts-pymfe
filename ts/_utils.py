@@ -141,15 +141,26 @@ def smape(arr_a: np.ndarray,
     return res
 
 
-def sample_data(ts: np.ndarray,
-                lm_sample_frac: float,
-                X: t.Optional[np.ndarray] = None) -> np.ndarray:
+def sample_data(
+        ts: np.ndarray,
+        lm_sample_frac: float,
+        X: t.Optional[np.ndarray] = None,
+) -> t.Union[np.ndarray, t.Tuple[np.ndarray, np.ndarray]]:
     """Select ``lm_sample_frac`` percent of data from ``ts``.
+
+    ``lm_sample_frac`` must be in (0, 1] range.
+
+    The chosen instances are the most recent ones (on the higher indices
+    of the ``ts`` array).
 
     ``X`` is any array of values associated to each ``ts`` observation, and
     will be sampled alongside it (mantaining the index correspondence) if
     given. Tipically, ``X`` is the timestamps of each ``ts`` observation.
     """
+    if not 0.0 < lm_sample_frac <= 1.0:
+        raise ValueError("'lm_sample_frac' must be in (0, 1] range (got {})."
+                         "".format(lm_sample_frac))
+
     threshold = int(np.ceil(ts.size * lm_sample_frac))
 
     if threshold >= ts.size:
@@ -159,9 +170,9 @@ def sample_data(ts: np.ndarray,
         return ts
 
     if X is not None:
-        return ts[:threshold], X[:threshold]
+        return ts[-threshold:], X[-threshold:]
 
-    return ts[:threshold]
+    return ts[-threshold:]
 
 
 def find_plateau_pt(arr: np.ndarray,

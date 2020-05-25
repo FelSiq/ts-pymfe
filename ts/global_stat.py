@@ -868,6 +868,8 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
 
+    res: t.Any
+
     res = MFETSGlobalStats.precompute_period(ts)
     print(res)
 
