@@ -1183,8 +1183,6 @@ def _test() -> None:
     res = MFETSInfoTheory.precompute_detrended_ami(ts)
     print(res)
 
-    exit(1)
-
     res = MFETSInfoTheory.ft_ami_detrended(ts, return_dist=True)
     print(res)
 

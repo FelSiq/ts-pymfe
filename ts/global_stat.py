@@ -870,7 +870,6 @@ def _test() -> None:
 
     res = MFETSGlobalStats.precompute_period(ts)
     print(res)
-    exit(1)
 
     res = MFETSGlobalStats.ft_dfa(ts)
     print(res)

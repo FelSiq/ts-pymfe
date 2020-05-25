@@ -355,7 +355,6 @@ def _test() -> None:
 
     res = MFETSFreqDomain.precompute_ps_residuals(ts)
     print(res)
-    exit(1)
 
     res = MFETSFreqDomain.ft_low_freq_power(ts)
     print(res)

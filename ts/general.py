@@ -1895,8 +1895,6 @@ def _test() -> None:
     res = MFETSGeneral.precompute_ts_scaled(ts)
     print(res)
 
-    exit(1)
-
     res = MFETSGeneral.ft_stick_angles(ts)
     print(res)
 

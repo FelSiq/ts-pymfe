@@ -429,7 +429,7 @@ def embed_lag(ts: np.ndarray,
 
         return default_lag if np.isnan(estimated_lag) else int(estimated_lag)
 
-    if np.isnumeric(lag):
+    if np.isscalar(lag):
         lag = int(lag)
 
         if lag <= 0:

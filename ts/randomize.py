@@ -984,7 +984,6 @@ def _test() -> None:
 
     res = MFETSRandomize.precompute_itrand_stats(ts, random_state=16)
     print(res)
-    exit(1)
 
     res = MFETSRandomize.ft_resample_first_acf_nonpos(ts, random_state=16)
     print(res)

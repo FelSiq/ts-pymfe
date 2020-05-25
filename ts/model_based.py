@@ -1085,8 +1085,6 @@ def _test() -> None:
     res = MFETSModelBased.precompute_ioe_std_linear_model(ts)
     print(res)
 
-    exit(1)
-
     res = MFETSModelBased.ft_avg_cycle_period(ts_residuals)
     print(res)
 

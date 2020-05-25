@@ -159,12 +159,14 @@ class MFETSAutocorr:
                                            or detrended_acfs.size == nlags):
             return detrended_acfs
 
-        try:
-            if detrend and ts_detrended is None:
+        ts_detrended = ts
+
+        if detrend and ts_detrended is None:
+            try:
                 ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
 
-        except ValueError:
-            ts_detrended = ts
+            except ValueError:
+                pass
 
         if nlags is None:
             nlags = ts.size // 2
@@ -217,12 +219,14 @@ class MFETSAutocorr:
         if nlags is None:
             nlags = ts.size // 2
 
-        try:
-            if detrend and ts_detrended is None:
+        ts_detrended = ts
+
+        if detrend and ts_detrended is None:
+            try:
                 ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
 
-        except ValueError:
-            ts_detrended = ts
+            except ValueError:
+                pass
 
         pacf = statsmodels.tsa.stattools.pacf(ts_detrended,
                                               nlags=nlags,
@@ -1105,7 +1109,7 @@ class MFETSAutocorr:
             gaussian_resid: t.Optional[np.ndarray] = None,
             gaussian_model: t.Optional[
                 sklearn.gaussian_process.GaussianProcessRegressor] = None,
-    ) -> float:
+    ) -> np.ndarray:
         """Ljung–Box test in the residuals of a gaussian process model.
 
         Parameters
@@ -1138,8 +1142,11 @@ class MFETSAutocorr:
 
         Returns
         -------
-        float
-            Ljung-Box test of the gaussian process residuals.
+        :obj:`np.ndarray`
+            If `return_pval` is False, Ljung-Box test statistic for each lag
+            of the gaussian process residuals.
+            If `return_pval` is True, p-value associated with the Ljung-Box
+            test statistic for each lag of the gaussian process residuals.
 
         References
         ----------
@@ -1162,7 +1169,7 @@ class MFETSAutocorr:
 
         gaussian_lb_test = stat_tests.MFETSStatTests.ft_test_lb(
             ts_residuals=gaussian_resid,
-            max_lags=nlags,
+            max_nlags=nlags,
             return_pval=return_pval)
 
         return gaussian_lb_test
@@ -1250,12 +1257,8 @@ def _test() -> None:
 
     res = MFETSAutocorr.precompute_gaussian_model(ts)
     print(res)
-    exit(1)
 
     res = MFETSAutocorr.ft_gen_autocorr(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_gresid_lbtest(ts, random_state=16)
     print(res)
 
     res = MFETSAutocorr.ft_trev(ts, only_numerator=False)
@@ -1296,6 +1299,10 @@ def _test() -> None:
 
     res = MFETSAutocorr.ft_pacf_diff(ts)
     print(res)
+
+    res = MFETSAutocorr.ft_gresid_lbtest(ts, random_state=16)
+    print(res)
+
 
 
 if __name__ == "__main__":

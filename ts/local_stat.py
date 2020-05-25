@@ -1831,7 +1831,6 @@ def _test() -> None:
     print(res)
     res = MFETSLocalStats.precompute_rolling_window(ts)
     print(res)
-    exit(1)
 
     res = MFETSLocalStats.ft_moving_lilliefors(ts)
     print(res)
