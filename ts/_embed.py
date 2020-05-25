@@ -116,7 +116,7 @@ def embed_dim_fnn(ts: np.ndarray,
     Parameters
     ----------
     ts : :obj:`np.ndarray`
-        Unidimensional time-series values.
+        One-dimensional time-series values.
 
     lag : int
         Embedding lag. You may want to check the `embed_lag` function
@@ -246,7 +246,7 @@ def embed_dim_cao(
     Parameters
     ----------
     ts : :obj:`np.ndarray`
-        Unidimensional time-series values.
+        One-dimensional time-series values.
 
     lag : int
         Embedding lag. You may want to check the `embed_lag` function
@@ -347,7 +347,7 @@ def embed_lag(ts: np.ndarray,
     Parameters
     ----------
     ts : :obj:`np.ndarray`
-        Unidimensional time-series values.
+        One-dimensional time-series values.
 
     lag : int or str, optional (default = None)
         If scalar, return its own value casted to integer,

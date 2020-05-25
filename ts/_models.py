@@ -258,6 +258,7 @@ class TSSine:
             If True, make an informed choice of the initial parameters before
             the optimization process.
         """
+        # pylint: disable=C0103
         self.A, self.w, self.p, self.c = 4 * [-1.0]
 
         self._func = lambda t, A, w, p, c: A * np.sin(w * t + p) + c
@@ -271,15 +272,16 @@ class TSSine:
 
     def _make_initial_guess(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
         """Make the initial guess."""
+        # pylint: disable=C0103
         if self.opt_initial_guess:
             # Note: based on: https://stackoverflow.com/a/42322656
             freqs = np.fft.fftfreq(y.size, X[1] - X[0])
             Fyy = np.abs(np.fft.rfft(y))[1:]
-            w_0 = 2 * np.pi * np.abs(freqs[1 + np.argmax(Fyy)])
-            A_0 = np.std(y) * np.sqrt(2)
-            c_0 = np.mean(y)
+            w_guess = 2 * np.pi * np.abs(freqs[1 + np.argmax(Fyy)])
+            A_guess = np.std(y) * np.sqrt(2)
+            c_guess = np.mean(y)
 
-            return np.asarray([A_0, w_0, 0.0, c_0], dtype=float)
+            return np.asarray([A_guess, w_guess, 0.0, c_guess])
 
         return np.std(y) * np.random.randn(4)
 
@@ -291,11 +293,11 @@ class TSSine:
         guess = self._make_initial_guess(X=X, y=y)
 
         try:
-            popt, _ = scipy.optimize.curve_fit(self._func,
-                                               X.ravel(),
-                                               y,
-                                               p0=guess,
-                                               check_finite=False)
+            popt = scipy.optimize.curve_fit(self._func,
+                                            X.ravel(),
+                                            y,
+                                            p0=guess,
+                                            check_finite=False)[0]
 
             self.A, self.w, self.p, self.c = popt
 
@@ -315,9 +317,14 @@ class TSSine:
 
 
 class TSExp:
-    """TODO."""
+    """Exponential forecasting model.
+
+    The exponential model is in the form by y(t) = a * exp(b * t) + c, where
+    `a`, `b`, and `c` are parameters to be optimized from the fitted data.
+    """
     def __init__(self):
-        """TODO."""
+        """Init an exponential forecasting model."""
+        # pylint: disable=C0103
         self.a, self.b, self.c = 3 * [-1.0]
 
         self._func = lambda t, a, b, c: a * np.exp(b * t) + c
@@ -326,18 +333,18 @@ class TSExp:
         self._fitted = False
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> "TSExp":
-        """TODO."""
+        """Fit the exponential forecasting model."""
         b_0 = y[-1] / y[-2]
         a_0 = 0.1
         c_0 = 0
         guess = np.asarray([a_0, b_0, c_0], dtype=float)
 
         try:
-            popt, _ = scipy.optimize.curve_fit(self._func,
-                                               X.ravel(),
-                                               y,
-                                               p0=guess,
-                                               check_finite=False)
+            popt = scipy.optimize.curve_fit(self._func,
+                                            X.ravel(),
+                                            y,
+                                            p0=guess,
+                                            check_finite=False)[0]
 
             self.a, self.b, self.c = popt
 

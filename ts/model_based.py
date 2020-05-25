@@ -755,7 +755,7 @@ class MFETSModelBased:
         Parameters
         ----------
         ts_trend : :obj:`np.ndarray`
-            Unidimensional time-series trend component.
+            One-dimensional time-series trend component.
 
         res_model_orthoreg : :obj:`RegressionResults`, optional
             Linear regression results from the time-series trend component
@@ -805,7 +805,7 @@ class MFETSModelBased:
         Parameters
         ----------
         ts_trend : :obj:`np.ndarray`
-            Unidimensional time-series trend component.
+            One-dimensional time-series trend component.
 
         res_model_orthoreg : :obj:`RegressionResults`, optional
             Linear regression results from the time-series trend component
