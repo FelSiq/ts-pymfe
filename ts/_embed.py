@@ -33,10 +33,10 @@ def embed_ts(ts: np.ndarray,
     dim : int
         Dimension of the embedding.
 
-    lag : int, optional (default = 1)
+    lag : int, optional (default=1)
         Lag of the time-series.
 
-    include_val : bool, optional (default = False)
+    include_val : bool, optional (default=False)
         Include the value itself on its own embedding.
 
     Returns
@@ -71,7 +71,7 @@ def embed_ts(ts: np.ndarray,
 def nn(embed: np.ndarray,
        metric: str = "chebyshev",
        p: t.Union[int, float] = 2) -> np.ndarray:
-    """TODO."""
+    """Return the Nearest neighbors of each embedded time-series observation."""
     dist_mat = scipy.spatial.distance.cdist(embed, embed, metric=metric, p=p)
 
     # Note: prevent nearest neighbor be the instance itself, and also
@@ -90,7 +90,76 @@ def embed_dim_fnn(ts: np.ndarray,
                   rtol: t.Union[int, float] = 10,
                   atol: t.Union[int, float] = 2,
                   ts_scaled: t.Optional[np.ndarray] = None) -> int:
-    """TODO.
+    """Estimation of the False Nearest Neighbors proportion for each dimension.
+
+    The False Nearest Neighbors calculates the average number of false nearest
+    neighbors of each time-series observations, given a fixed embedding
+    dimension.
+
+    A false nearest neighbors are a pair of instances that are farther apart
+    in the appropriate embedding dimension, but close together in a smaller
+    dimension simply because both are projected in a innapropriate dimension.
+    Sure enough, we could have just use a `sufficiently large` embedding
+    dimension to remove all possibility of false nearest neighbors. However,
+    this strategy may imply in a lack of computational effciency, and all
+    statistical concerns that may arise in high dimensional data analysis.
+    The idea behind of analysing the proportion of false neighbors is to
+    estimate the minimum embedding dimension that makes only true neighbors
+    be close together in that given space.
+
+    Thus, it is expected that, given the appropriate embedding dimension, the
+    proportion of false neighbors will be close to zero.
+
+    Differently from the reference paper, here we are using the Chebyshev
+    distance (or maximum norm distance) rather than the Euclidean distance.
+
+    Parameters
+    ----------
+    ts : :obj:`np.ndarray`
+        Unidimensional time-series values.
+
+    lag : int
+        Embedding lag. You may want to check the `embed_lag` function
+        documentation for embedding lag estimation. Must be a stricly
+        positive value.
+
+    dims : int or sequence of int
+        Dimensions to estimate the Cao's `E1` and `E2` statistic values.
+        If integer, estimate all dimensions from 1 up to the given number.
+        If a sequence of integers, estimate the FNN proportion for all
+        given dimensions, and return the corresponding values in the same
+        order of the given dimensions.
+        All dimensions with non-positive values will receive a `np.nan`.
+
+    rtol : float, optional (default=10)
+        Relative tolerance between the relative difference of the distances
+        between each observation and its nearest neighbor $D_{d}$ in a given
+        dimension $d$, and the distance $D_{d+1}$ of the observation and the
+        same nearest neighbor in the next embedding dimension. It is used in
+        the first criteria from the reference paper to define which instances
+        are false neighbors. The default value (10) is the recommended value
+        from the original paper, and it means that nearest neighbors that are
+        ten times farther in the next dimension relative to the distance in
+        the current dimension are considered false nearest neighbors.
+
+    atol : float, optional (default=2)
+        Number of time-series standard deviations that an observation and
+        its nearest neighbor must be in the next dimension in order to be
+        considered false neighbors. This is the reference paper's second
+        criteria.
+
+    ts_scaled : :obj:`np.ndarray`, optional
+        Standardized time-series values. Used to take advantage of
+        precomputations.
+
+    Returns
+    -------
+    :obj:`np.ndarray`
+        Proportion of false nearest neighbos for each given dimension. It is
+        used the union of both criterium to determine whether a pair of
+        neighbors are false neighbors in a fixed embedding dimension (i.e.,
+        any pair of neighbors considered false in either of the criterium
+        alone are considered false).
 
     References
     ----------
@@ -114,7 +183,11 @@ def embed_dim_fnn(ts: np.ndarray,
 
     fnn_prop = np.zeros(len(_dims), dtype=float)
 
-    ts_std = np.std(ts)
+    # Note: since we are using the standardized time-series, its standard
+    # deviation is always 1. However, we keep this variable to make clear
+    # the correspondence between the reference paper's formulas and what
+    # are programmed here.
+    ts_std = 1.0  # = np.std(ts_scaled)
 
     for ind, dim in enumerate(_dims):
         try:
@@ -130,6 +203,13 @@ def embed_dim_fnn(ts: np.ndarray,
         emb_next_abs_diff = np.abs(emb_next[:, 0] - emb_next[nn_inds, 0])
         dist_next = np.maximum(dist_cur, emb_next_abs_diff)
 
+        # Note: in the reference paper, there were three criteria for
+        # determining what is a False Nearest Neighbor. The first and second
+        # one are, respectively, related to the `crit_1` and `crit_2`
+        # variables. The third criteria is the union of the criteria, which
+        # means that the observation is considered a False Neighbor if either
+        # criteria accuses it as such. Here, we are using the third and
+        # therefore the most conservative criteria.
         crit_1 = emb_next_abs_diff > rtol * dist_cur
         crit_2 = dist_next > atol * ts_std
 
@@ -144,7 +224,54 @@ def embed_dim_cao(
         dims: t.Union[int, t.Sequence[int]] = 16,
         ts_scaled: t.Optional[np.ndarray] = None,
 ) -> t.Tuple[np.ndarray, np.ndarray]:
-    """TODO.
+    """Estimate Cao's metrics to estimate time-series embedding dimension.
+
+    The Cao's metrics are two statistics, `E1` and `E2`, used to estimate the
+    appropriate embedding metric of a time-series. From the `E1` statistic it
+    can be defined the appropriate embedding dimension as the index after the
+    saturation of the metric from a set of ordered lags.
+
+    The precise `saturation` concept may be a subjective concept, since this
+    metric can show some curious `artifacts` related to specific lags for
+    specific time-series, which will need deeper further investigation.
+
+    The `E2` statistics is to detect `false positives` from the `E1` statistic
+    since if is used to distinguish between random white noise and a process
+    generated from a true, non completely random, underlying process. If the
+    time-series is purely random white noise, then all values of `E2` will be
+    close to 1. If there exists a dimension with the `E2` metric estimated
+    `sufficiently far` from 1, then this series is considered not a white
+    random noise.
+
+    Parameters
+    ----------
+    ts : :obj:`np.ndarray`
+        Unidimensional time-series values.
+
+    lag : int
+        Embedding lag. You may want to check the `embed_lag` function
+        documentation for embedding lag estimation. Must be a stricly
+        positive value.
+
+    dims : int or sequence of int
+        Dimensions to estimate the Cao's `E1` and `E2` statistic values.
+        If integer, estimate all dimensions from 1 up to the given number.
+        If a sequence of integers, estimate all Cao's statistics for all
+        given dimensions, and return the corresponding values in the same
+        order of the given dimensions.
+        All dimensions with non-positive values will receive a `np.nan`
+        value for both Cao's metric.
+
+    ts_scaled : :obj:`np.ndarray`, optional
+        Standardized time-series values. Used to take advantage of
+        precomputations.
+
+    Returns
+    -------
+    tuple of :obj:`np.ndarray`
+        `E1` and `E2` Cao's metrics, necessarily in that order, for all
+        given dimensions (and with direct index correspondence for the
+        given dimensions).
 
     References
     ----------
@@ -260,9 +387,18 @@ def embed_lag(ts: np.ndarray,
         will be calculated inside this method up to ``max_nlags``.
 
     kwargs:
+        Extra arguments for the function used to estimate the lag. used
+        only if `lag` is not a numeric value.
 
     Returns
     -------
+    int
+        Estimated embedding lag.
+
+    Notes
+    -----
+    This method may be used to estimate `auto-interations` of the time-series
+    (such as calculating the autocorrelation function, for instance) aswell.
     """
     VALID_OPTIONS = {
         "ami": info_theory.MFETSInfoTheory.ft_ami_first_critpt,
@@ -293,7 +429,7 @@ def embed_lag(ts: np.ndarray,
 
         return default_lag if np.isnan(estimated_lag) else int(estimated_lag)
 
-    if np.isscalar(lag):
+    if np.isnumeric(lag):
         lag = int(lag)
 
         if lag <= 0:
