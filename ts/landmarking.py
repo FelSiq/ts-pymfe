@@ -26,6 +26,12 @@ import _models
 import _embed
 
 try:
+    import general
+
+except ImportError:
+    pass
+
+try:
     import autocorr
 
 except ImportError:
@@ -36,16 +42,16 @@ class MFETSLandmarking:
     """Extract time-series meta-features from Landmarking group."""
     @classmethod
     def _standard_pipeline_sklearn(
-            cls,
-            y: np.ndarray,
-            model: t.Union[_models.BaseModel, sklearn.base.BaseEstimator],
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            X: t.Optional[np.ndarray] = None,
-            args_fit: t.Optional[t.Dict[str, t.Any]] = None,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
+        cls,
+        y: np.ndarray,
+        model: t.Union[_models.BaseModel, sklearn.base.BaseEstimator],
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        X: t.Optional[np.ndarray] = None,
+        args_fit: t.Optional[t.Dict[str, t.Any]] = None,
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
     ) -> np.ndarray:
         """Fit a model using a canonical pipeline with models from sklearn.
 
@@ -147,16 +153,16 @@ class MFETSLandmarking:
 
     @classmethod
     def _standard_pipeline_statsmodels(
-            cls,
-            ts: np.ndarray,
-            model_callable: statsmodels.base.model.Model,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            args_inst: t.Optional[t.Dict[str, t.Any]] = None,
-            args_fit: t.Optional[t.Dict[str, t.Any]] = None,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
+        cls,
+        ts: np.ndarray,
+        model_callable: statsmodels.base.model.Model,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        args_inst: t.Optional[t.Dict[str, t.Any]] = None,
+        args_fit: t.Optional[t.Dict[str, t.Any]] = None,
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
     ) -> np.ndarray:
         """Fit a model using a canonical pipeline with models from statsmodels.
 
@@ -277,7 +283,43 @@ class MFETSLandmarking:
             unbiased: bool = True,
             max_nlags: t.Optional[int] = None,
             **kwargs) -> np.ndarray:
-        """TODO."""
+        """First non-positive autocorrelation lag of cross-validation folds.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        perf_ft_method : callable
+            Internal cross-validation method.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        max_nlags : int, optional
+            Number of lags to avaluate the autocorrelation function.
+
+        kwargs:
+            Additional parameters for ``perf_ft_method``.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            Lag of the first non-positive in the autocorrelation function for
+            each forward chaining cross-validation fold.
+        """
         score = lambda ts_pred, ts_test: (
             autocorr.MFETSAutocorr.ft_acf_first_nonpos(
                 ts=ts_pred - ts_test, unbiased=unbiased, max_nlags=max_nlags))
@@ -293,14 +335,45 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_mean(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the global mean forecasting model.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at
+        each iteration of the validation, a distinct single fold is used as
+        the test set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+        """
         model_callable = statsmodels.tsa.arima_model.ARIMA
 
         args_inst = {"order": (0, 0, 0)}
@@ -324,15 +397,53 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_loc_mean(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        loc_prop: float = 0.25,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            loc_prop: float = 0.25,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the local mean forecasting model.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at
+        each iteration of the validation, a distinct single fold is used as
+        the test set, and all other previous folds are used as the train set.
+
+        The local mean model uses the mean of the most recent observation
+        as the forecasting value for all the next observations.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        loc_prop : float, optional (default=0.25)
+            Fraction of the most recent observations to be used as the training
+            data. Must be in (0, 1] range.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+        """
         model = _models.TSLocalMean(train_prop=loc_prop)
 
         res = cls._standard_pipeline_sklearn(y=ts,
@@ -346,15 +457,53 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_loc_median(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        loc_prop: float = 0.25,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            loc_prop: float = 0.25,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the local median forecasting model.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at
+        each iteration of the validation, a distinct single fold is used as
+        the test set, and all other previous folds are used as the train set.
+
+        The local median model uses the median of the most recent observation
+        as the forecasting value for all the next observations.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        loc_prop : float, optional (default=0.25)
+            Fraction of the most recent observations to be used as the training
+            data. Must be in (0, 1] range.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+        """
         model = _models.TSLocalMedian(train_prop=loc_prop)
 
         res = cls._standard_pipeline_sklearn(y=ts,
@@ -368,16 +517,63 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_sine(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        opt_initial_guess: bool = True,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        random_state: t.Optional[int] = None,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            opt_initial_guess: bool = True,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            random_state: t.Optional[int] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the sine forecasting model.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        The sine model tries to optimize parameters such that a function `f` in
+        the form `f(x) = a * sin(w * x + b) + c` describes well the time-series
+        values.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        opt_initial_guess : bool, optional (default=True)
+            If True, make and optimal initial guess. If False, make a faster but
+            naive initial guess.
+
+        loc_prop : float, optional (default=0.25)
+            Fraction of the most recent observations to be used as the training
+            data. Must be in (0, 1] range.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        random_state : int, optional
+            Random seed to perform a random naive initial guess. Used only
+            if ``opt_initial_guess`` is False.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+        """
         model = _models.TSSine(opt_initial_guess=opt_initial_guess,
                                random_state=random_state)
 
@@ -392,16 +588,53 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_exp(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        opt_initial_guess: bool = True,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        random_state: t.Optional[int] = None,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the exponential forecasting model.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        The exponential model tries to optimize parameters such that a function
+        `f` in the form `f(x) = a * exp(b * x) + c` describes well the
+        time-series values.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        loc_prop : float, optional (default=0.25)
+            Fraction of the most recent observations to be used as the training
+            data. Must be in (0, 1] range.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+        """
         model = _models.TSExp()
 
         res = cls._standard_pipeline_sklearn(y=ts,
@@ -415,15 +648,53 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_gaussian(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        random_state: t.Optional[int] = None,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            random_state: t.Optional[int] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the gaussian process model.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        loc_prop : float, optional (default=0.25)
+            Fraction of the most recent observations to be used as the training
+            data. Must be in (0, 1] range.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        random_state : int, optional
+            Random seed, to keep the optimization process deterministic.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+        """
         model = sklearn.gaussian_process.GaussianProcessRegressor(
             copy_X_train=False, random_state=random_state)
 
@@ -445,7 +716,38 @@ class MFETSLandmarking:
         num_cv_folds: int = 5,
         lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the linear model in time domain.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+        """
         model = sklearn.linear_model.LinearRegression()
 
         res = cls._standard_pipeline_sklearn(y=ts,
@@ -458,69 +760,143 @@ class MFETSLandmarking:
         return res
 
     @classmethod
-    def ft_model_linear_embed_lag_1(
-        cls,
-        ts: np.ndarray,
-        ts_period: int,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
+    def ft_model_linear_embed(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            emb_dim: t.Optional[int] = None,
+            lag: t.Optional[t.Union[str, int]] = None,
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            max_nlags: t.Optional[int] = None,
+            detrended_acfs: t.Optional[np.ndarray] = None,
+            detrended_ami: t.Optional[np.ndarray] = None,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            emb_dim_cao_e1: t.Optional[np.ndarray] = None,
+            emb_dim_cao_e2: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """Fit a linear model on the embedded time-series.
+
+        The appropriate lag is estimated using either the detrended time-series
+        automutual information function or the autocorrelation function.
+
+        The appropriate dimension is estimated using the Cao's algorithm.
+
+        The time-series is detrended using the Friedman's Super Smoorther
+        algorithm.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        emb_bim : int, optional
+            Embedding dimension. If not given,
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        loc_prop : float, optional (default=0.25)
+            Fraction of the most recent observations to be used as the training
+            data. Must be in (0, 1] range.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        lag : int or str, optional (default = None)
+            If scalar, return its own value casted to integer,
+
+            If string, it must be one value in {`ami`, `acf`, `acf-nonsig`},
+            which defines the strategy of defining the appropriate lag of
+            the embedding.
+                1. `ami`: uses the first minimum lag of the automutual information
+                    of the time-series.
+                2. `acf`: uses the first negative lag of the autocorrelation of the
+                    time-series.
+                3. `acf-nonsig` (default): uses the first non-significant lag of
+                    the time-series autocorrelation function. The non-significant
+                    value is defined as the first lag that has the absolute value
+                    of is autocorrelation below the critical value defined as
+                    1.96 / sqrt(ts.size).
+
+            If None, the lag will be searched will the 'acf-nonsig' criteria.
+
+        max_nlags : int, optional
+            If ``lag`` is not a numeric value, then it will be estimated using
+            either the time-series autocorrelation or mutual information
+            function estimated up to this argument value.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags) of the detrended time-series. Used only if ``emb_dim`` is
+            None and ``lag`` is any of `acf`, `acf-nonsig` or None.  If this
+            argument is not given and the previous condiditon is meet, the
+            autocorrelation function will be calculated inside this method up
+            to ``max_nlags``.
+
+        detrended_ami : :obj:`np.ndarray`, optional
+            Array of time-series automutual information function (for distinct
+            ordered lags). Used only if ``emb_dim`` is None and ``lag`` is
+            `ami`. If not given and the previous condiditon is meet, the
+            automutual information function will be calculated inside this
+            method up to ``max_nlags``.
+
+        emb_dim_cao_e1 : :obj:`np.ndarray`, optional
+            E1 values from the Cao's method. Used to take advantage of
+            precomputations. Used only if ``emb_dim`` is None.
+
+        emb_dim_cao_e2 : :obj:`np.ndarray`, optional
+            E2 values from the Cao's method. Used to take advantage of
+            precomputations. Used only if ``emb_dim`` is None.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Liangyue Cao, Practical method for determining the minimum
+            embedding dimension of a scalar time series, Physica D: Nonlinear
+            Phenomena, Volume 110, Issues 1–2, 1997, Pages 43-50,
+            ISSN 0167-2789, https://doi.org/10.1016/S0167-2789(97)00118-8.
+        .. [2] Friedman, J. H. 1984, A variable span scatterplot smoother
+            Laboratory for Computational Statistics, Stanford University
+            Technical Report No. 5. Available at:
+            https://www.slac.stanford.edu/pubs/slacpubs/3250/slac-pub-3477.pdf
+            Accessed on May 12 2020.
+        .. [3] Fraser AM, Swinney HL. Independent coordinates for strange
+            attractors from mutual information. Phys Rev A Gen Phys.
+            1986;33(2):1134‐1140. doi:10.1103/physreva.33.1134
+        """
         model = sklearn.linear_model.LinearRegression()
 
-        X = _embed.embed_ts(ts=ts, dim=ts_period, lag=1)
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        res = cls._standard_pipeline_sklearn(y=X[:, 0],
-                                             X=X[:, 1:],
-                                             model=model,
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
+        lag = _embed.embed_lag(ts=ts_scaled,
+                               lag=lag,
+                               max_nlags=max_nlags,
+                               detrended_acfs=detrended_acfs,
+                               detrended_ami=detrended_ami)
 
-        return res
+        if emb_dim is None:
+            emb_dim = general.MFETSGeneral.ft_emb_dim_cao(
+                ts=ts,
+                lag=lag,
+                emb_dim_cao_e1=emb_dim_cao_e1,
+                emb_dim_cao_e2=emb_dim_cao_e2)
 
-    @classmethod
-    def ft_model_linear_embed_lag_2(
-        cls,
-        ts: np.ndarray,
-        ts_period: int,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-    ) -> np.ndarray:
-        """TODO."""
-        model = sklearn.linear_model.LinearRegression()
-
-        X = _embed.embed_ts(ts=ts, dim=ts_period, lag=2)
-
-        res = cls._standard_pipeline_sklearn(y=X[:, 0],
-                                             X=X[:, 1:],
-                                             model=model,
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
-
-        return res
-
-    @classmethod
-    def ft_model_linear_embed_lag_m(
-        cls,
-        ts: np.ndarray,
-        ts_period: int,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-    ) -> np.ndarray:
-        """TODO."""
-        model = sklearn.linear_model.LinearRegression()
-
-        X = _embed.embed_ts(ts=ts, dim=3, lag=ts_period)
+        X = _embed.embed_ts(ts=ts, dim=emb_dim, lag=lag)
 
         res = cls._standard_pipeline_sklearn(y=X[:, 0],
                                              X=X[:, 1:],
@@ -534,23 +910,69 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_linear_seasonal(
-        cls,
-        ts: np.ndarray,
-        ts_period: int,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            ts_period: t.Optional[int] = None,
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
-        """TODO."""
-        model = sklearn.linear_model.LinearRegression()
+        """Cross-validated performance of the seasonal linear model.
 
-        X = np.tile(np.arange(ts_period), 1 + ts.size // ts_period)[:ts.size,
-                                                                    np.newaxis]
+        This model is evaluated using a linear regression of the dummy
+        variables marking the corresponding value from the previous season
+        onto the time-series values.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        ts_period : int, optional
+            Time-series period. If not given, it will be estimated using
+            the minima of the absolute autocorrelation function from lag
+            1 up to half the time-series size.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+        """
+        _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
+
+        if _ts_period <= 1:
+            raise ValueError("Time-series is not seasonal (period <= 1).")
+
+        X = np.tile(np.arange(_ts_period),
+                    1 + ts.size // _ts_period)[:ts.size, np.newaxis]
+
         # Note: remove one dummy variable to avoid the 'dummy
         # variable trap'.
         X = sklearn.preprocessing.OneHotEncoder(
-            sparse=False).fit_transform(X)[:, 1:]
+            sparse=False, drop="first").fit_transform(X)
+
+        model = sklearn.linear_model.LinearRegression()
 
         res = cls._standard_pipeline_sklearn(y=ts,
                                              X=X,
@@ -564,14 +986,48 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_naive(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the naive model.
+
+        The naive model uses only the last observation of the time-series as
+        the forecast value for all future timesteps.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+        """
         model = _models.TSNaive()
 
         res = cls._standard_pipeline_sklearn(y=ts,
@@ -585,14 +1041,51 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_naive_drift(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the naive model with drift.
+
+        The naive model uses the last observation of the time-series as the
+        forecast value for all future timesteps, with a drift added based on
+        the timestamp. The drift is the angular coefficient from the line that
+        crosses the first and the last observation of the time-series (which
+        is equivalent to the mean first-order difference of the time-series).
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+        """
         model = _models.TSNaiveDrift()
 
         res = cls._standard_pipeline_sklearn(y=ts,
@@ -606,16 +1099,61 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_naive_seasonal(
-        cls,
-        ts: np.ndarray,
-        ts_period: int,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            ts_period: t.Optional[int] = None,
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
-        """TODO."""
-        model = _models.TSNaiveSeasonal(ts_period=ts_period)
+        """Cross-validated performance of the seasonal linear model.
+
+        This model is evaluated using a linear regression of the dummy
+        variables marking the corresponding value from the previous season
+        onto the time-series values.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        ts_period : int, optional
+            Time-series period. If not given, it will be estimated using
+            the minima of the absolute autocorrelation function from lag
+            1 up to half the time-series size.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+        """
+        _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
+
+        if _ts_period <= 1:
+            raise ValueError("Time-series is not seasonal (period <= 1).")
+
+        model = _models.TSNaiveSeasonal(ts_period=_ts_period)
 
         res = cls._standard_pipeline_sklearn(y=ts,
                                              model=model,
@@ -1005,11 +1543,6 @@ class MFETSLandmarking:
 
 
 def _test() -> None:
-    """Ref for not using SMAPE:
-
-    1. https://otexts.com/fpp2/accuracy.html#fnref2
-    2. Hyndman, R. J., & Koehler, A. B. (2006). Another look at measures of forecast accuracy. International Journal of Forecasting, 22, 679–688. https://robjhyndman.com/publications/another-look-at-measures-of-forecast-accuracy/
-    """
     ts = _get_data.load_data(3)
 
     ts_period = _period.get_ts_period(ts)
@@ -1021,6 +1554,13 @@ def _test() -> None:
                                                              squared=False)
 
     res: t.Any
+
+    res = MFETSLandmarking.ft_model_linear_seasonal(ts, score=score)
+    print(17, res)
+    exit(1)
+
+    res = MFETSLandmarking.ft_model_linear_embed(ts, score=score)
+    print(20, res)
 
     res = MFETSLandmarking.ft_model_exp(ts, score=score)
     print(4, res)
@@ -1048,24 +1588,6 @@ def _test() -> None:
 
     res = MFETSLandmarking.ft_model_hwes_adm(ts, ts_period, score=score)
     print(5, res)
-
-    res = MFETSLandmarking.ft_model_linear_embed_lag_1(ts,
-                                                       ts_period,
-                                                       score=score)
-    print(18, res)
-
-    res = MFETSLandmarking.ft_model_linear_embed_lag_2(ts,
-                                                       ts_period,
-                                                       score=score)
-    print(19, res)
-
-    res = MFETSLandmarking.ft_model_linear_embed_lag_m(ts,
-                                                       ts_period,
-                                                       score=score)
-    print(20, res)
-
-    res = MFETSLandmarking.ft_model_linear_seasonal(ts, ts_period, score=score)
-    print(17, res)
 
     res = MFETSLandmarking.ft_model_naive(ts, score=score)
     print(16, res)

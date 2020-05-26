@@ -268,7 +268,7 @@ class MFETSModelBased:
         ioe_std_func = lambda arr: np.std(arr, ddof=1) / np.sqrt(arr.size)
 
         ioe_std = _utils.calc_ioe_stats(ts=ts,
-                                        funcs=ioe_std_func,
+                                        funcs=[ioe_std_func],
                                         ts_scaled=ts_scaled,
                                         step_size=step_size)
 
@@ -1079,6 +1079,8 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res: t.Any
 
     res = MFETSModelBased.precompute_ts_scaled(ts)
     print(res)

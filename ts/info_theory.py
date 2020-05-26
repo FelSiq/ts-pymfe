@@ -1177,6 +1177,8 @@ def _test() -> None:
     ts = ts.to_numpy()
     print("TS period:", ts_period)
 
+    res: t.Any
+
     res = MFETSInfoTheory.precompute_ts_scaled(ts)
     print(res)
 

@@ -353,6 +353,8 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
 
+    res: t.Any
+
     res = MFETSFreqDomain.precompute_ps_residuals(ts)
     print(res)
 

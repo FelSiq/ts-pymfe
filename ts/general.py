@@ -823,7 +823,7 @@ class MFETSGeneral:
     @classmethod
     def ft_peak_frac(cls,
                      ts_season: np.ndarray,
-                     ts_period: t.Optional[t.Union[int, str]] = None,
+                     ts_period: t.Optional[int] = None,
                      normalize: bool = True) -> t.Union[int, float]:
         """Fraction of where the seasonal peak is localed within a period.
 
@@ -877,6 +877,8 @@ class MFETSGeneral:
         if _ts_period <= 1:
             return np.nan
 
+        ind_peak: t.Union[int, float]
+
         ind_peak = cls._calc_season_mode_ind(ts_season=ts_season,
                                              ts_period=_ts_period,
                                              indfunc=np.argmax)
@@ -889,7 +891,7 @@ class MFETSGeneral:
     @classmethod
     def ft_trough_frac(cls,
                        ts_season: np.ndarray,
-                       ts_period: t.Optional[t.Union[int, str]] = None,
+                       ts_period: t.Optional[int] = None,
                        normalize: bool = True) -> t.Union[int, float]:
         """Fraction of where the seasonal trough is localed within a period.
 
@@ -942,6 +944,8 @@ class MFETSGeneral:
 
         if _ts_period <= 1:
             return np.nan
+
+        ind_trough: t.Union[int, float]
 
         ind_trough = cls._calc_season_mode_ind(ts_season=ts_season,
                                                ts_period=_ts_period,
@@ -1461,6 +1465,89 @@ class MFETSGeneral:
         return angles
 
     @classmethod
+    def ft_emb_lag(cls,
+                   ts: np.ndarray,
+                   lag: t.Optional[t.Union[str, int]] = None,
+                   max_nlags: t.Optional[int] = None,
+                   detrended_acfs: t.Optional[np.ndarray] = None,
+                   detrended_ami: t.Optional[np.ndarray] = None,
+                   ts_scaled: t.Optional[np.ndarray] = None) -> int:
+        """Estimated appropriate embedding lag.
+
+        The lag is estimated using either the automutual information function
+        or the autocorrelation function on the detrended time-series (using
+        Friedman's Super Smoother).
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        lag : int or str, optional
+            Must be None or a string in {`acf`, `acf-nonsig`, `ami`}. In the
+            last two type of options, the lag is estimated within this method
+            using the given strategy method (or, if None, it is used the
+            strategy `acf-nonsig` by default) up to ``max_nlags``.
+                1. `acf`: the lag corresponds to the first non-positive value
+                    in the autocorrelation function.
+                2. `acf-nonsig`: lag corresponds to the first non-significant
+                    value in the autocorrelation function (absolute value below
+                    the critical value of 1.96 / sqrt(ts.size)).
+                3. `ami`: lag corresponds to the first local minimum of the
+                    time-series automutual information function.
+
+            If a positive integer, this method will return the given value by
+            default. This is used to take advantage of precomputations.
+
+        max_nlags : int, optional
+            If ``lag`` is not a numeric value, than it will be estimated using
+            either the time-series autocorrelation or mutual information
+            function estimated up to this argument value.
+
+        detrended_acfs : :obj:`np.ndarray`, optional
+            Array of time-series autocorrelation function (for distinct ordered
+            lags) of the detrended time-series. Used only if ``lag`` is any of
+            `acf`, `acf-nonsig` or None.  If this argument is not given and the
+            previous condiditon is meet, the autocorrelation function will be
+            calculated inside this method up to ``max_nlags``.
+
+        detrended_ami : :obj:`np.ndarray`, optional
+            Array of time-series automutual information function (for distinct
+            ordered lags). Used only if ``lag`` is `ami`. If not given and the
+            previous condiditon is meet, the automutual information function
+            will be calculated inside this method up to ``max_nlags``.
+
+        ts_scaled : :obj:`np.ndarray`, optional
+            Standardized time-series values. Used to take advantage of
+            precomputations.
+
+        Returns
+        -------
+        int
+            Estimation of the appropriate embedding lag using the selected
+            strategy.
+
+        References
+        ----------
+        .. [1] Friedman, J. H. 1984, A variable span scatterplot smoother
+            Laboratory for Computational Statistics, Stanford University
+            Technical Report No. 5. Available at:
+            https://www.slac.stanford.edu/pubs/slacpubs/3250/slac-pub-3477.pdf
+            Accessed on May 12 2020.
+        .. [2] Fraser AM, Swinney HL. Independent coordinates for strange
+            attractors from mutual information. Phys Rev A Gen Phys.
+            1986;33(2):1134‐1140. doi:10.1103/physreva.33.1134
+        """
+        ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
+
+        lag = _embed.embed_lag(ts=ts_scaled,
+                               lag=lag,
+                               detrended_acfs=detrended_acfs,
+                               detrended_ami=detrended_ami,
+                               max_nlags=max_nlags)
+        return lag
+
+    @classmethod
     def ft_emb_dim_cao(cls,
                        ts: np.ndarray,
                        dims: t.Union[int, t.Sequence[int]] = 16,
@@ -1471,7 +1558,8 @@ class MFETSGeneral:
                        ts_scaled: t.Optional[np.ndarray] = None,
                        detrended_acfs: t.Optional[np.ndarray] = None,
                        detrended_ami: t.Optional[np.ndarray] = None,
-                       emb_dim_cao_e1: t.Optional[np.ndarray] = None) -> int:
+                       emb_dim_cao_e1: t.Optional[np.ndarray] = None,
+                       emb_dim_cao_e2: t.Optional[np.ndarray] = None) -> int:
         """Embedding dimension estimation using Cao's method.
 
         Using the Cao's embedding dimension estimation, it is calculated both
@@ -1546,6 +1634,10 @@ class MFETSGeneral:
             E1 values from the Cao's method. Used to take advantage of
             precomputations.
 
+        emb_dim_cao_e2 : :obj:`np.ndarray`, optional
+            E2 values from the Cao's method. Used to take advantage of
+            precomputations.
+
         Returns
         -------
         int
@@ -1567,11 +1659,12 @@ class MFETSGeneral:
                                detrended_ami=detrended_ami,
                                max_nlags=max_nlags)
 
-        if emb_dim_cao_e1 is None:
+        if emb_dim_cao_e1 is None or (check_e2 and emb_dim_cao_e2 is None):
             emb_dim_cao_e1, emb_dim_cao_e2 = _embed.embed_dim_cao(
                 ts=ts, ts_scaled=ts_scaled, dims=dims, lag=lag)
 
-        if check_e2 and np.all(np.abs(emb_dim_cao_e2 - 1) < tol_threshold):
+        if (check_e2 and emb_dim_cao_e2 is not None and
+                np.all(np.abs(emb_dim_cao_e2 - 1) < tol_threshold)):
             return 1
 
         e1_abs_diff = np.abs(np.diff(emb_dim_cao_e1))
@@ -1882,6 +1975,8 @@ def _test() -> None:
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
     print("TS period:", ts_period)
+
+    res: t.Any
 
     res = MFETSGeneral.precompute_walker(ts)
     print(res)
