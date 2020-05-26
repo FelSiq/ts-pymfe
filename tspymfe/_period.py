@@ -4,7 +4,7 @@ import typing as t
 import numpy as np
 import statsmodels.tsa.stattools
 
-import _detrend
+import tspymfe._detrend as _detrend
 
 
 def get_ts_period(ts: np.ndarray,

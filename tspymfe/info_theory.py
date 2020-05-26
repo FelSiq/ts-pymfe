@@ -5,12 +5,12 @@ import numpy as np
 import sklearn.linear_model
 import scipy.stats
 
-import _detrend
-import _embed
-import _utils
+import tspymfe._detrend as _detrend
+import tspymfe._embed as _embed
+import tspymfe._utils as _utils
 
 try:
-    import autocorr
+    import tspymfe.autocorr as autocorr
 
 except ImportError:
     pass

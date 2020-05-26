@@ -5,12 +5,12 @@ import statsmodels.tsa.stattools
 import numpy as np
 import sklearn.gaussian_process
 
-import _embed
-import _utils
-import _detrend
+import tspymfe._embed as _embed
+import tspymfe._utils as _utils
+import tspymfe._detrend as _detrend
 
 try:
-    import stat_tests
+    import tspymfe.stat_tests as stat_tests
 
 except ImportError:
     pass

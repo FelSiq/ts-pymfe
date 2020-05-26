@@ -4,16 +4,16 @@ import typing as t
 import numpy as np
 import scipy.spatial
 
-import _utils
+import tspymfe._utils as _utils
 
 try:
-    import autocorr
+    import tspymfe.autocorr as autocorr
 
 except ImportError:
     pass
 
 try:
-    import info_theory
+    import tspymfe.info_theory as info_theory
 
 except ImportError:
     pass

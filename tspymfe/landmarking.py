@@ -11,19 +11,19 @@ import statsmodels.tsa.holtwinters
 import statsmodels.tools.sm_exceptions
 import statsmodels.base.model
 
-import _utils
-import _period
-import _models
-import _embed
+import tspymfe._utils as _utils
+import tspymfe._period as _period
+import tspymfe._models as _models
+import tspymfe._embed as _embed
 
 try:
-    import general
+    import tspymfe.general as general
 
 except ImportError:
     pass
 
 try:
-    import autocorr
+    import tspymfe.autocorr as autocorr
 
 except ImportError:
     pass

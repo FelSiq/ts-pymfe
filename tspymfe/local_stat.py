@@ -6,22 +6,22 @@ import scipy.stats
 import numpy as np
 import pymfe.statistical
 
-import _utils
+import tspymfe._utils as _utils
 
 try:
-    import stat_tests
+    import tspymfe.stat_tests as stat_tests
 
 except ImportError:
     pass
 
 try:
-    import autocorr
+    import tspymfe.autocorr as autocorr
 
 except ImportError:
     pass
 
 try:
-    import info_theory
+    import tspymfe.info_theory as info_theory
 
 except ImportError:
     pass

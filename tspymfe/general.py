@@ -6,9 +6,9 @@ import scipy.spatial
 import scipy.odr
 import scipy.signal
 
-import _embed
-import _period
-import _utils
+import tspymfe._embed as _embed
+import tspymfe._period as _period
+import tspymfe._utils as _utils
 
 
 class MFETSGeneral:

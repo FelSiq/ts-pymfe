@@ -5,12 +5,12 @@ import collections
 import numpy as np
 import statsmodels.tsa
 
-import _utils
-import _embed
-import _surrogates
+import tspymfe._utils as _utils
+import tspymfe._embed as _embed
+import tspymfe._surrogates as _surrogates
 
 try:
-    import autocorr
+    import tspymfe.autocorr as autocorr
 
 except ImportError:
     pass
