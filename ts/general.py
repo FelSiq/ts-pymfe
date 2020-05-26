@@ -1990,6 +1990,9 @@ def _test() -> None:
     res = MFETSGeneral.precompute_ts_scaled(ts)
     print(res)
 
+    res = MFETSGeneral.ft_emb_lag(ts)
+    print(res)
+
     res = MFETSGeneral.ft_stick_angles(ts)
     print(res)
 

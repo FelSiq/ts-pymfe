@@ -1,22 +1,15 @@
 """Module dedicated to landmarking time-series meta-features."""
-"""TODO.
-
-Future refs:
-https://people.duke.edu/~rnau/411arim.htm#mixed
-https://otexts.com/fpp2/taxonomy.html
-https://otexts.com/fpp2/forecasting-on-training-and-test-sets.html
-"""
 import typing as t
 import warnings
 
 import numpy as np
 import sklearn.model_selection
+import sklearn.gaussian_process
+import sklearn.base
 import statsmodels.tsa.arima_model
 import statsmodels.tsa.holtwinters
 import statsmodels.tools.sm_exceptions
 import statsmodels.base.model
-import sklearn.gaussian_process
-import sklearn.base
 
 import _utils
 import _period
@@ -42,16 +35,16 @@ class MFETSLandmarking:
     """Extract time-series meta-features from Landmarking group."""
     @classmethod
     def _standard_pipeline_sklearn(
-        cls,
-        y: np.ndarray,
-        model: t.Union[_models.BaseModel, sklearn.base.BaseEstimator],
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        X: t.Optional[np.ndarray] = None,
-        args_fit: t.Optional[t.Dict[str, t.Any]] = None,
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
+            cls,
+            y: np.ndarray,
+            model: t.Union[_models.BaseModel, sklearn.base.BaseEstimator],
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            X: t.Optional[np.ndarray] = None,
+            args_fit: t.Optional[t.Dict[str, t.Any]] = None,
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
     ) -> np.ndarray:
         """Fit a model using a canonical pipeline with models from sklearn.
 
@@ -153,16 +146,16 @@ class MFETSLandmarking:
 
     @classmethod
     def _standard_pipeline_statsmodels(
-        cls,
-        ts: np.ndarray,
-        model_callable: statsmodels.base.model.Model,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        args_inst: t.Optional[t.Dict[str, t.Any]] = None,
-        args_fit: t.Optional[t.Dict[str, t.Any]] = None,
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
+            cls,
+            ts: np.ndarray,
+            model_callable: statsmodels.base.model.Model,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            args_inst: t.Optional[t.Dict[str, t.Any]] = None,
+            args_fit: t.Optional[t.Dict[str, t.Any]] = None,
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
     ) -> np.ndarray:
         """Fit a model using a canonical pipeline with models from statsmodels.
 
@@ -177,17 +170,17 @@ class MFETSLandmarking:
             One-dimensional time-series values.
 
         model_callable : :obj:`statsmodels.base.model.Model`
-            TODO.
+            Callable model from statsmodels package.
 
         score : callable
             Score function. Must receive two numeric values as the first two
             arguments, and return a single numeric value.
 
         args_inst : dict, optional
-            TODO.
+            Extra arguments for the model instantiation.
 
         args_fit : dict, optional
-            TODO.
+            Extra arguments for the fit method.
 
         tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
             Custom Forward Chaining cross-validatior.
@@ -283,7 +276,7 @@ class MFETSLandmarking:
             unbiased: bool = True,
             max_nlags: t.Optional[int] = None,
             **kwargs) -> np.ndarray:
-        """First non-positive autocorrelation lag of cross-validation folds.
+        """First non-positive autocorrelation lag of cross-validation erros.
 
         Parameters
         ----------
@@ -373,6 +366,20 @@ class MFETSLandmarking:
         -------
         :obj:`np.ndarray`
             The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        .. [3] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
         model_callable = statsmodels.tsa.arima_model.ARIMA
 
@@ -443,6 +450,20 @@ class MFETSLandmarking:
         -------
         :obj:`np.ndarray`
             The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        .. [3] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
         model = _models.TSLocalMean(train_prop=loc_prop)
 
@@ -503,6 +524,20 @@ class MFETSLandmarking:
         -------
         :obj:`np.ndarray`
             The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        .. [3] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
         model = _models.TSLocalMedian(train_prop=loc_prop)
 
@@ -573,6 +608,20 @@ class MFETSLandmarking:
         -------
         :obj:`np.ndarray`
             The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        .. [3] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
         model = _models.TSSine(opt_initial_guess=opt_initial_guess,
                                random_state=random_state)
@@ -634,6 +683,20 @@ class MFETSLandmarking:
         -------
         :obj:`np.ndarray`
             The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        .. [3] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
         model = _models.TSExp()
 
@@ -694,6 +757,20 @@ class MFETSLandmarking:
         -------
         :obj:`np.ndarray`
             The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        .. [3] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
         model = sklearn.gaussian_process.GaussianProcessRegressor(
             copy_X_train=False, random_state=random_state)
@@ -709,12 +786,12 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_linear(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """Cross-validated performance of the linear model in time domain.
 
@@ -878,6 +955,9 @@ class MFETSLandmarking:
         .. [3] Fraser AM, Swinney HL. Independent coordinates for strange
             attractors from mutual information. Phys Rev A Gen Phys.
             1986;33(2):1134‐1140. doi:10.1103/physreva.33.1134
+        .. [4] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
         model = sklearn.linear_model.LinearRegression()
 
@@ -958,6 +1038,12 @@ class MFETSLandmarking:
         -------
         :obj:`np.ndarray`
             The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
         _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
 
@@ -1027,6 +1113,12 @@ class MFETSLandmarking:
         -------
         :obj:`np.ndarray`
             The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
         model = _models.TSNaive()
 
@@ -1085,6 +1177,12 @@ class MFETSLandmarking:
         -------
         :obj:`np.ndarray`
             The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
         model = _models.TSNaiveDrift()
 
@@ -1147,6 +1245,12 @@ class MFETSLandmarking:
         -------
         :obj:`np.ndarray`
             The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
         _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
 
@@ -1166,16 +1270,65 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_arima_100_c(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        solver: str = "lbfgs",
-        maxiter: int = 512,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the ARIMA(1,0,0) with constant model.
+
+        ARIMA(1,0,0) is a first-order regressive model.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        solver : str, optional (default="lbfgs")
+            Solver used to optimize the model.
+
+        maxiter : int, optional (default=512)
+            Maximum number of optimization iterations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Statistical forecasting: notes on regression and time series
+            analysis, Robert Nau, Fuqua School of Business, Duke University.
+            URL: https://people.duke.edu/~rnau/411arim.htm#mixed
+            Accessed on 26 May 2020.
+        .. [2] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
+        """
         model_callable = statsmodels.tsa.arima_model.ARIMA
 
         args_inst = {"order": (1, 0, 0)}
@@ -1200,16 +1353,65 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_arima_010_c(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        solver: str = "lbfgs",
-        maxiter: int = 512,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the ARIMA(0,1,0) with constant model.
+
+        ARIMA(0,1,0) is a random walk model.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        solver : str, optional (default="lbfgs")
+            Solver used to optimize the model.
+
+        maxiter : int, optional (default=512)
+            Maximum number of optimization iterations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Statistical forecasting: notes on regression and time series
+            analysis, Robert Nau, Fuqua School of Business, Duke University.
+            URL: https://people.duke.edu/~rnau/411arim.htm#mixed
+            Accessed on 26 May 2020.
+        .. [2] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
+        """
         model_callable = statsmodels.tsa.arima_model.ARIMA
 
         args_inst = {"order": (0, 1, 0)}
@@ -1234,16 +1436,65 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_arima_110_c(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        solver: str = "lbfgs",
-        maxiter: int = 512,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the ARIMA(1,1,0) with constant model.
+
+        ARIMA(1,1,0) is a differenced first-order autoregressive model.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        solver : str, optional (default="lbfgs")
+            Solver used to optimize the model.
+
+        maxiter : int, optional (default=512)
+            Maximum number of optimization iterations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Statistical forecasting: notes on regression and time series
+            analysis, Robert Nau, Fuqua School of Business, Duke University.
+            URL: https://people.duke.edu/~rnau/411arim.htm#mixed
+            Accessed on 26 May 2020.
+        .. [2] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
+        """
         model_callable = statsmodels.tsa.arima_model.ARIMA
 
         args_inst = {"order": (1, 1, 0)}
@@ -1268,16 +1519,65 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_arima_011_nc(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        solver: str = "lbfgs",
-        maxiter: int = 512,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the ARIMA(0,1,1) (no constant) model.
+
+        ARIMA(0,1,1) without constant is a simple exponential smoothing model.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        solver : str, optional (default="lbfgs")
+            Solver used to optimize the model.
+
+        maxiter : int, optional (default=512)
+            Maximum number of optimization iterations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Statistical forecasting: notes on regression and time series
+            analysis, Robert Nau, Fuqua School of Business, Duke University.
+            URL: https://people.duke.edu/~rnau/411arim.htm#mixed
+            Accessed on 26 May 2020.
+        .. [2] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
+        """
         model_callable = statsmodels.tsa.arima_model.ARIMA
 
         args_inst = {"order": (0, 1, 1)}
@@ -1302,16 +1602,66 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_arima_011_c(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        solver: str = "lbfgs",
-        maxiter: int = 512,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the ARIMA(0,1,1) with constant model.
+
+        ARIMA(0,1,1) with constant is a simple exponential smoothing model with
+        growth.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        solver : str, optional (default="lbfgs")
+            Solver used to optimize the model.
+
+        maxiter : int, optional (default=512)
+            Maximum number of optimization iterations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Statistical forecasting: notes on regression and time series
+            analysis, Robert Nau, Fuqua School of Business, Duke University.
+            URL: https://people.duke.edu/~rnau/411arim.htm#mixed
+            Accessed on 26 May 2020.
+        .. [2] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
+        """
         model_callable = statsmodels.tsa.arima_model.ARIMA
 
         args_inst = {"order": (0, 1, 1)}
@@ -1335,54 +1685,69 @@ class MFETSLandmarking:
         return res
 
     @classmethod
-    def ft_model_arima_022_nc(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        solver: str = "lbfgs",
-        maxiter: int = 512,
+    def ft_model_arima_021_c(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the ARIMA(0,2,1) with constant model.
+
+        ARIMA(0,2,1) with constant is a linear exponential smoothing model.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        solver : str, optional (default="lbfgs")
+            Solver used to optimize the model.
+
+        maxiter : int, optional (default=512)
+            Maximum number of optimization iterations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Statistical forecasting: notes on regression and time series
+            analysis, Robert Nau, Fuqua School of Business, Duke University.
+            URL: https://people.duke.edu/~rnau/411arim.htm#mixed
+            Accessed on 26 May 2020.
+        .. [2] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
+        """
         model_callable = statsmodels.tsa.arima_model.ARIMA
 
-        args_inst = {"order": (0, 2, 2)}
-        args_fit = {
-            "disp": False,
-            "trend": "nc",
-            "transparams": True,
-            "maxiter": maxiter,
-            "solver": solver,
-        }
-
-        res = cls._standard_pipeline_statsmodels(ts=ts,
-                                                 model_callable=model_callable,
-                                                 args_inst=args_inst,
-                                                 args_fit=args_fit,
-                                                 score=score,
-                                                 tskf=tskf,
-                                                 num_cv_folds=num_cv_folds,
-                                                 lm_sample_frac=lm_sample_frac)
-
-        return res
-
-    @classmethod
-    def ft_model_arima_112_c(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        solver: str = "lbfgs",
-        maxiter: int = 512,
-    ) -> np.ndarray:
-        """TODO."""
-        model_callable = statsmodels.tsa.arima_model.ARIMA
-
-        args_inst = {"order": (1, 1, 2)}
+        args_inst = {"order": (0, 2, 1)}
         args_fit = {
             "disp": False,
             "trend": "c",
@@ -1403,15 +1768,142 @@ class MFETSLandmarking:
         return res
 
     @classmethod
-    def ft_model_ses(
-        cls,
-        ts: np.ndarray,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
+    def ft_model_arima_112_nc(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            solver: str = "lbfgs",
+            maxiter: int = 512,
     ) -> np.ndarray:
-        """TODO."""
+        """Cross-validated performance of the ARIMA(1,1,2) (no constant) model.
+
+        ARIMA(1,1,2) without constant is a demped-trend linear exponential
+        smoothing model.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        solver : str, optional (default="lbfgs")
+            Solver used to optimize the model.
+
+        maxiter : int, optional (default=512)
+            Maximum number of optimization iterations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Statistical forecasting: notes on regression and time series
+            analysis, Robert Nau, Fuqua School of Business, Duke University.
+            URL: https://people.duke.edu/~rnau/411arim.htm#mixed
+            Accessed on 26 May 2020.
+        .. [2] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
+        """
+        model_callable = statsmodels.tsa.arima_model.ARIMA
+
+        args_inst = {"order": (1, 1, 2)}
+        args_fit = {
+            "disp": False,
+            "trend": "nc",
+            "transparams": True,
+            "maxiter": maxiter,
+            "solver": solver,
+        }
+
+        res = cls._standard_pipeline_statsmodels(ts=ts,
+                                                 model_callable=model_callable,
+                                                 args_inst=args_inst,
+                                                 args_fit=args_fit,
+                                                 score=score,
+                                                 tskf=tskf,
+                                                 num_cv_folds=num_cv_folds,
+                                                 lm_sample_frac=lm_sample_frac)
+
+        return res
+
+    @classmethod
+    def ft_model_ses(
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+    ) -> np.ndarray:
+        """Cross-validated performance of a Single Exponential Smoothing model.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        solver : str, optional (default="lbfgs")
+            Solver used to optimize the model.
+
+        maxiter : int, optional (default=512)
+            Maximum number of optimization iterations.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
+        """
         model_callable = statsmodels.tsa.holtwinters.SimpleExpSmoothing
 
         res = cls._standard_pipeline_statsmodels(ts=ts,
@@ -1425,19 +1917,76 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_hwes_ada(
-        cls,
-        ts: np.ndarray,
-        ts_period: int,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            ts_period: t.Optional[int] = None,
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
-        """TODO."""
+        """Performance of a HW(A_{d},A) model.
+
+        Either components (Trend and Seasonal) are additive, and the model has
+        a damping component in the trend component.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        ts_period : int, optional
+            Time-series period. If not given, it will be estimated using
+            the minima of the absolute autocorrelation function from lag
+            1 up to half the time-series size.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
+        .. [2] Holt, C. E. (1957). Forecasting seasonals and trends by
+            exponentially weighted averages (O.N.R. Memorandum No. 52).
+            Carnegie Institute of Technology, Pittsburgh USA.
+            https://doi.org/10.1016/j.ijforecast.2003.09.015
+        .. [3] Winters, P. R. (1960). Forecasting sales by exponentially
+            weighted moving averages. Management Science, 6, 324–342.
+            https://doi.org/10.1287/mnsc.6.3.324
+        """
+        _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
+
+        if _ts_period <= 1:
+            raise ValueError("Time-series is not seasonal (period <= 1).")
+
         model_callable = statsmodels.tsa.holtwinters.ExponentialSmoothing
 
         args_inst = {
-            "seasonal_periods": ts_period,
+            "seasonal_periods": _ts_period,
             "trend": "add",
             "seasonal": "add",
             "damped": True,
@@ -1460,19 +2009,76 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_hwes_adm(
-        cls,
-        ts: np.ndarray,
-        ts_period: int,
-        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
+            cls,
+            ts: np.ndarray,
+            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+            ts_period: t.Optional[int] = None,
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
-        """TODO."""
+        """Performance of a HW(A_{d},M) model.
+
+        The trend component is additive, and the seasonal component is
+        multiplicative. Also, the trend component is damped.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set.
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        score : callable
+            Score function. Must receive two numeric values as the first two
+            arguments, and return a single numeric value.
+
+        ts_period : int, optional
+            Time-series period. If not given, it will be estimated using
+            the minima of the absolute autocorrelation function from lag
+            1 up to half the time-series size.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            The model performance for each iteration of the cross-validation.
+
+        References
+        ----------
+        .. [1] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
+        .. [2] Holt, C. E. (1957). Forecasting seasonals and trends by
+            exponentially weighted averages (O.N.R. Memorandum No. 52).
+            Carnegie Institute of Technology, Pittsburgh USA.
+            https://doi.org/10.1016/j.ijforecast.2003.09.015
+        .. [3] Winters, P. R. (1960). Forecasting sales by exponentially
+            weighted moving averages. Management Science, 6, 324–342.
+            https://doi.org/10.1287/mnsc.6.3.324
+        """
+        _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
+
+        if _ts_period <= 1:
+            raise ValueError("Time-series is not seasonal (period <= 1).")
+
         model_callable = statsmodels.tsa.holtwinters.ExponentialSmoothing
 
         args_inst = {
-            "seasonal_periods": ts_period,
+            "seasonal_periods": _ts_period,
             "trend": "add",
             "seasonal": "mul",
             "damped": True,
@@ -1499,15 +2105,66 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_mean_acf_first_nonpos(
-        cls,
-        ts: np.ndarray,
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        unbiased: bool = True,
-        max_nlags: t.Optional[int] = None,
+            cls,
+            ts: np.ndarray,
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            unbiased: bool = True,
+            max_nlags: t.Optional[int] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """First non-positive autocorrelation lags for Mean model errors.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set. Then, the
+        autocorrelation function is calculated from the test set errors (i.e.
+        true values subtracted by the predicted values).
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        max_nlags : int, optional
+            Number of lags to avaluate the autocorrelation function.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            First non-positive autocorrelation function lag of the mean model
+            errors, for each cross-validation fold.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        .. [3] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
+        """
         acf_first_nonpos_mean = cls._model_acf_first_nonpos(
             ts=ts,
             perf_ft_method=cls.ft_model_mean,
@@ -1521,15 +2178,69 @@ class MFETSLandmarking:
 
     @classmethod
     def ft_model_linear_acf_first_nonpos(
-        cls,
-        ts: np.ndarray,
-        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-        num_cv_folds: int = 5,
-        lm_sample_frac: float = 1.0,
-        unbiased: bool = True,
-        max_nlags: t.Optional[int] = None,
+            cls,
+            ts: np.ndarray,
+            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+            num_cv_folds: int = 5,
+            lm_sample_frac: float = 1.0,
+            unbiased: bool = True,
+            max_nlags: t.Optional[int] = None,
     ) -> np.ndarray:
-        """TODO."""
+        """First non-positive autocorrelation lags for Linear model errors.
+
+        The linear model is in the time domain, i.e., the time-series value
+        is regressed onto the timestamps.
+
+        The model score is validated using Forward Chaining, i.e., the full
+        time-series is split into ``num_cv_folds`` of equal sizes, and at each
+        iteration of the validation, a distinct single fold is used as the test
+        set, and all other previous folds are used as the train set. Then, the
+        autocorrelation function is calculated from the test set errors (i.e.
+        true values subtracted by the predicted values).
+
+        Parameters
+        ----------
+        ts : :obj:`np.ndarray`
+            One-dimensional time-series values.
+
+        tskf : :obj:`sklearn.model_selection.TimeSeriesSplit`, optional
+            Custom Forward Chaining cross-validatior.
+
+        num_cv_folds : int, optional (default=5)
+            Number of test folds. Used only if ``tskf`` is None.
+
+        lm_sample_frac : float, optional (default=1.0)
+            Fraction of dataset to use. Default is to use the entire dataset.
+            Must be a value in (0, 1] range. Only the most recent time-series
+            observations (in the highest indices of ``ts``) are used.
+
+        unbiased : bool, optional (default=True)
+            If True, the autocorrelation function is corrected for statistical
+            bias.
+
+        max_nlags : int, optional
+            Number of lags to avaluate the autocorrelation function.
+
+        Returns
+        -------
+        :obj:`np.ndarray`
+            First non-positive autocorrelation function lag of the linear model
+            errors, for each cross-validation fold.
+
+        References
+        ----------
+        .. [1] B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework
+            for Automated Time-Series Phenotyping Using Massive Feature
+            Extraction, Cell Systems 5: 527 (2017).
+            DOI: 10.1016/j.cels.2017.10.001
+        .. [2] B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative
+            time-series analysis: the empirical structure of time series and
+            their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
+            DOI: 10.1098/rsif.2013.0048
+        .. [3] Hyndman, R.J., & Athanasopoulos, G. (2018) Forecasting:
+            principles and practice, 2nd edition, OTexts: Melbourne,
+            Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
+        """
         acf_first_nonpos_linear = cls._model_acf_first_nonpos(
             ts=ts,
             perf_ft_method=cls.ft_model_linear,
@@ -1557,7 +2268,6 @@ def _test() -> None:
 
     res = MFETSLandmarking.ft_model_linear_seasonal(ts, score=score)
     print(17, res)
-    exit(1)
 
     res = MFETSLandmarking.ft_model_linear_embed(ts, score=score)
     print(20, res)
@@ -1574,7 +2284,7 @@ def _test() -> None:
     res = MFETSLandmarking.ft_model_loc_mean(ts, score=score)
     print(4, res)
 
-    res = MFETSLandmarking.ft_model_naive_seasonal(ts, ts_period, score=score)
+    res = MFETSLandmarking.ft_model_naive_seasonal(ts, score=score)
     print(15, res)
 
     res = MFETSLandmarking.ft_model_naive_drift(ts, score=score)
@@ -1583,10 +2293,10 @@ def _test() -> None:
     res = MFETSLandmarking.ft_model_gaussian(ts, score=score, random_state=16)
     print(4, res)
 
-    res = MFETSLandmarking.ft_model_hwes_ada(ts, ts_period, score=score)
+    res = MFETSLandmarking.ft_model_hwes_ada(ts, score=score)
     print(4, res)
 
-    res = MFETSLandmarking.ft_model_hwes_adm(ts, ts_period, score=score)
+    res = MFETSLandmarking.ft_model_hwes_adm(ts, score=score)
     print(5, res)
 
     res = MFETSLandmarking.ft_model_naive(ts, score=score)
@@ -1616,14 +2326,10 @@ def _test() -> None:
     res = MFETSLandmarking.ft_model_arima_011_c(ts, score=score)
     print(10, res)
 
-    res = MFETSLandmarking.ft_model_arima_022_nc(ts,
-                                                 score=score,
-                                                 num_cv_folds=5)
+    res = MFETSLandmarking.ft_model_arima_021_c(ts, score=score)
     print(11, res)
 
-    res = MFETSLandmarking.ft_model_arima_112_c(ts,
-                                                score=score,
-                                                num_cv_folds=5)
+    res = MFETSLandmarking.ft_model_arima_112_nc(ts, score=score)
     print(12, res)
 
     res = MFETSLandmarking.ft_model_linear(ts, score=score)
