@@ -785,6 +785,7 @@ class MFETSInfoTheory:
             DOI: 10.1098/rsif.2013.0048
         """
         def neigh_num(dim: int) -> int:
+            """Mean-log-mean of the number of radius neighbors."""
             embed = _embed.embed_ts(ts_scaled, dim=dim, lag=embed_lag)
             dist_mat = scipy.spatial.distance.cdist(embed,
                                                     embed,
@@ -859,6 +860,7 @@ class MFETSInfoTheory:
             DOI: 10.1098/rsif.2013.0048
         """
         def log_neigh_num(dim: int) -> int:
+            """Logarithm of the number of nearest neighbors."""
             embed = _embed.embed_ts(ts_scaled, dim=dim, lag=embed_lag)
             dist_mat = scipy.spatial.distance.pdist(embed, metric=metric, p=p)
             return np.log(np.sum(dist_mat < threshold))
@@ -953,13 +955,13 @@ class MFETSInfoTheory:
         """Surprise factor of a nth-order differenced time-series.
 
         The surprise measure is an estimation of the negative log-probablity of
-        a given random reference observation have its value given a `short-term`
+        a given random reference observation have its value given a short-term
         memory of `ceil(memory_size * len(ts))` most recent values.
 
         This method measures the surprise factor associated with each value on
-        a nth-order differenced time-series. This analysis may also be performed
-        on the original time-series, simply using the 0th-order differenced
-        time-series.
+        a nth-order differenced time-series. This analysis may also be
+        performed on the original time-series, simply using the 0th-order
+        differenced time-series.
 
         Parameters
         ----------
@@ -1040,7 +1042,10 @@ class MFETSInfoTheory:
                              "".format(num_it))
 
         def get_reference_inds(inds_num: int, max_ind: int) -> np.ndarray:
-            """Get min(ts.size - memory_size, inds_num) random reference indices."""
+            """Get min(ts.size - memory_size, inds_num) random indices.
+
+            The indices are chosen randomly without replacement.
+            """
             if max_ind - memory_size > num_it:
                 if random_state is not None:
                     np.random.seed(random_state)

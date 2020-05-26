@@ -220,13 +220,13 @@ class MFETSLandmarking:
                 feature_range=scale_range)
 
         with warnings.catch_warnings():
-            # Note: We are ignoring these warnings because they are related to poor
-            # model fits when the time-series does not match the algorithm
+            # Note: We are ignoring these warnings because they are related to
+            # poor model fits when the time-series does not match the algorithm
             # assumptions. This is expected for a couple of model types, since
             # the same unprocessed time-series is fitted in a large amount of
             # different model types. It is also expected that bad score relates
-            # with poor fits, and hence the metafeature will still reflect the true
-            # (bad) relationship between the model and the data.
+            # with poor fits, and hence the metafeature will still reflect the
+            # true (bad) relationship between the model and the data.
             warnings.filterwarnings(
                 "ignore",
                 module="statsmodels",
@@ -311,9 +311,10 @@ class MFETSLandmarking:
             Lag of the first non-positive in the autocorrelation function for
             each forward chaining cross-validation fold.
         """
-        score = lambda ts_pred, ts_test: (
-            autocorr.MFETSAutocorr.ft_acf_first_nonpos(
-                ts=ts_pred - ts_test, unbiased=unbiased, max_nlags=max_nlags))
+        def score(ts_pred: np.ndarray, ts_test: np.ndarray) -> float:
+            """Score function: autocorrelation of the errors."""
+            return autocorr.MFETSAutocorr.ft_acf_first_nonpos(
+                ts=ts_pred - ts_test, unbiased=unbiased, max_nlags=max_nlags)
 
         model_acf_first_nonpos = perf_ft_method(ts=ts,
                                                 tskf=tskf,
@@ -583,8 +584,8 @@ class MFETSLandmarking:
             Custom Forward Chaining cross-validatior.
 
         opt_initial_guess : bool, optional (default=True)
-            If True, make and optimal initial guess. If False, make a faster but
-            naive initial guess.
+            If True, make and optimal initial guess. If False, make a faster
+            but naive initial guess.
 
         loc_prop : float, optional (default=0.25)
             Fraction of the most recent observations to be used as the training
@@ -894,15 +895,15 @@ class MFETSLandmarking:
             If string, it must be one value in {`ami`, `acf`, `acf-nonsig`},
             which defines the strategy of defining the appropriate lag of
             the embedding.
-                1. `ami`: uses the first minimum lag of the automutual information
-                    of the time-series.
-                2. `acf`: uses the first negative lag of the autocorrelation of the
-                    time-series.
-                3. `acf-nonsig` (default): uses the first non-significant lag of
-                    the time-series autocorrelation function. The non-significant
-                    value is defined as the first lag that has the absolute value
-                    of is autocorrelation below the critical value defined as
-                    1.96 / sqrt(ts.size).
+                1. `ami`: uses the first minimum lag of the automutual
+                    information of the time-series.
+                2. `acf`: uses the first negative lag of the autocorrelation of
+                    the time-series.
+                3. `acf-nonsig` (default): uses the first non-significant lag
+                    of the time-series autocorrelation function.
+                    The non-significant value is defined as the first lag that
+                    has the absolute value of is autocorrelation below the
+                    critical value defined as 1.96 / sqrt(ts.size).
 
             If None, the lag will be searched will the 'acf-nonsig' criteria.
 

@@ -654,13 +654,14 @@ class MFETSGlobalStats:
         References
         ----------
         .. [1] H. E. Hurst, The problem of long-term storage in reservoirs,
-            International Association of Scientific Hydrology. Bulletin, vol. 1,
-            no. 3, pp. 13–27, 1956.
+            International Association of Scientific Hydrology. Bulletin, vol.
+            1, no. 3, pp. 13–27, 1956.
         .. [2] H. E. Hurst, A suggested statistical model of some time series
             which occur in nature, Nature, vol. 180, p. 494, 1957.
         .. [3] R. Weron, Estimating long-range dependence: finite sample
-            properties and confidence intervals, Physica A: Statistical Mechanics
-            and its Applications, vol. 312, no. 1, pp. 285–299, 2002.
+            properties and confidence intervals, Physica A: Statistical
+            Mechanics and its Applications, vol. 312, no. 1, pp. 285–299,
+            2002.
         .. [4] "nolds" Python package: https://pypi.org/project/nolds/
         .. [5] Lemke, Christiane & Gabrys, Bogdan. (2010). Meta-learning for
             time series forecasting and forecast combination. Neurocomputing.
@@ -695,13 +696,14 @@ class MFETSGlobalStats:
         References
         ----------
         .. [1] H. E. Hurst, The problem of long-term storage in reservoirs,
-            International Association of Scientific Hydrology. Bulletin, vol. 1,
-            no. 3, pp. 13–27, 1956.
+            International Association of Scientific Hydrology. Bulletin, vol.
+            1, no. 3, pp. 13–27, 1956.
         .. [2] H. E. Hurst, A suggested statistical model of some time series
             which occur in nature, Nature, vol. 180, p. 494, 1957.
         .. [3] R. Weron, Estimating long-range dependence: finite sample
-            properties and confidence intervals, Physica A: Statistical Mechanics
-            and its Applications, vol. 312, no. 1, pp. 285–299, 2002.
+            properties and confidence intervals, Physica A: Statistical
+            Mechanics and its Applications, vol. 312, no. 1, pp. 285–299,
+            2002.
         .. [4] "nolds" Python package: https://pypi.org/project/nolds/
         """
         return nolds.hurst_rs(data=ts)

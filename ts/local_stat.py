@@ -1545,9 +1545,9 @@ class MFETSLocalStats:
         Returns
         -------
         :obj:`np.ndarray`
-            If `return_pval` is False, moving approximate entropy from overlapping
-            windows in time-series values. If `return_pval` is True, each test
-            statistic is replaced by its correspondent p-value.
+            If `return_pval` is False, moving approximate entropy from
+            overlapping windows in time-series values. If `return_pval` is
+            True, each test statistic is replaced by its correspondent p-value.
 
         References
         ----------

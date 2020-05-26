@@ -560,6 +560,7 @@ class MFETSRandomize:
             return itrand_stat_acf
 
         def func_acf(arr: np.ndarray) -> float:
+            """Autocorrelation of the first lag."""
             return statsmodels.tsa.stattools.acf(arr, nlags=1, fft=True)[1]
 
         res = cls._itrand_stat(ts=ts,

@@ -71,7 +71,7 @@ def embed_ts(ts: np.ndarray,
 def nn(embed: np.ndarray,
        metric: str = "chebyshev",
        p: t.Union[int, float] = 2) -> np.ndarray:
-    """Return the Nearest neighbors of each embedded time-series observation."""
+    """Return the Nearest neighbor of each embedded time-series observation."""
     dist_mat = scipy.spatial.distance.cdist(embed, embed, metric=metric, p=p)
 
     # Note: prevent nearest neighbor be the instance itself, and also

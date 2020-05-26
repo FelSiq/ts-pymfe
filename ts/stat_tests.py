@@ -69,7 +69,7 @@ class MFETSStatTests:
             are 0, so that any observed correlations in the data result from
             randomness of the sampling process).
 
-        Alternative Hypothesis (HA): The data are not independently distributed;
+        Alternative Hypothesis (HA): The data is not independently distributed;
             they exhibit serial correlation.
 
         Parameters

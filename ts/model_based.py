@@ -263,7 +263,9 @@ class MFETSModelBased:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
-        ioe_std_func = lambda arr: np.std(arr, ddof=1) / np.sqrt(arr.size)
+        def ioe_std_func(arr: np.ndarray) -> float:
+            """Normalized standard deviation with ddof=1."""
+            return np.std(arr, ddof=1) / np.sqrt(arr.size)
 
         ioe_std = _utils.calc_ioe_stats(ts=ts,
                                         funcs=[ioe_std_func],
@@ -687,9 +689,9 @@ class MFETSModelBased:
 
         ETS models are also known as `Holt-Winters Exponential Smoothing`.
 
-        The `seasonal` parameter is also known as the `gamma` parameter, from the
-        traditional Triple Exponential Smoothing definition formula. It controls
-        the influence of the seasonal component into the model.
+        The `seasonal` parameter is also known as the `gamma` parameter, from
+        the traditional Triple Exponential Smoothing definition formula. It
+        controls the influence of the seasonal component into the model.
 
         Parameters
         ----------

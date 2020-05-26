@@ -623,8 +623,8 @@ class MFETSGeneral:
             1141–1160.
         .. [5] Jaksic V, Mandic DP, Ryan K, Basu B, Pakrashi V. A comprehensive
             study of the delay vector variance method for quantification of
-            nonlinearity in dynamical systems. R Soc Open Sci. 2016;3(1):150493.
-            Published 2016 Jan 6. doi:10.1098/rsos.150493
+            nonlinearity in dynamical systems. R Soc Open Sci.
+            2016;3(1):150493. Published 2016 Jan 6. doi:10.1098/rsos.150493
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
         lag = _embed.embed_lag(ts=ts_scaled,
@@ -895,8 +895,8 @@ class MFETSGeneral:
 
         This method returns the fraction (relative to the time-series period)
         of the mode of the trough localization within every complete period
-        in the given time-series. For instance, if the trough tends to appear in
-        the middle of a time-series complete period, this method will return
+        in the given time-series. For instance, if the trough tends to appear
+        in the middle of a time-series complete period, this method will return
         `0.5`. If, in contrast, the trough tends to appear as the first period
         observation, this method returns `0.0`.
 
@@ -1943,10 +1943,10 @@ class MFETSGeneral:
 
         References
         ----------
-        .. [1] Determining embedding dimension for phase-space reconstruction using
-            a geometrical construction, Kennel, Matthew B. and Brown, Reggie and
-            Abarbanel, Henry D. I., Phys. Rev. A, volume 45, 1992, American
-            Physical Society.
+        .. [1] Determining embedding dimension for phase-space reconstruction
+            using a geometrical construction, Kennel, Matthew B. and Brown,
+            Reggie and Abarbanel, Henry D. I., Phys. Rev. A, volume 45, 1992,
+            American Physical Society.
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
