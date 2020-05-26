@@ -1,13 +1,20 @@
 """Simple model algorithms for time-series forecasting."""
 import typing as t
+import abc
 
 import numpy as np
 import scipy.optimize
 
 
-class BaseModel:
+class BaseModel(metaclass=abc.ABCMeta):
     """Base model for the custom models of this module."""
-    pass
+    @abc.abstractmethod
+    def fit(self, X: np.ndarray, y: np.ndarray, **kwargs) -> "BaseModel":
+        """Generic fit method."""
+
+    @abc.abstractmethod
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """Generic predict method."""
 
 
 class TSNaive(BaseModel):
@@ -22,7 +29,7 @@ class TSNaive(BaseModel):
         self.last_timestamp = -1.0
         self._fitted = False
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "TSNaive":
+    def fit(self, X: np.ndarray, y: np.ndarray, **kwargs) -> "TSNaive":
         """Fit a Naive model.
 
         It stores the value of the last observation of ``y``, and its
@@ -66,7 +73,7 @@ class TSNaiveDrift(BaseModel):
         self.last_obs_ind = -1
         self._fitted = False
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "TSNaiveDrift":
+    def fit(self, X: np.ndarray, y: np.ndarray, **kwargs) -> "TSNaiveDrift":
         """Fit a Naive model with drift.
 
         This model calculates the slope of the line crossing the first and last
@@ -118,34 +125,28 @@ class TSNaiveSeasonal(BaseModel):
     past period. Then, each prediction is equal to the value in the
     corresponding timestamp of the previous period.
     """
-    def __init__(self, ts_period: t.Optional[int] = None):
+    def __init__(self, ts_period: int, copy: bool = False):
         """Init a Seasonal Naive Model."""
         self.y = np.empty(0)
         self.ts_period = ts_period
         self.timestamp_interval = -1
         self.last_timestamp = -1
         self._fitted = False
+        self.copy = copy
 
-    def fit(self,
-            X: np.ndarray,
-            y: np.ndarray,
-            ts_period: t.Optional[int] = None,
-            copy: bool = False) -> "TSNaiveSeasonal":
+        if self.ts_period is None:
+            raise ValueError("'ts_period' must be given.")
+
+    def fit(self, X: np.ndarray, y: np.ndarray, **kwargs) -> "TSNaiveSeasonal":
         """Fit a Seasonal Naive model."""
         if X.size != y.size:
             raise ValueError("'X' and 'y' size must match.")
 
-        if copy or not isinstance(y, np.ndarray):
+        if self.copy or not isinstance(y, np.ndarray):
             self.y = np.copy(y)
 
         else:
             self.y = y
-
-        if ts_period is not None:
-            self.ts_period = ts_period
-
-        if self.ts_period is None:
-            raise ValueError("'ts_period' must be given.")
 
         if X.size < self.ts_period:
             raise ValueError("Fitted time-series can't be smaller than its "
@@ -194,7 +195,7 @@ class _TSLocalStat(BaseModel):
         self.last_timestamp = -1
         self._fitted = False
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "_TSLocalStat":
+    def fit(self, X: np.ndarray, y: np.ndarray, **kwargs) -> "_TSLocalStat":
         """Fit a local statistical forecasting model."""
         self.last_timestamp = X[-1]
         last_ind = int(np.ceil(y.size * self.train_prop))
@@ -290,7 +291,7 @@ class TSSine(BaseModel):
 
         return np.std(y) * np.random.randn(4)
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "TSSine":
+    def fit(self, X: np.ndarray, y: np.ndarray, **kwargs) -> "TSSine":
         """Fit the Sine forecasting model."""
         if self.random_state is not None:
             np.random.seed(self.random_state)
@@ -337,7 +338,7 @@ class TSExp(BaseModel):
 
         self._fitted = False
 
-    def fit(self, X: np.ndarray, y: np.ndarray) -> "TSExp":
+    def fit(self, X: np.ndarray, y: np.ndarray, **kwargs) -> "TSExp":
         """Fit the exponential forecasting model."""
         b_0 = y[-1] / y[-2]
         a_0 = 0.1
