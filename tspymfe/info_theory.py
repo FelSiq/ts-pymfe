@@ -423,6 +423,10 @@ class MFETSInfoTheory:
             the given ``lags`` value.
             If sequence of integers, calculate the automutual information for
             each of the given lags.
+            If None, estimate the appropriate lag from the autocorrelation
+            function (using the lag corresponding to the first non-positive
+            value), and estimate the automutual information from lag 1 up to
+            the estimated appropriate lag.
 
         return_dist : bool, optional (default=False)
             If True, return the automutual information distance for every lag,
@@ -483,9 +487,8 @@ class MFETSInfoTheory:
                                     lag="acf",
                                     max_nlags=max_nlags,
                                     detrended_acfs=detrended_acfs)
-            lags = np.asarray([lags], dtype=int)
 
-        elif np.isscalar(lags):
+        if np.isscalar(lags):
             lags = np.arange(1, 1 + int(lags))  # type: ignore
 
         if ts_detrended is None:
