@@ -4,7 +4,11 @@ import typing as t
 import numpy as np
 import scipy.spatial
 
-import tspymfe._utils as _utils
+try:
+    import tspymfe._utils as _utils
+
+except ImportError:
+    pass
 
 try:
     import tspymfe.autocorr as autocorr
