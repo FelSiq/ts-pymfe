@@ -7,7 +7,6 @@ import pymfe.statistical
 import nolds
 import scipy.stats
 
-import _detrend
 import _period
 import _utils
 

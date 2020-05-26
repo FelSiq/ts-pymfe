@@ -7,7 +7,6 @@ import scipy.stats
 
 import _detrend
 import _embed
-import _period
 import _utils
 
 try:

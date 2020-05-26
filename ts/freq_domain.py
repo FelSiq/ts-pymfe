@@ -5,9 +5,6 @@ import numpy as np
 import scipy.signal
 import scipy.stats
 
-import _detrend
-import _period
-
 
 class MFETSFreqDomain:
     """Extract time-series meta-features from Frequency Domain group."""

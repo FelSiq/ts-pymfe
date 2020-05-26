@@ -6,8 +6,6 @@ import numpy as np
 import statsmodels.tsa
 
 import _utils
-import _detrend
-import _period
 import _embed
 import _surrogates
 
@@ -145,7 +143,7 @@ class MFETSRandomize:
                 ("acf", lambda arr: statsmodels.tsa.stattools.acf(
                     arr, nlags=1, fft=True)[1]),
             )
-        )  # type: collections.OrderedDict[str, t.Callable[[np.ndarray], float]]
+        )  # type: collections.OrderedDict[str,t.Callable[[np.ndarray], float]]
 
         stat_names = list(map("itrand_stat_{}".format, stats.keys()))
 
@@ -561,8 +559,8 @@ class MFETSRandomize:
         if itrand_stat_acf is not None:
             return itrand_stat_acf
 
-        func_acf = lambda arr: statsmodels.tsa.stattools.acf(
-            arr, nlags=1, fft=True)[1]
+        def func_acf(arr: np.ndarray) -> float:
+            return statsmodels.tsa.stattools.acf(arr, nlags=1, fft=True)[1]
 
         res = cls._itrand_stat(ts=ts,
                                func_stats=[func_acf],

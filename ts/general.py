@@ -6,7 +6,6 @@ import scipy.spatial
 import scipy.odr
 import scipy.signal
 
-import _detrend
 import _embed
 import _period
 import _utils

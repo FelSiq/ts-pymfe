@@ -6,9 +6,6 @@ import arch.unitroot
 import statsmodels.stats.stattools
 import statsmodels.stats.diagnostic
 
-import _period
-import _detrend
-
 
 class MFETSStatTests:
     """Extract time-series meta-features from Statistical Tests group."""

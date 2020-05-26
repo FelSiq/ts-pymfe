@@ -6,8 +6,6 @@ import scipy.stats
 import numpy as np
 import pymfe.statistical
 
-import _period
-import _detrend
 import _utils
 
 try:

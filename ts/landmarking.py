@@ -13,7 +13,6 @@ import statsmodels.base.model
 
 import _utils
 import _period
-import _detrend
 import _models
 import _embed
 

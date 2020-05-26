@@ -5,11 +5,15 @@ import statsmodels.tsa.stattools
 import numpy as np
 import sklearn.gaussian_process
 
-import stat_tests
 import _embed
 import _utils
 import _detrend
-import _period
+
+try:
+    import stat_tests
+
+except ImportError:
+    pass
 
 
 class MFETSAutocorr:

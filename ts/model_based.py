@@ -12,7 +12,6 @@ import numpy as np
 import _utils
 import _orthopoly
 import _period
-import _detrend
 
 
 class MFETSModelBased:
