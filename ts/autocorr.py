@@ -159,14 +159,15 @@ class MFETSAutocorr:
                                            or detrended_acfs.size == nlags):
             return detrended_acfs
 
-        ts_detrended = ts
-
         if detrend and ts_detrended is None:
             try:
                 ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
 
             except ValueError:
                 pass
+
+        if ts_detrended is None:
+            ts_detrended = ts
 
         if nlags is None:
             nlags = ts.size // 2
@@ -219,14 +220,15 @@ class MFETSAutocorr:
         if nlags is None:
             nlags = ts.size // 2
 
-        ts_detrended = ts
-
         if detrend and ts_detrended is None:
             try:
                 ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
 
             except ValueError:
                 pass
+
+        if ts_detrended is None:
+            ts_detrended = ts
 
         pacf = statsmodels.tsa.stattools.pacf(ts_detrended,
                                               nlags=nlags,
@@ -1251,6 +1253,8 @@ def _test() -> None:
     ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
                                                            ts_period=ts_period)
     ts = ts.to_numpy()
+
+    res: t.Any
 
     res = MFETSAutocorr.precompute_detrended_acf(ts)
     print(res)
