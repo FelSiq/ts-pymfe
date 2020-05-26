@@ -1540,12 +1540,12 @@ class MFETSGeneral:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        lag = _embed.embed_lag(ts=ts_scaled,
-                               lag=lag,
-                               detrended_acfs=detrended_acfs,
-                               detrended_ami=detrended_ami,
-                               max_nlags=max_nlags)
-        return lag
+        _lag = _embed.embed_lag(ts=ts_scaled,
+                                lag=lag,
+                                detrended_acfs=detrended_acfs,
+                                detrended_ami=detrended_ami,
+                                max_nlags=max_nlags)
+        return _lag
 
     @classmethod
     def ft_emb_dim_cao(cls,
@@ -1967,7 +1967,6 @@ class MFETSGeneral:
 
 
 def _test() -> None:
-    import matplotlib.pyplot as plt
     ts = _get_data.load_data(3)
 
     ts_period = _period.get_ts_period(ts)
