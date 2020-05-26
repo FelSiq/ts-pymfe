@@ -6,13 +6,27 @@ import scipy.stats
 import numpy as np
 import pymfe.statistical
 
-import stat_tests
-import autocorr
-import info_theory
 import _period
 import _detrend
-import _get_data
 import _utils
+
+try:
+    import stat_tests
+
+except ImportError:
+    pass
+
+try:
+    import autocorr
+
+except ImportError:
+    pass
+
+try:
+    import info_theory
+
+except ImportError:
+    pass
 
 
 class MFETSLocalStats:
@@ -1819,88 +1833,3 @@ class MFETSLocalStats:
                                              func=np.ptp)
 
         return tilled_range
-
-
-def _test() -> None:
-    ts = _get_data.load_data(3)
-    ts_period = _period.get_ts_period(ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts)
-    ts = ts.to_numpy()
-
-    res = MFETSLocalStats.precompute_ts_scaled(ts)
-    print(res)
-    res = MFETSLocalStats.precompute_rolling_window(ts)
-    print(res)
-
-    res = MFETSLocalStats.ft_moving_lilliefors(ts)
-    print(res)
-
-    res = MFETSLocalStats.ft_moving_approx_ent(ts)
-    print(res)
-
-    res = MFETSLocalStats.ft_moving_lilliefors(ts)
-    print(res)
-
-    res = MFETSLocalStats.ft_moving_avg(ts)
-    print(res)
-
-    res = MFETSLocalStats.ft_moving_avg_shift(ts)
-    print(res)
-
-    res = MFETSLocalStats.ft_moving_var_shift(ts)
-    print(res)
-
-    res = MFETSLocalStats.ft_moving_skewness_shift(ts)
-    print("skewness diff", np.nanmax(res))
-
-    res = MFETSLocalStats.ft_moving_kurtosis_shift(ts)
-    print("kurtosis diff", np.nanmax(res))
-
-    res = MFETSLocalStats.ft_moving_gmean_shift(ts)
-    print("gmean diff", res)
-
-    res = MFETSLocalStats.ft_moving_sd_shift(ts)
-    print("sd shift", res)
-
-    res = MFETSLocalStats.ft_moving_acf_shift(ts)
-    print("acf diff", res)
-
-    res = MFETSLocalStats.ft_moving_kldiv_shift(ts)
-    print(res)
-
-    res = MFETSLocalStats.ft_spikiness(ts_residuals)
-    print(np.var(res))
-
-    res = MFETSLocalStats.ft_lumpiness(ts)
-    print("lumpiness", np.var(res))
-
-    res = MFETSLocalStats.ft_stability(ts)
-    print("stability", np.var(res))
-
-    res = MFETSLocalStats.ft_moving_var(ts)
-    print(np.nanmax(res))
-
-    res = MFETSLocalStats.ft_moving_skewness(ts)
-    print("skewness diff", np.nanmax(res))
-
-    res = MFETSLocalStats.ft_moving_kurtosis(ts)
-    print("kurtosis diff", np.nanmax(res))
-
-    res = MFETSLocalStats.ft_moving_gmean(ts)
-    print("gmean diff", res)
-
-    res = MFETSLocalStats.ft_moving_sd(ts)
-    print(np.nanmax(res))
-
-    res = MFETSLocalStats.ft_moving_acf(ts)
-    print("acf diff", res)
-
-    res = MFETSLocalStats.ft_moving_kldiv(ts)
-    print(res)
-
-    res = MFETSLocalStats.ft_local_extrema(ts)
-    print("LocalStats extrema", res)
-
-
-if __name__ == "__main__":
-    _test()

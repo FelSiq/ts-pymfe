@@ -8,7 +8,6 @@ import statsmodels.stats.diagnostic
 
 import _period
 import _detrend
-import _get_data
 
 
 class MFETSStatTests:
@@ -454,44 +453,3 @@ class MFETSStatTests:
             return pvalue
 
         return stat
-
-
-def _test() -> None:
-    ts = _get_data.load_data(3)
-    ts_period = _period.get_ts_period(ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
-                                                           ts_period=ts_period)
-    ts = ts.to_numpy().astype(float)
-
-    pval = True
-
-    res = MFETSStatTests.ft_test_lilliefors(ts_residuals, return_pval=pval)
-    print(res)
-
-    res = MFETSStatTests.ft_test_lb(ts_residuals, return_pval=pval)
-    print(res)
-
-    res = MFETSStatTests.ft_test_earch(ts_residuals, return_pval=pval)
-    print(res)
-
-    res = MFETSStatTests.ft_test_adf(ts, return_pval=pval)
-    print(res)
-
-    res = MFETSStatTests.ft_test_adf_gls(ts, return_pval=pval)
-    print(res)
-
-    res = MFETSStatTests.ft_test_kpss(ts, return_pval=pval)
-    print(res)
-
-    res = MFETSStatTests.ft_test_pp(ts, return_pval=pval)
-    print(res)
-
-    res = MFETSStatTests.ft_test_dw(ts_residuals)
-    print(res)
-
-    res = MFETSStatTests.ft_test_za(ts, return_pval=pval)
-    print(res)
-
-
-if __name__ == "__main__":
-    _test()

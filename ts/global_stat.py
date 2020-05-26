@@ -10,7 +10,6 @@ import scipy.stats
 import _detrend
 import _period
 import _utils
-import _get_data
 
 
 class MFETSGlobalStats:
@@ -858,80 +857,3 @@ class MFETSGlobalStats:
             DOI: 10.1098/rsif.2013.0048
         """
         return pymfe.statistical.MFEStatistical.ft_t_mean(N=ts, pcut=pcut)
-
-
-def _test() -> None:
-    ts = _get_data.load_data(3)
-
-    ts_period = _period.get_ts_period(ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
-                                                           ts_period=ts_period)
-    ts = ts.to_numpy()
-
-    res: t.Any
-
-    res = MFETSGlobalStats.precompute_period(ts)
-    print(res)
-
-    res = MFETSGlobalStats.ft_dfa(ts)
-    print(res)
-
-    res = MFETSGlobalStats.ft_corr_dim(ts)
-    print("corr_dim", res)
-
-    res = MFETSGlobalStats.ft_ioe_tdelta_mean(ts)
-    print(res)
-
-    res = MFETSGlobalStats.ft_t_mean(ts)
-    print("trimmed mean", res)
-
-    res = MFETSGlobalStats.ft_opt_boxcox_coef(ts)
-    print(res)
-
-    res = MFETSGlobalStats.ft_sd_diff(ts)
-    print("sd diff", res)
-
-    res = MFETSGlobalStats.ft_sd_sdiff(ts)
-    print("sd sdiff", res)
-
-    res = MFETSGlobalStats.ft_skewness_diff(ts)
-    print("skewness diff", res)
-
-    res = MFETSGlobalStats.ft_skewness_sdiff(ts)
-    print("skewness sdiff", res)
-
-    res = MFETSGlobalStats.ft_kurtosis_diff(ts)
-    print("kurtosis diff", res)
-
-    res = MFETSGlobalStats.ft_kurtosis_sdiff(ts)
-    print("kurtosis sdiff", res)
-
-    res = MFETSGlobalStats.ft_sd_diff(ts)
-    print("sd diff", res)
-
-    res = MFETSGlobalStats.ft_exp_max_lyap(ts, embed_dim=ts_period, lag=1)
-    print("exp max lyap", res)
-
-    res = MFETSGlobalStats.ft_exp_hurst(ts)
-    print("exp hurst", res)
-
-    res = MFETSGlobalStats.ft_skewness_residuals(ts_residuals)
-    print(res)
-
-    res = MFETSGlobalStats.ft_kurtosis_residuals(ts_residuals)
-    print(res)
-
-    res = MFETSGlobalStats.ft_sd_residuals(ts_residuals)
-    print(res)
-
-    res = MFETSGlobalStats.ft_trend_strenght(ts_residuals,
-                                             ts_trend + ts_residuals)
-    print(res)
-
-    res = MFETSGlobalStats.ft_season_strenght(ts_residuals,
-                                              ts_season + ts_residuals)
-    print(res)
-
-
-if __name__ == "__main__":
-    _test()

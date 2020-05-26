@@ -10,7 +10,6 @@ import _embed
 import _utils
 import _detrend
 import _period
-import _get_data
 
 
 class MFETSAutocorr:
@@ -1245,69 +1244,3 @@ class MFETSAutocorr:
                            ts_inliners_acfs)
 
         return dist_acfs
-
-
-def _test() -> None:
-    ts = _get_data.load_data(3)
-    ts_period = _period.get_ts_period(ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
-                                                           ts_period=ts_period)
-    ts = ts.to_numpy()
-
-    res: t.Any
-
-    res = MFETSAutocorr.precompute_detrended_acf(ts)
-    print(res)
-
-    res = MFETSAutocorr.precompute_gaussian_model(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_gen_autocorr(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_trev(ts, only_numerator=False)
-    print(res)
-
-    res = MFETSAutocorr.ft_acf_first_nonsig(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_acf_first_nonpos(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_tc3(ts, only_numerator=False)
-    print(res)
-
-    res = MFETSAutocorr.ft_autocorr_out_dist(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_first_acf_locmin(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_gresid_autocorr(ts, random_state=16)
-    print(res)
-
-    res = MFETSAutocorr.ft_autocorr_crit_pt(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_acf_first_nonpos(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_acf_detrended(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_pacf(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_acf_diff(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_pacf_diff(ts)
-    print(res)
-
-    res = MFETSAutocorr.ft_gresid_lbtest(ts, random_state=16)
-    print(res)
-
-
-
-if __name__ == "__main__":
-    _test()

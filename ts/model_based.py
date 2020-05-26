@@ -13,7 +13,6 @@ import _utils
 import _orthopoly
 import _period
 import _detrend
-import _get_data
 
 
 class MFETSModelBased:
@@ -1070,63 +1069,3 @@ class MFETSModelBased:
         adj_r_sqr = res_ioe_std_linreg.rsquared_adj
 
         return adj_r_sqr
-
-
-def _test() -> None:
-    ts = _get_data.load_data(3)
-
-    ts_period = _period.get_ts_period(ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
-                                                           ts_period=ts_period)
-    ts = ts.to_numpy()
-
-    res: t.Any
-
-    res = MFETSModelBased.precompute_ts_scaled(ts)
-    print(res)
-
-    res = MFETSModelBased.precompute_period(ts)
-    print(res)
-
-    res = MFETSModelBased.precompute_model_ets(ts)
-    print(res)
-
-    res = MFETSModelBased.precompute_ioe_std_linear_model(ts)
-    print(res)
-
-    res = MFETSModelBased.ft_avg_cycle_period(ts_residuals)
-    print(res)
-
-    res = MFETSModelBased.ft_ioe_std_adj_r_sqr(ts)
-    print(res)
-
-    res = MFETSModelBased.ft_ioe_std_slope(ts)
-    print(res)
-
-    res = MFETSModelBased.ft_gaussian_r_sqr(ts)
-    print(res)
-
-    res = MFETSModelBased.ft_linearity(ts_trend)
-    print("linearity", res)
-
-    res = MFETSModelBased.ft_curvature(ts_trend)
-    print("curvature", res)
-
-    res = MFETSModelBased.ft_des_level(ts)
-    print(res)
-
-    res = MFETSModelBased.ft_des_slope(ts)
-    print(res)
-
-    res = MFETSModelBased.ft_ets_level(ts)
-    print(res)
-
-    res = MFETSModelBased.ft_ets_slope(ts)
-    print(res)
-
-    res = MFETSModelBased.ft_ets_season(ts)
-    print(res)
-
-
-if __name__ == "__main__":
-    _test()

@@ -5,12 +5,16 @@ import numpy as np
 import sklearn.linear_model
 import scipy.stats
 
-import autocorr
 import _detrend
 import _embed
 import _period
 import _utils
-import _get_data
+
+try:
+    import autocorr
+
+except ImportError:
+    pass
 
 
 class MFETSInfoTheory:
@@ -1166,60 +1170,3 @@ class MFETSInfoTheory:
             lz_comp *= np.log(_len) / (_len * np.log(num_bins))
 
         return lz_comp
-
-
-def _test() -> None:
-    ts = _get_data.load_data(3)
-
-    ts_period = _period.get_ts_period(ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
-                                                           ts_period=ts_period)
-    ts = ts.to_numpy()
-    print("TS period:", ts_period)
-
-    res: t.Any
-
-    res = MFETSInfoTheory.precompute_ts_scaled(ts)
-    print(res)
-
-    res = MFETSInfoTheory.precompute_detrended_ami(ts)
-    print(res)
-
-    res = MFETSInfoTheory.ft_ami_detrended(ts, return_dist=True)
-    print(res)
-
-    res = MFETSInfoTheory.ft_ami(ts, return_dist=True)
-    print(res)
-
-    res = MFETSInfoTheory.ft_lz_complexity(ts)
-    print(res)
-
-    res = MFETSInfoTheory.ft_sample_entropy(ts)
-    print(res)
-
-    res = MFETSInfoTheory.ft_approx_entropy(ts)
-    print(res)
-
-    res = MFETSInfoTheory.ft_control_entropy(ts)
-    print(res)
-
-    res = MFETSInfoTheory.ft_surprise(ts,
-                                      random_state=16,
-                                      method="1-transition")
-    print(res)
-
-    res = MFETSInfoTheory.ft_ami_curvature(ts, random_state=16)
-    print(res)
-
-    res = MFETSInfoTheory.ft_ami_first_critpt(ts)
-    print(res)
-
-    res = MFETSInfoTheory.ft_hist_entropy(ts)
-    print(res)
-
-    res = MFETSInfoTheory.ft_hist_ent_out_diff(ts)
-    print(res)
-
-
-if __name__ == "__main__":
-    _test()

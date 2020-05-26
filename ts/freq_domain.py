@@ -7,7 +7,6 @@ import scipy.stats
 
 import _detrend
 import _period
-import _get_data
 
 
 class MFETSFreqDomain:
@@ -345,34 +344,3 @@ class MFETSFreqDomain:
         low_freq_prop = np.sum(hann_ps[freqs <= threshold]) / np.sum(hann_ps)
 
         return low_freq_prop
-
-
-def _test() -> None:
-    ts = _get_data.load_data(3)
-    ts_period = _period.get_ts_period(ts=ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
-                                                           ts_period=ts_period)
-
-    res: t.Any
-
-    res = MFETSFreqDomain.precompute_ps_residuals(ts)
-    print(res)
-
-    res = MFETSFreqDomain.ft_low_freq_power(ts)
-    print(res)
-
-    res = MFETSFreqDomain.ft_ps_residuals(ts_residuals)
-    print(res)
-
-    res = MFETSFreqDomain.ft_ps_freqs(ts_residuals)
-    print(res)
-
-    res = MFETSFreqDomain.ft_ps_peaks(ts_residuals)
-    print(res)
-
-    res = MFETSFreqDomain.ft_ps_entropy(ts_residuals)
-    print(res)
-
-
-if __name__ == "__main__":
-    _test()

@@ -10,7 +10,6 @@ import _detrend
 import _embed
 import _period
 import _utils
-import _get_data
 
 
 class MFETSGeneral:
@@ -1964,94 +1963,3 @@ class MFETSGeneral:
                                         lag=lag)
 
         return fnn_prop
-
-
-def _test() -> None:
-    ts = _get_data.load_data(3)
-
-    ts_period = _period.get_ts_period(ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
-                                                           ts_period=ts_period)
-    ts = ts.to_numpy()
-    print("TS period:", ts_period)
-
-    res: t.Any
-
-    res = MFETSGeneral.precompute_walker(ts)
-    print(res)
-
-    res = MFETSGeneral.precompute_embed_caos_method(ts)
-    print(res)
-
-    res = MFETSGeneral.precompute_period(ts)
-    print(res)
-
-    res = MFETSGeneral.precompute_ts_scaled(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_emb_lag(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_stick_angles(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_fs_len(ts, num_bins=2)
-    print(res)
-
-    res = MFETSGeneral.ft_fnn_prop(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_embed_in_shell(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_force_potential(ts, potential="sine")
-    print(res)
-
-    res = MFETSGeneral.ft_walker_cross_frac(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_walker_path(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_pred(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_moving_threshold(ts, relative=True)
-    print(res)
-
-    res = MFETSGeneral.ft_turning_points(ts)
-    print(np.mean(res))
-
-    res = MFETSGeneral.ft_step_changes(ts)
-    print(np.mean(res))
-
-    res = MFETSGeneral.ft_turning_points_trend(ts_trend)
-    print(np.mean(res))
-
-    res = MFETSGeneral.ft_step_changes_trend(ts_trend)
-    print(np.mean(res))
-
-    res = MFETSGeneral.ft_length(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_frac_cp(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_fs_len(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_binmean(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_period(ts)
-    print(res)
-
-    res = MFETSGeneral.ft_peak_frac(ts_season)
-    print(res)
-
-    res = MFETSGeneral.ft_trough_frac(ts_season)
-    print(res)
-
-
-if __name__ == "__main__":
-    _test()

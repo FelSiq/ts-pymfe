@@ -14,7 +14,6 @@ import statsmodels.base.model
 import _utils
 import _period
 import _detrend
-import _get_data
 import _models
 import _embed
 
@@ -2251,93 +2250,3 @@ class MFETSLandmarking:
             max_nlags=max_nlags)
 
         return acf_first_nonpos_linear
-
-
-def _test() -> None:
-    ts = _get_data.load_data(3)
-
-    ts_period = _period.get_ts_period(ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
-                                                           ts_period=ts_period)
-    ts = ts.to_numpy().astype(float)
-
-    score = lambda *args: sklearn.metrics.mean_squared_error(*args,
-                                                             squared=False)
-
-    res: t.Any
-
-    res = MFETSLandmarking.ft_model_linear_seasonal(ts, score=score)
-    print(17, res)
-
-    res = MFETSLandmarking.ft_model_linear_embed(ts, score=score)
-    print(20, res)
-
-    res = MFETSLandmarking.ft_model_exp(ts, score=score)
-    print(4, res)
-
-    res = MFETSLandmarking.ft_model_sine(ts - ts_trend, score=score)
-    print(4, res)
-
-    res = MFETSLandmarking.ft_model_loc_median(ts, score=score)
-    print(4, res)
-
-    res = MFETSLandmarking.ft_model_loc_mean(ts, score=score)
-    print(4, res)
-
-    res = MFETSLandmarking.ft_model_naive_seasonal(ts, score=score)
-    print(15, res)
-
-    res = MFETSLandmarking.ft_model_naive_drift(ts, score=score)
-    print(14, res)
-
-    res = MFETSLandmarking.ft_model_gaussian(ts, score=score, random_state=16)
-    print(4, res)
-
-    res = MFETSLandmarking.ft_model_hwes_ada(ts, score=score)
-    print(4, res)
-
-    res = MFETSLandmarking.ft_model_hwes_adm(ts, score=score)
-    print(5, res)
-
-    res = MFETSLandmarking.ft_model_naive(ts, score=score)
-    print(16, res)
-
-    res = MFETSLandmarking.ft_model_mean(ts, score=score)
-    print(13, res)
-
-    res = MFETSLandmarking.ft_model_mean_acf_first_nonpos(ts)
-    print(14, res)
-
-    res = MFETSLandmarking.ft_model_ses(ts, score=score)
-    print(3, res)
-
-    res = MFETSLandmarking.ft_model_arima_100_c(ts, score=score)
-    print(6, res)
-
-    res = MFETSLandmarking.ft_model_arima_010_c(ts, score=score)
-    print(7, res)
-
-    res = MFETSLandmarking.ft_model_arima_110_c(ts, score=score)
-    print(8, res)
-
-    res = MFETSLandmarking.ft_model_arima_011_nc(ts, score=score)
-    print(9, res)
-
-    res = MFETSLandmarking.ft_model_arima_011_c(ts, score=score)
-    print(10, res)
-
-    res = MFETSLandmarking.ft_model_arima_021_c(ts, score=score)
-    print(11, res)
-
-    res = MFETSLandmarking.ft_model_arima_112_nc(ts, score=score)
-    print(12, res)
-
-    res = MFETSLandmarking.ft_model_linear(ts, score=score)
-    print(15, res)
-
-    res = MFETSLandmarking.ft_model_linear_acf_first_nonpos(ts)
-    print(16, res)
-
-
-if __name__ == "__main__":
-    _test()

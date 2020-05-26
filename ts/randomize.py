@@ -8,7 +8,6 @@ import statsmodels.tsa
 import _utils
 import _detrend
 import _period
-import _get_data
 import _embed
 import _surrogates
 
@@ -971,44 +970,3 @@ class MFETSRandomize:
                 ts=ts, lag=lag, only_numerator=only_numerator)
 
         return surr_tc3
-
-
-def _test() -> None:
-    ts = _get_data.load_data(3)
-    ts_period = _period.get_ts_period(ts=ts)
-    ts_trend, ts_season, ts_residuals = _detrend.decompose(ts,
-                                                           ts_period=ts_period)
-
-    res = MFETSRandomize.precompute_ts_scaled(ts)
-    print(res)
-
-    res = MFETSRandomize.precompute_itrand_stats(ts, random_state=16)
-    print(res)
-
-    res = MFETSRandomize.ft_resample_first_acf_nonpos(ts, random_state=16)
-    print(res)
-
-    res = MFETSRandomize.ft_resample_first_acf_locmin(ts, random_state=16)
-    print(res)
-
-    res = MFETSRandomize.ft_surr_tc3(ts, random_state=16)
-    print(res)
-
-    res = MFETSRandomize.ft_surr_trev(ts, random_state=16)
-    print(res)
-
-    res = MFETSRandomize.ft_itrand_mean(ts, random_state=16)
-    print(res)
-
-    res = MFETSRandomize.ft_itrand_sd(ts, random_state=16)
-    print(res)
-
-    res = MFETSRandomize.ft_itrand_acf(ts, random_state=16)
-    print(res)
-
-    res = MFETSRandomize.ft_resample_std(ts, random_state=16)
-    print(res)
-
-
-if __name__ == "__main__":
-    _test()
