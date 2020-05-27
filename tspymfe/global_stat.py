@@ -323,7 +323,7 @@ class MFETSGlobalStats:
                                                                method=method,
                                                                bias=~unbiased)
 
-        return ts_skew
+        return float(ts_skew)
 
     @classmethod
     def ft_skewness_diff(cls,
@@ -386,7 +386,7 @@ class MFETSGlobalStats:
                                                                method=method,
                                                                bias=~unbiased)
 
-        return ts_skew
+        return float(ts_skew)
 
     @classmethod
     def ft_skewness_sdiff(cls,
@@ -447,7 +447,7 @@ class MFETSGlobalStats:
                                                                method=method,
                                                                bias=~unbiased)
 
-        return ts_skew
+        return float(ts_skew)
 
     @classmethod
     def ft_kurtosis_residuals(cls,
@@ -504,7 +504,7 @@ class MFETSGlobalStats:
                                                                method=method,
                                                                bias=~unbiased)
 
-        return ts_kurt
+        return float(ts_kurt)
 
     @classmethod
     def ft_kurtosis_diff(cls,
@@ -563,7 +563,7 @@ class MFETSGlobalStats:
                                                                method=method,
                                                                bias=~unbiased)
 
-        return ts_kurt
+        return float(ts_kurt)
 
     @classmethod
     def ft_kurtosis_sdiff(cls,
@@ -626,7 +626,7 @@ class MFETSGlobalStats:
                                                                method=method,
                                                                bias=~unbiased)
 
-        return ts_kurt
+        return float(ts_kurt)
 
     @classmethod
     def ft_exp_max_lyap(cls,

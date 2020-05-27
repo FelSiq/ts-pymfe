@@ -528,7 +528,7 @@ class MFETSGeneral:
                 max_nlags: t.Optional[int] = None,
                 detrended_acfs: t.Optional[np.ndarray] = None,
                 detrended_ami: t.Optional[np.ndarray] = None,
-                ts_scaled: t.Optional[np.ndarray] = None) -> float:
+                ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
         """Signal predictability using delay vector variance method.
 
         Parameters
@@ -732,7 +732,7 @@ class MFETSGeneral:
         return num_cp
 
     @classmethod
-    def ft_binmean(cls, ts: np.ndarray) -> np.ndarray:
+    def ft_bin_mean(cls, ts: np.ndarray) -> np.ndarray:
         """Check whether values are below or above the average value.
 
         Parameters
@@ -1787,7 +1787,7 @@ class MFETSGeneral:
                   ts_scaled: t.Optional[np.ndarray] = None,
                   detrended_acfs: t.Optional[np.ndarray] = None,
                   detrended_ami: t.Optional[np.ndarray] = None,
-                  emb_dim_cao_e2: t.Optional[np.ndarray] = None) -> int:
+                  emb_dim_cao_e2: t.Optional[np.ndarray] = None) -> np.ndarray:
         """Estimated Cao's method E2 values.
 
         Using the Cao's embedding dimension estimation, it is calculated both
@@ -1880,14 +1880,15 @@ class MFETSGeneral:
         return emb_dim_cao_e2
 
     @classmethod
-    def ft_fnn_prop(cls,
-                    ts: np.ndarray,
-                    dims: t.Union[int, t.Sequence[int]] = 16,
-                    lag: t.Optional[t.Union[str, int]] = None,
-                    max_nlags: t.Optional[int] = None,
-                    ts_scaled: t.Optional[np.ndarray] = None,
-                    detrended_acfs: t.Optional[np.ndarray] = None,
-                    detrended_ami: t.Optional[np.ndarray] = None) -> int:
+    def ft_fnn_prop(
+            cls,
+            ts: np.ndarray,
+            dims: t.Union[int, t.Sequence[int]] = 16,
+            lag: t.Optional[t.Union[str, int]] = None,
+            max_nlags: t.Optional[int] = None,
+            ts_scaled: t.Optional[np.ndarray] = None,
+            detrended_acfs: t.Optional[np.ndarray] = None,
+            detrended_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
         """Proportion of False Nearest Neighbors in the embedded time-series.
 
         Parameters
