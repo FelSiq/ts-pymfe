@@ -1,5 +1,6 @@
 """Module dedicated to model-based time-series meta-features."""
 import typing as t
+import warnings
 
 import sklearn.gaussian_process
 import sklearn.preprocessing
@@ -314,9 +315,15 @@ class MFETSModelBased:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        model = statsmodels.tsa.holtwinters.ExponentialSmoothing(
-            endog=ts_scaled, trend="additive", damped=damped,
-            seasonal=None).fit()
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                module="statsmodels",
+                category=statsmodels.tools.sm_exceptions.ConvergenceWarning)
+
+            model = statsmodels.tsa.holtwinters.ExponentialSmoothing(
+                endog=ts_scaled, trend="additive", damped=damped,
+                seasonal=None).fit()
 
         return model
 
@@ -371,12 +378,18 @@ class MFETSModelBased:
 
         ts_period = _period.get_ts_period(ts=ts_scaled, ts_period=ts_period)
 
-        model = statsmodels.tsa.holtwinters.ExponentialSmoothing(
-            endog=ts_scaled,
-            trend="additive",
-            seasonal="additive",
-            damped=damped,
-            seasonal_periods=ts_period).fit(use_brute=grid_search_guess)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                module="statsmodels",
+                category=statsmodels.tools.sm_exceptions.ConvergenceWarning)
+
+            model = statsmodels.tsa.holtwinters.ExponentialSmoothing(
+                endog=ts_scaled,
+                trend="additive",
+                seasonal="additive",
+                damped=damped,
+                seasonal_periods=ts_period).fit(use_brute=grid_search_guess)
 
         return model
 
