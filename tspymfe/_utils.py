@@ -252,7 +252,8 @@ def fit_gaussian_process(
     """
     ts_scaled = standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-    timestamps = np.linspace(0, 1, ts_scaled.size).reshape(-1, 1)
+    if gaussian_model is None or return_residuals:
+        timestamps = np.linspace(0, 1, ts_scaled.size).reshape(-1, 1)
 
     if gaussian_model is None:
         gaussian_model = sklearn.gaussian_process.GaussianProcessRegressor(
