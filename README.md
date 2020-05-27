@@ -1,7 +1,7 @@
 # ts-pymfe
 A backup for the pymfe expansion for time-series data.
 
-There is 153 distinct metafeature extraction methods in this version, distributed in the following groups:
+There is 149 distinct metafeature extraction methods in this version, distributed in the following groups:
 
 1. General
 2. Local statistics
