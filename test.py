@@ -116,8 +116,7 @@ def _test() -> None:
         MFETSGeneral.ft_step_changes_trend,
         MFETSGeneral.ft_length,
         MFETSGeneral.ft_frac_cp,
-        MFETSGeneral.ft_fs_len,
-        MFETSGeneral.ft_binmean,
+        MFETSGeneral.ft_bin_mean,
         MFETSGeneral.ft_period,
         MFETSGeneral.ft_peak_frac,
         MFETSGeneral.ft_trough_frac,
@@ -134,7 +133,6 @@ def _test() -> None:
         MFETSAutocorr.ft_first_acf_locmin,
         MFETSAutocorr.ft_gresid_autocorr,
         MFETSAutocorr.ft_autocorr_crit_pt,
-        MFETSAutocorr.ft_acf_first_nonpos,
         MFETSAutocorr.ft_acf_detrended,
         MFETSAutocorr.ft_pacf,
         MFETSAutocorr.ft_acf,
@@ -158,7 +156,6 @@ def _test() -> None:
         MFETSGlobalStats.ft_skewness_sdiff,
         MFETSGlobalStats.ft_kurtosis_diff,
         MFETSGlobalStats.ft_kurtosis_sdiff,
-        MFETSGlobalStats.ft_sd_diff,
         MFETSGlobalStats.ft_exp_max_lyap,
         MFETSGlobalStats.ft_exp_hurst,
         MFETSGlobalStats.ft_skewness_residuals,
@@ -168,7 +165,6 @@ def _test() -> None:
         MFETSGlobalStats.ft_season_strenght,
         MFETSLocalStats.ft_moving_lilliefors,
         MFETSLocalStats.ft_moving_approx_ent,
-        MFETSLocalStats.ft_moving_lilliefors,
         MFETSLocalStats.ft_moving_avg,
         MFETSLocalStats.ft_moving_avg_shift,
         MFETSLocalStats.ft_moving_var_shift,
@@ -259,7 +255,9 @@ def _test() -> None:
 
     if precomp:
         for i, method in enumerate(precomps, 1):
-            print(f"Precomputation method {i} of {len(precomps)}: {method}...")
+            print(
+                f"Precomputation method {i} of {len(precomps)}: {method.__name__}..."
+            )
 
             params = inspect.signature(method).parameters.keys()
             component_names = frozenset(components.keys())
@@ -276,14 +274,15 @@ def _test() -> None:
                 components.update(res)
 
             except Exception as ex:
-                errors.append(("P", ex, method))
+                errors.append(("P", ex, method.__name__))
 
     component_names = frozenset(components.keys())
 
     for i, method in enumerate(methods, 1):
-        print(f"method {i} of {len(methods)}: {method}...")
+        print(f"method {i} of {len(methods)}: {method.__name__}...")
 
-        params = inspect.signature(method).parameters.keys()
+        sig = inspect.signature(method)
+        params = sig.parameters.keys()
         intersec = component_names.intersection(params)
 
         args = {
@@ -293,10 +292,23 @@ def _test() -> None:
         print(3 * " ", f"Args {len(args)}: ", args.keys())
 
         try:
-            method(**args)
+            res = method(**args)
+
+            type_ = type(res)
+            type_ = float if type_ is np.float64 else type_
+            type_ = int if type_ is np.int64 else type_
+
+            exp_ret_type = sig.return_annotation
+            is_single_type = not hasattr(sig.return_annotation, "__args__")
+
+            if type_ is not exp_ret_type and (is_single_type or type_
+                                              not in exp_ret_type.__args__):
+                raise TypeError(
+                    f"Return ({res}) type {type(res)} does not conform to the return type ({sig.return_annotation})."
+                )
 
         except Exception as ex:
-            errors.append(("M", ex, method))
+            errors.append(("M", ex, method.__name__))
 
     if errors:
         for typ, err, method in errors:
