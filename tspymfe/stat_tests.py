@@ -15,9 +15,8 @@ class MFETSStatTests:
                    normalize: bool = True) -> float:
         """Durbin-Watson test statistic value.
 
-        The ADF test works as follows:
-        Null Hypothesis (H0): there is no serial correlation.
-        Alternative Hypothesis (HA): there is serial correlation.
+        This tests tries to detect autocorrelation of lag 1 in the given
+        residuals.
 
         This test statistic value is in [0, 4] range.
 
