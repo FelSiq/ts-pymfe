@@ -1779,7 +1779,7 @@ class MFETSLandmarking:
     ) -> np.ndarray:
         """Cross-validated performance of the ARIMA(1,1,2) (no constant) model.
 
-        ARIMA(1,1,2) without constant is a demped-trend linear exponential
+        ARIMA(1,1,2) without constant is a damped-trend linear exponential
         smoothing model.
 
         The model score is validated using Forward Chaining, i.e., the full

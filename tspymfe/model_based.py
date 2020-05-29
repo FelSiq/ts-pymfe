@@ -309,9 +309,10 @@ class MFETSModelBased:
 
         References
         ----------
-        .. [1] Winters, Peter R. Forecasting Sales by Exponentially Weighted
-            Moving Averages, 1960, INFORMS, Linthicum, MD, USA
-            https://doi.org/10.1287/mnsc.6.3.324
+        .. [1] Holt, C. E. (1957). Forecasting seasonals and trends by
+            exponentially weighted averages (O.N.R. Memorandum No. 52).
+            Carnegie Institute of Technology, Pittsburgh USA.
+            https://doi.org/10.1016/j.ijforecast.2003.09.015
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 

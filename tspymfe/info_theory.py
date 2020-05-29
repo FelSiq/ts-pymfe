@@ -114,6 +114,8 @@ class MFETSInfoTheory:
         .. [1] Fraser AM, Swinney HL. Independent coordinates for strange
             attractors from mutual information. Phys Rev A Gen Phys.
             1986;33(2):1134‐1140. doi:10.1103/physreva.33.1134
+        .. [2] Thomas M. Cover and Joy A. Thomas. 1991. Elements of information
+            theory. Wiley-Interscience, USA.
         """
         precomp_vals = {}  # type: t.Dict[str, np.ndarray]
 
@@ -185,6 +187,8 @@ class MFETSInfoTheory:
         .. [1] Fraser AM, Swinney HL. Independent coordinates for strange
             attractors from mutual information. Phys Rev A Gen Phys.
             1986;33(2):1134‐1140. doi:10.1103/physreva.33.1134
+        .. [2] Thomas M. Cover and Joy A. Thomas. 1991. Elements of information
+            theory. Wiley-Interscience, USA.
         """
         ts_x = ts[:-lag]
         ts_y = ts[lag:]
@@ -375,6 +379,8 @@ class MFETSInfoTheory:
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
+        .. [4] Thomas M. Cover and Joy A. Thomas. 1991. Elements of information
+            theory. Wiley-Interscience, USA.
         """
         # Note: using ts_detrended=ts to avoid detrending.
         non_detrended_ami = cls.ft_ami_detrended(ts=ts,
@@ -478,6 +484,8 @@ class MFETSInfoTheory:
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
+        .. [4] Thomas M. Cover and Joy A. Thomas. 1991. Elements of information
+            theory. Wiley-Interscience, USA.
         """
         if detrended_ami is not None:
             return detrended_ami
@@ -573,6 +581,8 @@ class MFETSInfoTheory:
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
+        .. [4] Thomas M. Cover and Joy A. Thomas. 1991. Elements of information
+            theory. Wiley-Interscience, USA.
         """
         if detrended_ami is None:
             if max_nlags is None:
@@ -691,6 +701,8 @@ class MFETSInfoTheory:
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
+        .. [4] Thomas M. Cover and Joy A. Thomas. 1991. Elements of information
+            theory. Wiley-Interscience, USA.
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
