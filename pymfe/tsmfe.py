@@ -455,7 +455,7 @@ class TSMFE:
              ft_mtd_args, ft_mandatory) = cur_metadata
 
             ft_name_without_prefix = _internal.remove_prefix(
-                value=ft_mtd_name, prefix=_internal.MTF_PREFIts)
+                value=ft_mtd_name, prefix=_internal.MTF_PREFIX)
 
             try:
                 ft_mtd_args_pack = _internal.build_mtd_kwargs(
@@ -1247,7 +1247,7 @@ class TSMFE:
             mtf_names += (
                 _internal.get_prefixed_mtds_from_class(
                     class_obj=_internal.VALID_MFECLASSES[class_ind],
-                    prefix=_internal.MTF_PREFIts,
+                    prefix=_internal.MTF_PREFIX,
                     only_name=True,
                     prefix_removal=True))
 
@@ -1417,7 +1417,7 @@ class TSMFE:
             mtf_names = (  # type: ignore
                 _internal.get_prefixed_mtds_from_class(  # type: ignore
                     class_obj=_internal.VALID_MFECLASSES[class_ind],
-                    prefix=_internal.MTF_PREFIts,
+                    prefix=_internal.MTF_PREFIX,
                     only_name=False,
                     prefix_removal=True))
 

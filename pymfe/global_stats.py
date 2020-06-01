@@ -319,7 +319,7 @@ class MFETSGlobalStats:
            John Campbell. Machine Learning, Neural and Statistical
            Classification, volume 37. Ellis Horwood Upper Saddle River, 1994.
         """
-        ts_skew = _summary.sum_skewness(N=ts_residuals,
+        ts_skew = _summary.sum_skewness(values=ts_residuals,
                                         method=method,
                                         bias=~unbiased)
 
@@ -382,7 +382,7 @@ class MFETSGlobalStats:
            Classification, volume 37. Ellis Horwood Upper Saddle River, 1994.
         """
         ts_diff = np.diff(ts, n=num_diff)
-        ts_skew = _summary.sum_skewness(N=ts_diff,
+        ts_skew = _summary.sum_skewness(values=ts_diff,
                                         method=method,
                                         bias=~unbiased)
 
@@ -443,7 +443,7 @@ class MFETSGlobalStats:
         """
         _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
         ts_sdiff = ts[_ts_period:] - ts[:-_ts_period]
-        ts_skew = _summary.sum_skewness(N=ts_sdiff,
+        ts_skew = _summary.sum_skewness(values=ts_sdiff,
                                         method=method,
                                         bias=~unbiased)
 
@@ -500,7 +500,7 @@ class MFETSGlobalStats:
            John Campbell. Machine Learning, Neural and Statistical
            Classification, volume 37. Ellis Horwood Upper Saddle River, 1994.
         """
-        ts_kurt = _summary.sum_kurtosis(N=ts_residuals,
+        ts_kurt = _summary.sum_kurtosis(values=ts_residuals,
                                         method=method,
                                         bias=~unbiased)
 
@@ -559,7 +559,7 @@ class MFETSGlobalStats:
             Kurtosis of the nth-order differenced time-series
         """
         ts_diff = np.diff(ts, n=num_diff)
-        ts_kurt = _summary.sum_kurtosis(N=ts_diff,
+        ts_kurt = _summary.sum_kurtosis(values=ts_diff,
                                         method=method,
                                         bias=~unbiased)
 
@@ -622,7 +622,7 @@ class MFETSGlobalStats:
         """
         _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
         ts_sdiff = ts[_ts_period:] - ts[:-_ts_period]
-        ts_kurt = _summary.sum_kurtosis(N=ts_sdiff,
+        ts_kurt = _summary.sum_kurtosis(values=ts_sdiff,
                                         method=method,
                                         bias=~unbiased)
 
