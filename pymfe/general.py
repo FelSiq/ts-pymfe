@@ -402,7 +402,7 @@ class MFETSGeneral:
             time series forecasting and forecast combination. Neurocomputing.
             73. 2006-2016. 10.1016/j.neucom.2009.09.020.
         """
-        return _utils.find_crit_pt(ts, type_="non-plateau")
+        return _utils.find_crit_pt(ts, type_="non-plateau").astype(int)
 
     @classmethod
     def ft_turning_points_trend(cls, ts_trend: np.ndarray) -> np.ndarray:
