@@ -81,8 +81,8 @@ import pymfe.scoring as scoring
 
 import pymfe.landmarking as landmarking
 import pymfe.general as general
-import pymfe.global_stat as global_stat
-import pymfe.local_stat as local_stat
+import pymfe.global_stats as global_stats
+import pymfe.local_stats as local_stats
 import pymfe.model_based as model_based
 import pymfe.freq_domain as freq_domain
 import pymfe.stat_tests as stat_tests
@@ -134,8 +134,8 @@ GROUP_PREREQUISITES = (
 VALID_MFECLASSES = (
     landmarking.MFETSLandmarking,
     general.MFETSGeneral,
-    global_stat.MFETSGlobalStat,
-    local_stat.MFETSLocalStat,
+    global_stats.MFETSGlobalStats,
+    local_stats.MFETSLocalStats,
     model_based.MFETSModelBased,
     freq_domain.MFETSFreqDomain,
     stat_tests.MFETSStatTests,

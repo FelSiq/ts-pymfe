@@ -10,6 +10,8 @@ import sklearn.utils
 import sklearn.exceptions
 
 import pymfe._internal as _internal
+import pymfe._period as _period
+import pymfe._detrend as _detrend
 
 _TypeSeqExt = t.Sequence[t.Tuple[str, t.Callable, t.Tuple[str, ...],
                                  t.Tuple[str, ...]]]

@@ -4,9 +4,9 @@ import typing as t
 import pandas as pd
 import scipy.stats
 import numpy as np
-import pymfe.statistical
 
 import pymfe._utils as _utils
+import pymfe._summary as _summary
 
 try:
     import pymfe.stat_tests as stat_tests
@@ -722,7 +722,7 @@ class MFETSLocalStats:
                                                ts_rol_win=ts_rol_win)
 
         rolling_stat = ts_rol_win.apply(
-            pymfe.statistical.MFEStatistical.ft_skewness,
+            _summary.sum_skewness,
             kwargs=dict(method=method, bias=~unbiased))
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
@@ -899,7 +899,7 @@ class MFETSLocalStats:
                                                ts_rol_win=ts_rol_win)
 
         rolling_stat = ts_rol_win.apply(
-            pymfe.statistical.MFEStatistical.ft_kurtosis,
+            _summary.sum_kurtosis,
             kwargs=dict(method=method, bias=~unbiased))
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)

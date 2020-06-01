@@ -3,12 +3,12 @@ import typing as t
 import warnings
 
 import numpy as np
-import pymfe.statistical
 import nolds
 import scipy.stats
 
 import pymfe._period as _period
 import pymfe._utils as _utils
+import pymfe._summary as _summary
 
 
 class MFETSGlobalStats:
@@ -319,9 +319,9 @@ class MFETSGlobalStats:
            John Campbell. Machine Learning, Neural and Statistical
            Classification, volume 37. Ellis Horwood Upper Saddle River, 1994.
         """
-        ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_residuals,
-                                                               method=method,
-                                                               bias=~unbiased)
+        ts_skew = _summary.sum_skewness(N=ts_residuals,
+                                        method=method,
+                                        bias=~unbiased)
 
         return float(ts_skew)
 
@@ -382,9 +382,9 @@ class MFETSGlobalStats:
            Classification, volume 37. Ellis Horwood Upper Saddle River, 1994.
         """
         ts_diff = np.diff(ts, n=num_diff)
-        ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_diff,
-                                                               method=method,
-                                                               bias=~unbiased)
+        ts_skew = _summary.sum_skewness(N=ts_diff,
+                                        method=method,
+                                        bias=~unbiased)
 
         return float(ts_skew)
 
@@ -443,9 +443,9 @@ class MFETSGlobalStats:
         """
         _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
         ts_sdiff = ts[_ts_period:] - ts[:-_ts_period]
-        ts_skew = pymfe.statistical.MFEStatistical.ft_skewness(N=ts_sdiff,
-                                                               method=method,
-                                                               bias=~unbiased)
+        ts_skew = _summary.sum_skewness(N=ts_sdiff,
+                                        method=method,
+                                        bias=~unbiased)
 
         return float(ts_skew)
 
@@ -500,9 +500,9 @@ class MFETSGlobalStats:
            John Campbell. Machine Learning, Neural and Statistical
            Classification, volume 37. Ellis Horwood Upper Saddle River, 1994.
         """
-        ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_residuals,
-                                                               method=method,
-                                                               bias=~unbiased)
+        ts_kurt = _summary.sum_kurtosis(N=ts_residuals,
+                                        method=method,
+                                        bias=~unbiased)
 
         return float(ts_kurt)
 
@@ -559,9 +559,9 @@ class MFETSGlobalStats:
             Kurtosis of the nth-order differenced time-series
         """
         ts_diff = np.diff(ts, n=num_diff)
-        ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_diff,
-                                                               method=method,
-                                                               bias=~unbiased)
+        ts_kurt = _summary.sum_kurtosis(N=ts_diff,
+                                        method=method,
+                                        bias=~unbiased)
 
         return float(ts_kurt)
 
@@ -622,9 +622,9 @@ class MFETSGlobalStats:
         """
         _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
         ts_sdiff = ts[_ts_period:] - ts[:-_ts_period]
-        ts_kurt = pymfe.statistical.MFEStatistical.ft_kurtosis(N=ts_sdiff,
-                                                               method=method,
-                                                               bias=~unbiased)
+        ts_kurt = _summary.sum_kurtosis(N=ts_sdiff,
+                                        method=method,
+                                        bias=~unbiased)
 
         return float(ts_kurt)
 
@@ -857,4 +857,4 @@ class MFETSGlobalStats:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
-        return pymfe.statistical.MFEStatistical.ft_t_mean(N=ts, pcut=pcut)
+        return scipy.stats.trim_mean(ts, proportiontocut=pcut)
