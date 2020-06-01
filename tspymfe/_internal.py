@@ -153,11 +153,6 @@ VALID_TIMEOPT = (
     "total_summ",
 )
 
-VALID_TRANSFORM_CAT = (
-    "gray",
-    "one-hot",
-)
-
 _RESCALE_SCALERS = {
     "standard": sklearn.preprocessing.StandardScaler,
     "min-max": sklearn.preprocessing.MinMaxScaler,
@@ -204,11 +199,6 @@ VERBOSE_BLOCK_MID_SYMBOL = "|"
 VERBOSE_BLOCK_END_SYMBOL = "."
 
 VERBOSE_WARNING_SYMBOL = "*"
-
-type_translator = {
-    sklearn.tree.DecisionTreeClassifier: "dt_model",
-}
-"""'.extract_from_model' supported types and correspoding parameters."""
 
 
 def warning_format(message: str,
