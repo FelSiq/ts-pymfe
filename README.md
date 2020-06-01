@@ -1,5 +1,5 @@
 # ts-pymfe
-A backup for the pymfe expansion for time-series data. Currently, this repository contains only the methods for meta-feature extraction, but not the modified pymfe core to preprocess and extract the meta-features from time-series data. Those extra resources will be available soon.
+A backup for the pymfe expansion for time-series data. Currently, this repository contains the methods for meta-feature extraction and an modified pymfe core to run extract the meta-features.
 
 There is 149 distinct metafeature extraction methods in this version, distributed in the following groups:
 
@@ -20,15 +20,32 @@ Install the required packages using:
 pip install -Ur requirements.txt
 ```
 
-Then run the test script:
+To extract the meta-features, the API behaves pretty much like the original Pymfe API:
 ```
-python test.py <data_id> <random_seed> <precomp 0/1>
+import pymfe.tsmfe
+import numpy as np
+
+# random time-series
+ts = 0.3 * np.arange(100) + np.random.randn(100)
+
+extractor = pymfe.tsmfe.TSMFE()
+extractor.fit(ts)
+res = extractor.extract()
+
+print(res)
+```
+
+To run the test scripts:
+```
+python test\_a.py <data_id> <random_seed> <precomp 0/1>
+python test\_b.py <data_id> <random_seed> <precomp 0/1>
 ```
 Where the first argument is the test time-series id (check [data/comp-engine-export-sample.20200503.csv](https://github.com/FelSiq/ts-pymfe/tree/master/data) file.) and must be between 0 (inclusive) and 19 (also inclusive), the random seed must be an integer, and precomp is a boolean argument ('0' or '1') to activate the precomputation methods, used to calculate common values between various methods and, therefore, speed the main computations.
 
 Example:
 ```
-python test.py 0 16 1
+python test\_a.py 0 16 1
+python test\_b.py 0 16 1
 ```
 
 The code format style is checked using flake8, pylint and mypy. You can use the Makefile to run all verifications by yourself:
