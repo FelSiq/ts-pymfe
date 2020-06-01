@@ -391,7 +391,12 @@ class MFETSStatTests:
         res = arch.unitroot.ZivotAndrews(ts)
 
         if return_pval:
-            return res.pvalue
+            try:
+                return res.pvalue
+
+            except IndexError:
+                # Note: catching a weird IndexError of arch module.
+                return np.nan
 
         return res.stat
 
