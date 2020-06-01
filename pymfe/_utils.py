@@ -302,7 +302,7 @@ def calc_ioe_stats(ts: np.ndarray,
 
     step_size *= np.std(ts_abs)
     _max_it = min(max_it, int(np.ceil(max_abs_ts / step_size)))
-    ioe_stats = np.zeros(_max_it, len(funcs))
+    ioe_stats = np.zeros((_max_it, len(funcs)))
     threshold = min_abs_ts
     it = 0
 
