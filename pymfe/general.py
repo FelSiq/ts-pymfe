@@ -171,10 +171,11 @@ class MFETSGeneral:
         """
         precomp_vals = {}  # type: t.Dict[str, np.ndarray]
 
-        if "ts_scaled" not in kwargs:
-            precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
+        ts_scaled = kwargs.get("ts_scaled")
 
-        ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])
+        if ts_scaled is None:
+            precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
+            ts_scaled = precomp_vals["ts_scaled"]
 
         if lag is None or isinstance(lag, str):
             lag = _embed.embed_lag(ts=ts_scaled,
@@ -248,10 +249,11 @@ class MFETSGeneral:
         precomp_vals = {}  # type: t.Dict[str, np.ndarray]
 
         if "walker_path" not in kwargs:
-            if "ts_scaled" not in kwargs:
-                precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
+            ts_scaled = kwargs.get("ts_scaled")
 
-            ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])
+            if ts_scaled is None:
+                precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
+                ts_scaled = precomp_vals["ts_scaled"]
 
             walker_path = cls._ts_walker(ts=ts_scaled,
                                          step_size=step_size,

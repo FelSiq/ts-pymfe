@@ -94,10 +94,11 @@ class MFETSLocalStats:
         """
         precomp_vals = {}  # type: t.Dict[str, pd.core.window.rolling.Rolling]
 
-        if "ts_scaled" not in kwargs:
-            precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
+        ts_scaled = kwargs.get("ts_scaled")
 
-        ts_scaled = kwargs.get("ts_scaled", precomp_vals["ts_scaled"])
+        if ts_scaled is None:
+            precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
+            ts_scaled = precomp_vals["ts_scaled"]
 
         if "ts_tol_win" not in kwargs:
             ts_rol_win = _utils.get_rolling_window(ts=ts,
