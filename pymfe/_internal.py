@@ -1276,10 +1276,13 @@ def check_data(ts: t.Union[np.ndarray, list]) -> np.ndarray:
         raise TypeError('"ts" is neither "list" nor "np.array".')
 
     if not isinstance(ts, np.ndarray):
-        ts = np.array(ts, dtype=np.object).ravel()
+        ts = np.array(ts, dtype=float)
 
     else:
         ts = np.copy(ts)
+
+    if ts.ndim > 1:
+        ts = ts.ravel()
 
     if ts.size == 0:
         raise ValueError("'ts' length is 0.")
