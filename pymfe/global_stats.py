@@ -321,7 +321,7 @@ class MFETSGlobalStats:
         """
         ts_skew = _summary.sum_skewness(values=ts_residuals,
                                         method=method,
-                                        bias=~unbiased)
+                                        bias=not unbiased)
 
         return float(ts_skew)
 
@@ -384,7 +384,7 @@ class MFETSGlobalStats:
         ts_diff = np.diff(ts, n=num_diff)
         ts_skew = _summary.sum_skewness(values=ts_diff,
                                         method=method,
-                                        bias=~unbiased)
+                                        bias=not unbiased)
 
         return float(ts_skew)
 
@@ -445,7 +445,7 @@ class MFETSGlobalStats:
         ts_sdiff = ts[_ts_period:] - ts[:-_ts_period]
         ts_skew = _summary.sum_skewness(values=ts_sdiff,
                                         method=method,
-                                        bias=~unbiased)
+                                        bias=not unbiased)
 
         return float(ts_skew)
 
@@ -502,7 +502,7 @@ class MFETSGlobalStats:
         """
         ts_kurt = _summary.sum_kurtosis(values=ts_residuals,
                                         method=method,
-                                        bias=~unbiased)
+                                        bias=not unbiased)
 
         return float(ts_kurt)
 
@@ -561,7 +561,7 @@ class MFETSGlobalStats:
         ts_diff = np.diff(ts, n=num_diff)
         ts_kurt = _summary.sum_kurtosis(values=ts_diff,
                                         method=method,
-                                        bias=~unbiased)
+                                        bias=not unbiased)
 
         return float(ts_kurt)
 
@@ -624,7 +624,7 @@ class MFETSGlobalStats:
         ts_sdiff = ts[_ts_period:] - ts[:-_ts_period]
         ts_kurt = _summary.sum_kurtosis(values=ts_sdiff,
                                         method=method,
-                                        bias=~unbiased)
+                                        bias=not unbiased)
 
         return float(ts_kurt)
 
