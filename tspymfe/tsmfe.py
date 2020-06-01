@@ -45,11 +45,9 @@ class TSMFE:
                  summary: t.Union[str, t.Iterable[str]] = ("mean", "sd"),
                  measure_time: t.Optional[str] = None,
                  wildcard: str = "all",
-                 score: str = "accuracy",
+                 score: str = "rmse",
                  num_cv_folds: int = 10,
-                 shuffle_cv_folds: bool = False,
                  lm_sample_frac: float = 1.0,
-                 hypparam_model_dt: t.Optional[t.Dict[str, t.Any]] = None,
                  suppress_warnings: bool = False,
                  random_state: t.Optional[int] = None) -> None:
         """Provides easy access for metafeature extraction from datasets.
@@ -172,27 +170,9 @@ class TSMFE:
             Number of folds to create a Stratified K-Fold cross
             validation to extract the ``landmarking`` metafeatures.
 
-        shuffle_cv_folds : :obj:`bool`, optional
-            If True, then the fitted data will be shuffled before splitted in
-            the Stratified K-Fold Cross Validation of ``landmarking`` features.
-            The shuffle random seed is the ``random_state`` argument.
-
         lm_sample_frac : :obj:`float`, optional
             Sample proportion used to produce the ``landmarking`` metafeatures.
             This argument must be in 0.5 and 1.0 (both inclusive) interval.
-
-        hypparam_model_dt : :obj:`dict`, optional
-            Dictionary providing extra hyperparameters for the Decision Tree
-            algorithm for building the Decision Tree model, used to extract the
-            model-based metafeatures. The class used to fit the model is the
-            ``sklearn.tree.DecisionTreeClassifier`` (sklearn library). Using
-            this argument, it is possible to provide extra arguments in the
-            DecisionTreeClassifier class initialization (e.g., ``max_depth``
-            and ``min_samples_split``.) In order to use this argument, provide
-            the DecisionTreeClassifier init argument name as the dictionary
-            keys and the corresponding custom values, as the dictionary values.
-            Example:
-            {"min_samples_split": 10, "criterion": "entropy"}
 
         suppress_warnings : :obj:`bool`, optional
             If True, then ignore all warnings invoked at the instantiation
@@ -291,8 +271,6 @@ class TSMFE:
                 'Invalid "random_state" argument ({0}). '
                 'Expecting None or an integer.'.format(random_state))
 
-        self.shuffle_cv_folds = shuffle_cv_folds
-
         if isinstance(num_cv_folds, int):
             self.num_cv_folds = num_cv_folds
 
@@ -313,8 +291,6 @@ class TSMFE:
                              .format(random_state))
 
         self.score = _internal.check_score(score, self.groups)
-        self.hypparam_model_dt = (hypparam_model_dt.copy()
-                                  if hypparam_model_dt else None)
 
         # """Total time elapsed for precomputations."""
         self.time_precomp = -1.0
@@ -554,74 +530,6 @@ class TSMFE:
 
         return metafeat_names, metafeat_vals, metafeat_times
 
-    def _fill_col_ind_by_type(
-            self,
-            cat_cols: t.Optional[t.Union[str, t.Iterable[int]]] = "auto",
-            check_bool: bool = True) -> None:
-        """Select ``ts`` column indexes based in its data type.
-
-        The indexes for numerical and categorical attributes are kept,
-        respectively, at ``_attr_indexes_num`` and ``_attr_indexes_cat``
-        instance attributes.
-
-        Parameters
-        ----------
-        cat_cols : :obj:`str` or :obj:`iterable` of :obj:`int`, optional
-            Iterable of indexes identifying categorical columns. If special
-            keyword ``auto`` is given, then an automatic verification is done
-            in the fitted attributes.
-
-        check_bool : :obj:`bool`, optional
-            Check ``fit`` method corresponding argument for more information.
-
-        Raises
-        ------
-        TypeError
-            If ``ts`` attribute is :obj:`NoneType`.
-        ValueError
-            If ``cat_cols`` is neither ``auto`` or a valid integer iterable.
-        """
-
-        if self.ts is None:
-            raise TypeError("ts can't be 'None'.")
-
-        categorical_cols = None  # type: np.ndarray[bool]
-
-        if not cat_cols:
-            categorical_cols = np.array([False] * self.ts.shape[1])
-
-        elif isinstance(cat_cols, str) and cat_cols.lower() == "auto":
-            categorical_cols = np.logical_not(
-                np.apply_along_axis(
-                    _internal.isnumeric,
-                    axis=0,
-                    arr=self.ts,
-                    check_subtype=True,
-                ))
-
-            if check_bool:
-                categorical_cols |= np.apply_along_axis(
-                    func1d=lambda col: len(np.unique(col)) == 2,
-                    axis=0,
-                    arr=self.ts,
-                )
-
-        elif (isinstance(cat_cols, (np.ndarray, collections.Iterable))
-              and not isinstance(cat_cols, str)):
-            # and all(isinstance(x, int) for x in cat_cols)):
-            categorical_cols = [i in cat_cols for i in range(self.ts.shape[1])]
-
-        else:
-            raise ValueError(
-                'Invalid "cat_cols" argument ({0}). '
-                'Expecting "auto" or an integer Iterable.'.format(cat_cols))
-
-        categorical_cols = np.array(categorical_cols)
-
-        self._attr_indexes_num = tuple(
-            np.where(np.logical_not(categorical_cols))[0])
-        self._attr_indexes_cat = tuple(np.where(categorical_cols)[0])
-
     def _timeopt_type_is_avg(self) -> bool:
         """Checks if user selected time option is an ``average`` type."""
         return (isinstance(self.timeopt, str)
@@ -670,154 +578,11 @@ class TSMFE:
 
         return total_time.tolist()
 
-    def _set_data_categoric(self, transform_num: bool,
-                            num_bins: bool = None) -> np.ndarray:
-        """Returns categorical data from the fitted dataset.
-
-        Parameters
-        ----------
-        transform_num : :obj:`bool`
-            If True, then all numeric-type data are discretized using an
-            equal-frequency histogram. Otherwise, this method ignores these
-            attributes.
-
-        num_bins : :obj:`bool`, optional
-            Number of bins of the discretization histogram. This argument is
-            used only if ``transform_num`` is True. If this argument value is
-            :obj:`NoneType`, then it is set to min(2, c), where ``c`` is the
-            cubic root of the number of instances of the fitted dataset.
-
-        Returns
-        -------
-        :obj:`np.ndarray`
-            Processed categorical data. If no need for changes from the
-            original dataset, then this method does not create a copy of it to
-            prevent unnecessary memory usage. Otherwise, this method returns a
-            modified version of the original categorical data, thus consuming
-            more memory.
-
-        Raises
-        ------
-        TypeError:
-            If either ``ts`` or ``_attr_indexes_cat`` instance attributes are
-            :obj:`NoneType`. This can be avoided passing valid data to fit and
-            first calling ``_fill_col_ind_by_type`` instance method before this
-            method.
-        """
-        if self.ts is None:
-            raise TypeError("It is necessary to fit valid data into the "
-                            'model before setting up categoric data. ("ts" '
-                            'attribute is "NoneType").')
-
-        if self._attr_indexes_cat is None:
-            raise TypeError("No information about indexes of categoric "
-                            "attributes. Please be sure to call method "
-                            '"_fill_col_ind_by_type" before this method.')
-
-        data_cat = self.ts[:, self._attr_indexes_cat]
-
-        if transform_num:
-            data_num_discretized = _internal.transform_num(
-                self.ts[:, self._attr_indexes_num], num_bins=num_bins)
-
-            if data_num_discretized is not None:
-                data_cat = np.concatenate((data_cat, data_num_discretized),
-                                          axis=1)
-
-        return data_cat
-
-    def _set_data_numeric(
-            self,
-            transform_cat: str,
-            rescale: t.Optional[str] = None,
-            rescale_args: t.Optional[t.Dict[str, t.Any]] = None) -> np.ndarray:
-        """Returns numeric data from the fitted dataset.
-
-        Parameters
-        ----------
-        transform_cat: :obj:`bool`
-            If `gray`, then all categoric-type data will be binarized with a
-            model matrix strategy. If `one-hot`, then all categoric-type
-            data will be transformed using the one-hot encoding strategy.
-            If None, then categorical attributes are not transformed.
-
-        rescale : :obj:`str`, optional
-            Check ``fit`` documentation for more information about this
-            parameter.
-
-        rescale_args : :obj:`dict`, optional
-            Check ``fit`` documentation for more information about this
-            parameter.
-
-        Returns
-        -------
-        :obj:`np.ndarray`
-            Processed numerical data. If no need for changes from the original
-            dataset, then this method does not create a copy of it to prevent
-            unnecessary memory usage. Otherwise, this method returns a modified
-            version of the original numerical data, thus consuming more memory.
-
-        Raises
-        ------
-        TypeError
-            If ``ts`` or ``_attr_indexes_num`` instance attributes are
-            :obj:`NoneType`. This can be avoided passing valid data to fit and
-            first calling ``_fill_col_ind_by_type`` instance method before
-            this method.
-
-        ValueError
-            If `transform_cat` is neither None nor a value among `one-hot` and
-            `gray`.
-        """
-        if self.ts is None:
-            raise TypeError("It is necessary to fit valid data into the "
-                            'model before setting up numeric data. ("ts" '
-                            'attribute is "NoneType").')
-
-        if self._attr_indexes_num is None:
-            raise TypeError("No information about indexes of numeric "
-                            "attributes. Please be sure to call method "
-                            '"_fill_col_ind_by_type" before this method.')
-
-        if (transform_cat is not None and
-                transform_cat not in _internal.VALID_TRANSFORM_CAT):
-            raise ValueError("Invalid 'transform_cat' value ('{}'). Must be "
-                             "a value in {}.".format(
-                                 transform_cat, _internal.VALID_TRANSFORM_CAT))
-
-        data_num = self.ts[:, self._attr_indexes_num]
-
-        if transform_cat:
-            if transform_cat == "gray":
-                categorical_dummies = _internal.transform_cat_gray(
-                    self.ts[:, self._attr_indexes_cat])
-
-            else:
-                categorical_dummies = _internal.transform_cat_onehot(
-                    self.ts[:, self._attr_indexes_cat])
-
-            if categorical_dummies is not None:
-                data_num = np.concatenate((data_num, categorical_dummies),
-                                          axis=1).astype(float)
-
-        if rescale:
-            data_num = _internal.rescale_data(
-                data=data_num, option=rescale, args=rescale_args)
-
-        if data_num.dtype != float:
-            data_num = data_num.astype(float)
-
-        return data_num
-
     def fit(self,
-            ts: t.Sequence,
-            y: t.Optional[t.Sequence] = None,
-            transform_num: bool = True,
-            transform_cat: str = "gray",
+            ts: t.Sequence[int],
+            ts_period: t.Optional[int] = None,
             rescale: t.Optional[str] = None,
             rescale_args: t.Optional[t.Dict[str, t.Any]] = None,
-            cat_cols: t.Optional[t.Union[str, t.Iterable[int]]] = "auto",
-            check_bool: bool = False,
             precomp_groups: t.Optional[str] = "all",
             wildcard: str = "all",
             suppress_warnings: bool = False,
@@ -831,37 +596,9 @@ class TSMFE:
         ts : :obj:`Sequence`
             Predictive attributes of the dataset.
 
-        y : :obj:`Sequence`, optional
-            Target attributes of the dataset, assuming that it is a supervised
-            task.
-
-        transform_num : :obj:`bool`, optional
-            If True, numeric attributes are discretized using equal-frequency
-            histogram technique to use alongside categorical data when
-            extracting categoric-only metafeatures. Note that numeric-only
-            features still uses the original numeric values, not the
-            discretized ones. If False, then numeric attributes are ignored for
-            categorical-only meta-features.
-
-        transform_cat : :obj:`str`, optional
-            Transform categorical data to use alongside numerical data while
-            extracting numeric-only metafeatures. Note that categoric-only
-            features still uses the original categoric values, and not the
-            binarized ones.
-
-            If `one-hot`, categorical attributes are binarized using one-hot
-            encoding.
-
-            If `gray`, categorical attributes are binarized using a model
-            matrix.
-
-            The formula used for this transformation is just the union (+) of
-            all categoric attributes using formula language from ``patsy``
-            package API, removing the intercept terms:
-            ``~ 0 + A_1 + ... + A_n``, where ``n`` is the number of attributes
-            and A_i is the ith categoric attribute, 1 <= i <= n.
-
-            If None, then categorical attributes are not transformed.
+        ts_period : int, optional
+            Period of the time-series. If not given, it will be estimated
+            from the autocorrelation function.
 
         rescale : :obj:`str`, optional
             If :obj:`NoneType`, the model keeps all numeric data with its
@@ -888,22 +625,6 @@ class TSMFE:
             ``rescale`` argument is not :obj:`NoneType`. These dictionary keys
             are the parameter names as strings and the values, the
             corresponding parameter value.
-
-        cat_cols :obj:`Sequence` of :obj:`int` or :obj:`str`, optional
-            Categorical columns of dataset. If given :obj:`NoneType` or an
-            empty sequence, assume all columns as numeric. If given value
-            ``auto``, then an attempt of automatic detection is performed while
-            fitting the dataset.
-
-        check_bool : :obj:`bool`, optional
-            If `cat_cols` is ``auto``, and this flag is True, assume that all
-            columns with precisely two different values is also a categorical
-            (boolean) column, independently of its data type. Otherwise, these
-            columns may be considered numeric depending on their data type.
-
-        missing_data : :obj:`str`, optional
-            Defines the strategy to handle missing values in data. Still not
-            implemented.
 
         precomp_groups : :obj:`str`, optional
             Defines which metafeature groups common values should be cached to
@@ -948,55 +669,53 @@ class TSMFE:
             object.
 
         """
+        rescale = _internal.process_generic_option(
+            value=rescale, group_name="rescale", allow_none=True)
+
         if verbose >= 2:
             print("Fitting data into model... ", end="")
 
         self.ts = _internal.check_data(ts)
 
+        if rescale is not None:
+            self.ts = _internal.rescale_data(
+                data=self.ts.reshape(-1, 1),
+                option=rescale,
+                args=rescale_args).ravel()
+
         if verbose >= 2:
             print("Done.")
+            print("Getting time-series period...", end="")
 
-        rescale = _internal.process_generic_option(
-            value=rescale, group_name="rescale", allow_none=True)
-
-        self._fill_col_ind_by_type(cat_cols=cat_cols, check_bool=check_bool)
+        self.ts_period = _period.get_ts_period(ts=self.ts)
 
         if verbose >= 2:
-            print("Started data transformation process.",
-                  " {} Encoding numerical data into discrete values... "
-                  .format(_internal.VERBOSE_BLOCK_END_SYMBOL),
-                  sep="\n", end="")
+            print("Done (got period {}).".format(ts_period))
+            print("Started time-series decomposition...", end="")
 
-        data_cat = self._set_data_categoric(transform_num=transform_num)
+         _ts_components = _detrend.decompose(self.ts, ts_period=self.ts_period)
 
-        if verbose >= 2:
-            print("Done.",
-                  " {} Enconding categorical data into numerical values... "
-                  .format(_internal.VERBOSE_BLOCK_END_SYMBOL),
-                  sep="\n", end="")
-
-        data_num = self._set_data_numeric(
-            transform_cat=transform_cat,
-            rescale=rescale,
-            rescale_args=rescale_args)
+        self.ts_trend, self.ts_season, self.ts_residuals = _ts_components
+    
+        self.ts_detrended = self.ts - self.ts_trend
+        self.ts_deseasonalized = self.ts - self.ts_season
 
         if verbose >= 2:
-            print("Done.",
-                  "Finished data transformation process.",
-                  sep="\n")
+            print("Done.")
 
         # Custom arguments for metafeature extraction methods
         self._custom_args_ft = {
             "ts": self.ts,
-            "N": data_num,
-            "C": data_cat,
+            "ts_trend": self.ts_trend,
+            "ts_season": self.ts_season,
+            "ts_residuals": self.ts_residuals,
+            "ts_detrended": self.ts_detrended,
+            "ts_deseasonalized": self.ts_deseasonalized,
+            "ts_period": self.ts_period,
             "num_cv_folds": self.num_cv_folds,
-            "shuffle_cv_folds": self.shuffle_cv_folds,
             "lm_sample_frac": self.lm_sample_frac,
             "score": self.score,
             "random_state": self.random_state,
-            "cat_cols": self._attr_indexes_cat,
-            "hypparam_model_dt": self.hypparam_model_dt,
         }
 
         if verbose >= 2:
@@ -1122,13 +841,13 @@ class TSMFE:
         >>> 'leaves': {'max_depth': 4},
         >>> }
 
-        >>> model = TSMFE().fit(ts=data, y=labels)
+        >>> model = TSMFE().fit(ts=data)
         >>> result = model.extract(**args)
 
         Option 2 (note: metafeatures with name starting with numbers are not
         allowed!):
 
-        >>> model = TSMFE().fit(ts=data, y=labels)
+        >>> model = TSMFE().fit(ts=data)
         >>> res = extract(sd={'ddof': 2}, leaves={'max_depth': 4})
 
         """
