@@ -6,8 +6,6 @@ import time
 
 import texttable
 import numpy as np
-import sklearn.utils
-import sklearn.exceptions
 
 import pymfe._internal as _internal
 import pymfe._period as _period
@@ -48,7 +46,7 @@ class TSMFE:
                  measure_time: t.Optional[str] = None,
                  wildcard: str = "all",
                  score: str = "rmse",
-                 num_cv_folds: int = 10,
+                 num_cv_folds: int = 5,
                  lm_sample_frac: float = 1.0,
                  suppress_warnings: bool = False,
                  random_state: t.Optional[int] = None) -> None:
@@ -245,18 +243,18 @@ class TSMFE:
             allow_none=True)  # type: t.Optional[str]
 
         self.ts = None  # type: t.Optional[np.ndarray]
+        self.ts_trend = None  # type: t.Optional[np.ndarray]
+        self.ts_season = None  # type: t.Optional[np.ndarray]
+        self.ts_residuals = None  # type: t.Optional[np.ndarray]
+        self.ts_detrended = None  # type: t.Optional[np.ndarray]
+        self.ts_deseasonalized = None  # type: t.Optional[np.ndarray]
+        self.ts_period = -1
 
         self._custom_args_ft = None  # type: t.Optional[t.Dict[str, t.Any]]
-        """User-independent arguments for ft. methods (e.g. ``ts`` and ``y``)"""
+        """User-independent arguments for ft. methods (e.g. ``ts``)"""
 
         self._custom_args_sum = None  # type: t.Optional[t.Dict[str, t.Any]]
         """User-independent arguments for summary functions methods."""
-
-        self._attr_indexes_num = None  # type: t.Optional[t.Tuple[int, ...]]
-        """Numeric column indexes from ``ts`` (independent attributes)."""
-
-        self._attr_indexes_cat = None  # type: t.Optional[t.Tuple[int, ...]]
-        """Categoric column indexes from ``ts`` (independent attributes)."""
 
         self._precomp_args_ft = None  # type: t.Optional[t.Dict[str, t.Any]]
         """Precomputed common feature-extraction method arguments."""
@@ -535,12 +533,12 @@ class TSMFE:
     def _timeopt_type_is_avg(self) -> bool:
         """Checks if user selected time option is an ``average`` type."""
         return (isinstance(self.timeopt, str)
-                and self.timeopt.startswith(_internal.TIMEOPT_AVG_PREFIts))
+                and self.timeopt.startswith(_internal.TIMEOPT_AVG_PREFIX))
 
     def _timeopt_include_summary(self) -> bool:
         """Checks if user selected time option includes ``summary`` time."""
         return (isinstance(self.timeopt, str)
-                and self.timeopt.endswith(_internal.TIMEOPT_SUMMARY_SUFFIts))
+                and self.timeopt.endswith(_internal.TIMEOPT_SUMMARY_SUFFIX))
 
     def _combine_time(self, time_ft: float,
                       times_sm: t.List[float]) -> t.List[float]:
@@ -667,8 +665,7 @@ class TSMFE:
         ValueError
             If the number of rows of ts and y length does not match.
         TypeError
-            If ts or y (or both) is neither a :obj:`list` or a :obj:`np.ndarray`
-            object.
+            If ts is neither a :obj:`list` or a :obj:`np.ndarray` object.
 
         """
         rescale = _internal.process_generic_option(
@@ -698,7 +695,7 @@ class TSMFE:
         _ts_components = _detrend.decompose(self.ts, ts_period=self.ts_period)
 
         self.ts_trend, self.ts_season, self.ts_residuals = _ts_components
-    
+
         self.ts_detrended = self.ts - self.ts_trend
         self.ts_deseasonalized = self.ts - self.ts_season
 
@@ -985,7 +982,7 @@ class TSMFE:
 
             ts_sample = self.ts[sample_inds, :]
 
-            extractor.fit(ts_sample, y_sample, **arguments_fit)
+            extractor.fit(ts_sample, **arguments_fit)
 
             res = _handle_extract_ret(
                 res=res,
