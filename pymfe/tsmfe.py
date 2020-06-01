@@ -686,7 +686,7 @@ class TSMFE:
             print("Done.")
             print("Getting time-series period...", end="")
 
-        self.ts_period = _period.get_ts_period(ts=self.ts)
+        self.ts_period = _period.get_ts_period(ts=self.ts, ts_period=ts_period)
 
         if verbose >= 2:
             print("Done (got period {}).".format(ts_period))
