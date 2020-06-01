@@ -1,4 +1,6 @@
 """Scoring module or forecasting models."""
+import collections
+
 import numpy as np
 import sklearn.metrics
 
@@ -56,3 +58,11 @@ def smape(arr_a: np.ndarray,
         res *= 2
 
     return res
+
+
+VALID_SCORING = collections.OrderedDict((
+    ("mse", mse),
+    ("rmse", rmse),
+    ("mae", mae),
+    ("smape", smape),
+))
