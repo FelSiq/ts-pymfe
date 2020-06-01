@@ -96,7 +96,7 @@ class MFETSAutocorr:
         ts_scaled = kwargs.get("ts_scaled")
 
         if ts_scaled is None:
-            precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
+            precomp_vals["ts_scaled"] = _utils.standardize_ts(ts=ts)
             ts_scaled = precomp_vals["ts_scaled"]
 
         if "gaussian_model" not in kwargs:
