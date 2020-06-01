@@ -7,8 +7,8 @@ import pymfe.statistical
 import nolds
 import scipy.stats
 
-import tspymfe._period as _period
-import tspymfe._utils as _utils
+import pymfe._period as _period
+import pymfe._utils as _utils
 
 
 class MFETSGlobalStats:

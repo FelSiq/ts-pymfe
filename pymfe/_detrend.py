@@ -10,7 +10,7 @@ import pandas as pd
 import supersmoother
 
 try:
-    import tspymfe._period as _period
+    import pymfe._period as _period
 
 except ImportError:
     pass
