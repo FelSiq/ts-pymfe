@@ -101,46 +101,6 @@ def get_rolling_window(
     return pd.Series(ts).rolling(window_size, center=center)
 
 
-def smape(arr_a: np.ndarray,
-          arr_b: np.ndarray,
-          percentage: bool = False,
-          half_denom: bool = True) -> float:
-    """Calculate SMAPE (Symmetric Mean Absolute Percentage Error).
-
-    Parameters
-    ----------
-    arr_a, arr_b : :obj:`np.ndarray`
-        Arrays to calculate the SMAPE from.
-
-    percentage : bool, optional
-        If True, multiply the result by 100 (i.e., return the
-        percentage value, not the fraction).
-
-    half_denom : bool, optional
-        If True, divide the denominator by 2. If False, the
-        result if bounded by [0, 100] (if ``percentage`` is
-        True), or by [0, 1] otherwise.
-
-    Returns
-    -------
-    float
-        SMAPE estimation between the two given arrays. If
-        ``percentage`` is True, then return the estimation in
-        the percentage form (in [0, 100] range). Return the
-        error in fraction form (in [0, 1] range) otherwise.
-    """
-    res = np.mean(
-        np.abs(arr_a - arr_b) / (1e-9 + np.abs(arr_a) + np.abs(arr_b)))
-
-    if percentage:
-        res *= 100
-
-    if not half_denom:
-        res *= 2
-
-    return res
-
-
 def sample_data(
         ts: np.ndarray,
         lm_sample_frac: float,
