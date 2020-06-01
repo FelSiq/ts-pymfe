@@ -693,7 +693,7 @@ class TSMFE:
             print("Done (got period {}).".format(ts_period))
             print("Started time-series decomposition...", end="")
 
-         _ts_components = _detrend.decompose(self.ts, ts_period=self.ts_period)
+        _ts_components = _detrend.decompose(self.ts, ts_period=self.ts_period)
 
         self.ts_trend, self.ts_season, self.ts_residuals = _ts_components
     
