@@ -222,7 +222,7 @@ class MFETSAutocorr:
             the autocorrelation function up to `nlags` lags of the time-series.
         """
         if nlags is None:
-            nlags = ts.size // 2
+            nlags = 1 + ts.size // 10
 
         if detrend and ts_detrended is None:
             try:
