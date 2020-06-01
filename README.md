@@ -21,7 +21,7 @@ pip install -Ur requirements.txt
 ```
 
 To extract the meta-features, the API behaves pretty much like the original Pymfe API:
-```
+```python
 import pymfe.tsmfe
 import numpy as np
 
