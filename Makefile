@@ -1,4 +1,4 @@
-PACKAGE := tspymfe
+PACKAGE := pymfe
 
 code-check: ## Execute the code check with flake8, pylint, mypy.
 	flake8 $(PACKAGE)
