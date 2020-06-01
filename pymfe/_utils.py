@@ -231,6 +231,7 @@ def calc_ioe_stats(ts: np.ndarray,
                    funcs: t.Collection[t.Callable[[np.ndarray], float]],
                    ts_scaled: t.Optional[np.ndarray] = None,
                    step_size: float = 0.05,
+                   max_it: int = 1024,
                    differentiate: bool = False) -> np.ndarray:
     """Get statistics using the iterative outlier exclusion strategy.
 
@@ -256,6 +257,9 @@ def calc_ioe_stats(ts: np.ndarray,
     step_size : float, optional (default=0.05)
         Increase of the outlier threshold in each iteration. Must be a number
         strictly positive.
+
+    max_it : int, optional (default=1024)
+        Maximum number of iterations.
 
     differentiate : bool, optional (default=False)
         If True, differentiate the timestamps before calculating each
@@ -293,18 +297,16 @@ def calc_ioe_stats(ts: np.ndarray,
 
     ts_scaled = standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-    # Note: originally, the step size of the threshold is calculated
-    # as step_size * std(ts). However, we are considering just the
-    # normalized time-series and, therefore, std(ts_scaled) = 1.
-    # This means that the step size is actually just the step_size.
     ts_abs = np.abs(ts_scaled)
-    max_abs_ts = np.max(ts_abs)
+    min_abs_ts, max_abs_ts = np.quantile(ts_abs, (0, 1))
 
-    ioe_stats = np.zeros((int(np.ceil(max_abs_ts / step_size)), len(funcs)))
-    threshold = 0.0
+    step_size *= np.std(ts_abs)
+    _max_it = min(max_it, int(np.ceil(max_abs_ts / step_size)))
+    ioe_stats = np.zeros(_max_it, len(funcs))
+    threshold = min_abs_ts
     it = 0
 
-    while threshold < max_abs_ts:
+    while it < _max_it:
         threshold += step_size
         outlier_tsteps = np.flatnonzero(ts_abs >= threshold)
 
