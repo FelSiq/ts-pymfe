@@ -37,15 +37,15 @@ print(res)
 
 To run the test scripts:
 ```
-python test\_a.py <data_id> <random_seed> <precomp 0/1>
-python test\_b.py <data_id> <random_seed> <precomp 0/1>
+python test_a.py <data_id> <random_seed> <precomp 0/1>
+python test_b.py <data_id> <random_seed> <precomp 0/1>
 ```
 Where the first argument is the test time-series id (check [data/comp-engine-export-sample.20200503.csv](https://github.com/FelSiq/ts-pymfe/tree/master/data) file.) and must be between 0 (inclusive) and 19 (also inclusive), the random seed must be an integer, and precomp is a boolean argument ('0' or '1') to activate the precomputation methods, used to calculate common values between various methods and, therefore, speed the main computations.
 
 Example:
 ```
-python test\_a.py 0 16 1
-python test\_b.py 0 16 1
+python test_a.py 0 16 1
+python test_b.py 0 16 1
 ```
 
 The code format style is checked using flake8, pylint and mypy. You can use the Makefile to run all verifications by yourself:
