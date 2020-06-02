@@ -1,6 +1,8 @@
 # ts-pymfe
 A backup for the pymfe expansion for time-series data. Currently, this repository contains the methods for meta-feature extraction and an modified pymfe core to run extract the meta-features.
 
+Please note that tspymfe is not intended to be a stand-alone package, and will be oficially merged (hopefully soon) to the original Pymfe package. Until then, this package is available as a beta version.
+
 There is 149 distinct metafeature extraction methods in this version, distributed in the following groups:
 
 1. General
