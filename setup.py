@@ -8,12 +8,12 @@ with open("README.md", "r") as fh:
 requirements = []
 
 
-with open("requirements.txt") as req:
+with open("requirements.txt", "r") as req:
     requirements = req.read().split()
 
 
 setuptools.setup(
-    name="tspymfe", # Replace with your own username
+    name="tspymfe",
     version="0.0.1",
     author="Felipe Siqueira",
     author_email="felipe.siqueira@usp.br",
