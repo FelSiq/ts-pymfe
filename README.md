@@ -16,13 +16,13 @@ There is 149 distinct metafeature extraction methods in this version, distribute
 
 ## Install
 From pip:
-``
+```
 pip install -U tspymfe
-``
+```
 or:
-``
+```
 python3 -m pip install -U tspymfe
-``
+```
 
 ## Usage
 To extract the meta-features, the API behaves pretty much like the original Pymfe API:
