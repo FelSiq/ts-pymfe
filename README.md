@@ -14,12 +14,17 @@ There is 149 distinct metafeature extraction methods in this version, distribute
 9. Landmarking
 10. Model based
 
-## Usage
-Install the required packages using:
-```
-pip install -Ur requirements.txt
-```
+## Install
+From pip:
+``
+pip install -U tspymfe
+``
+or:
+``
+python3 -m pip install -U tspymfe
+``
 
+## Usage
 To extract the meta-features, the API behaves pretty much like the original Pymfe API:
 ```python
 import pymfe.tsmfe
@@ -35,7 +40,13 @@ res = extractor.extract()
 print(res)
 ```
 
-To run the test scripts:
+## Dev-install
+If you downloaded directly from github, install the required packages using:
+```
+pip install -Ur requirements.txt
+```
+
+You can run some test scripts:
 ```
 python test_a.py <data_id> <random_seed> <precomp 0/1>
 python test_b.py <data_id> <random_seed> <precomp 0/1>
