@@ -331,6 +331,12 @@ class MFETSGeneral:
         -------
         int
             Length of the time-seties.
+
+        References
+        ----------
+        .. [1] Prudêncio, Ricardo & Ludermir, Teresa. (2004). Meta-learning
+            approaches to selecting time series models. Neurocomputing. 61.
+            121-137.  10.1016/j.neucom.2004.03.008.
         """
         return ts.size
 
@@ -398,7 +404,10 @@ class MFETSGeneral:
         .. [1] C. Shah, Model selection in univariate time series forecasting
             using discriminant analysis, International Journal of Forecasting
             13 (4) (1997) 489–500.
-        .. [2] Lemke, Christiane & Gabrys, Bogdan. (2010). Meta-learning for
+        .. [2] Prudêncio, Ricardo & Ludermir, Teresa. (2004). Meta-learning
+            approaches to selecting time series models. Neurocomputing. 61.
+            121-137.  10.1016/j.neucom.2004.03.008.
+        .. [3] Lemke, Christiane & Gabrys, Bogdan. (2010). Meta-learning for
             time series forecasting and forecast combination. Neurocomputing.
             73. 2006-2016. 10.1016/j.neucom.2009.09.020.
         """
