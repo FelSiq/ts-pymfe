@@ -20,7 +20,7 @@ def get_ts_period(ts: np.ndarray,
     (if ``ts_detrended`` is None).
 
     It is calculated the autocorrelation of the time-series up to
-    1 + floor(ts.size / 2), using the fast-fourier transform method.
+    floor(ts.size / 2), using the fast-fourier transform method.
 
     The time-series period is the argument where the autocorrelation function
     assumed maximal absolute value.
@@ -28,11 +28,14 @@ def get_ts_period(ts: np.ndarray,
     if ts_period is not None:
         return max(int(ts_period), 1)
 
+    if ts.size <= 1:
+        return 1
+
     if ts_detrended is None:
         ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
 
     autocorr = statsmodels.tsa.stattools.acf(ts_detrended,
-                                             nlags=1 + ts_detrended.size // 2,
+                                             nlags=ts_detrended.size // 2,
                                              fft=True,
                                              unbiased=True)[1:]
 

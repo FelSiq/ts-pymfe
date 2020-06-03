@@ -275,9 +275,8 @@ class MFETSGeneral:
 
         inds = np.array([
             indfunc(ts_season[i * ts_period + inds])
-            for i in np.arange(1, ts_season.size // ts_period)
-        ],
-                        dtype=int)
+            for i in np.arange(ts_season.size // ts_period)
+        ], dtype=int)
 
         mode_inds, _ = scipy.stats.mode(inds)
         return mode_inds[0] + 1
