@@ -788,7 +788,12 @@ class MFETSGlobalStats:
             Scholarpedia, vol. 2, no. 5, p. 3043.
         .. [4] "nolds" Python package. URL: https://pypi.org/project/nolds/
         """
-        corr_dim = nolds.corr_dim(ts, emb_dim=emb_dim)
+        try:
+            corr_dim = nolds.corr_dim(ts, emb_dim=emb_dim)
+
+        except AssertionError:
+            corr_dim = np.nan
+
         return corr_dim
 
     @classmethod
