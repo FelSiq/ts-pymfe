@@ -200,6 +200,17 @@ VERBOSE_BLOCK_END_SYMBOL = "."
 
 VERBOSE_WARNING_SYMBOL = "*"
 
+_EXCEPTIONS = (
+    ValueError,
+    TypeError,
+    MemoryError,
+    ZeroDivisionError,
+    AttributeError,
+    np.linalg.LinAlgError,
+    OverflowError,
+)
+"""Common exceptions of metafeature extraction."""
+
 
 def warning_format(message: str,
                    category: t.Type[Warning],
@@ -530,7 +541,7 @@ def summarize(
     try:
         metafeature = callable_sum(features, **callable_args)
 
-    except (TypeError, ValueError, ZeroDivisionError, MemoryError):
+    except _EXCEPTIONS:
         metafeature = np.nan
 
     return metafeature
@@ -576,8 +587,7 @@ def get_feat_value(
     try:
         features = mtd_callable(**mtd_args)
 
-    except (TypeError, ValueError, ZeroDivisionError,
-            MemoryError, np.linalg.LinAlgError) as type_e:
+    except _EXCEPTIONS as type_e:
         is_array = array_is_returned(mtd_callable)
 
         if not suppress_warnings:
@@ -1202,8 +1212,7 @@ def process_precomp_groups(
         try:
             new_precomp_vals = precomp_mtd_callable(**kwargs)  # type: ignore
 
-        except (AttributeError, TypeError,
-                ValueError, MemoryError) as type_err:
+        except _EXCEPTIONS as type_err:
             new_precomp_vals = {}
 
             if not suppress_warnings:
@@ -1699,8 +1708,7 @@ def post_processing(
                 for res_list_old, res_list_new in zip(results, new_results):
                     res_list_old += res_list_new
 
-        except (AttributeError, TypeError,
-                ValueError, MemoryError) as type_err:
+        except _EXCEPTIONS as type_err:
             if not suppress_warnings:
                 warnings.warn("Something went wrong while "
                               "postprocessing '{0}'. Will ignore "
