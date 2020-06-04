@@ -9,6 +9,16 @@ import statsmodels.stats.diagnostic
 
 class MFETSStatTests:
     """Extract time-series meta-features from Statistical Tests group."""
+    @staticmethod
+    def _extract_arch_module_pval(arch_result: t.Any) -> float:
+        """Extract the p-value from a result of the `arch` module."""
+        try:
+            return arch_result.pvalue
+
+        except (IndexError, AssertionError):
+            # Note: catching a weird exceptions from arch module.
+            return np.nan
+
     @classmethod
     def ft_test_dw(cls,
                    ts_residuals: np.ndarray,
@@ -252,7 +262,7 @@ class MFETSStatTests:
         res = arch.unitroot.DFGLS(ts, lags=lags, max_lags=max_nlags)
 
         if return_pval:
-            return res.pvalue
+            return cls._extract_arch_module_pval(arch_result=res)
 
         return res.stat
 
@@ -300,7 +310,7 @@ class MFETSStatTests:
         res = arch.unitroot.PhillipsPerron(ts, lags=max_nlags)
 
         if return_pval:
-            return res.pvalue
+            return cls._extract_arch_module_pval(arch_result=res)
 
         return res.stat
 
@@ -349,7 +359,7 @@ class MFETSStatTests:
         res = arch.unitroot.KPSS(ts, lags=max_nlags)
 
         if return_pval:
-            return res.pvalue
+            return cls._extract_arch_module_pval(arch_result=res)
 
         return res.stat
 
@@ -391,12 +401,7 @@ class MFETSStatTests:
         res = arch.unitroot.ZivotAndrews(ts)
 
         if return_pval:
-            try:
-                return res.pvalue
-
-            except IndexError:
-                # Note: catching a weird IndexError of arch module.
-                return np.nan
+            return cls._extract_arch_module_pval(arch_result=res)
 
         return res.stat
 
