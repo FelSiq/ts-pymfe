@@ -432,10 +432,10 @@ def _get_all_prefixed_mtds(
 
         if update_groups_by:
             group_mtds_names = {
-                remove_prefix(mtd_name, prefix=MTF_PREFIX)
+                remove_prefix(mtd_pack[0], prefix=MTF_PREFIX)
                 if not prefix_removal
-                else mtd_name
-                for mtd_name, _ in group_mtds
+                else mtd_pack[0]
+                for mtd_pack in group_mtds
             }
 
             if not update_groups_by.isdisjoint(group_mtds_names):

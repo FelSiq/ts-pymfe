@@ -1403,7 +1403,6 @@ class TSMFE:
         if not isinstance(print_table, bool):
             raise TypeError("The parameter print_table should be bool.")
 
-        mtf_names = []  # type: t.List[str]
         mtf_desc = [["Group", "Meta-feature name", "Description"]]
         if include_references:
             mtf_desc[0].append("Reference")
@@ -1418,7 +1417,7 @@ class TSMFE:
                     only_name=False,
                     prefix_removal=True))
 
-            for name, method in mtf_names:
+            for name, method in mtf_names:  # type: ignore
                 ini_desc, ref_desc = TSMFE._parse_description(
                     str(method.__doc__), include_references)
                 mtf_desc_line = [group, name, ini_desc]
