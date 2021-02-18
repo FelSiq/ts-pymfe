@@ -6,7 +6,7 @@ import numpy as np
 import sklearn.model_selection
 import sklearn.gaussian_process
 import sklearn.base
-import statsmodels.tsa.arima_model
+import statsmodels.tsa.arima.model
 import statsmodels.tsa.holtwinters
 import statsmodels.tools.sm_exceptions
 import statsmodels.base.model
@@ -31,18 +31,19 @@ except ImportError:
 
 class MFETSLandmarking:
     """Extract time-series meta-features from Landmarking group."""
+
     @classmethod
     def _standard_pipeline_sklearn(
-            cls,
-            y: np.ndarray,
-            model: t.Union[_models.BaseModel, sklearn.base.BaseEstimator],
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            X: t.Optional[np.ndarray] = None,
-            args_fit: t.Optional[t.Dict[str, t.Any]] = None,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
+        cls,
+        y: np.ndarray,
+        model: t.Union[_models.BaseModel, sklearn.base.BaseEstimator],
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        X: t.Optional[np.ndarray] = None,
+        args_fit: t.Optional[t.Dict[str, t.Any]] = None,
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
     ) -> np.ndarray:
         """Fit a model using a canonical pipeline with models from sklearn.
 
@@ -103,7 +104,8 @@ class MFETSLandmarking:
         """
         if tskf is None:
             tskf = sklearn.model_selection.TimeSeriesSplit(
-                n_splits=num_cv_folds)
+                n_splits=num_cv_folds
+            )
 
         if args_fit is None:
             args_fit = {}
@@ -122,7 +124,8 @@ class MFETSLandmarking:
 
         if scale_range is not None:
             scaler = sklearn.preprocessing.MinMaxScaler(
-                feature_range=scale_range)
+                feature_range=scale_range
+            )
 
         for ind_fold, (inds_train, inds_test) in enumerate(tskf.split(X)):
             X_train, X_test = X[inds_train, :], X[inds_test, :]
@@ -144,16 +147,16 @@ class MFETSLandmarking:
 
     @classmethod
     def _standard_pipeline_statsmodels(
-            cls,
-            ts: np.ndarray,
-            model_callable: statsmodels.base.model.Model,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            args_inst: t.Optional[t.Dict[str, t.Any]] = None,
-            args_fit: t.Optional[t.Dict[str, t.Any]] = None,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
+        cls,
+        ts: np.ndarray,
+        model_callable: statsmodels.base.model.Model,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        args_inst: t.Optional[t.Dict[str, t.Any]] = None,
+        args_fit: t.Optional[t.Dict[str, t.Any]] = None,
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        scale_range: t.Optional[t.Tuple[float, float]] = (0.0, 1.0),
     ) -> np.ndarray:
         """Fit a model using a canonical pipeline with models from statsmodels.
 
@@ -210,14 +213,16 @@ class MFETSLandmarking:
 
         if tskf is None:
             tskf = sklearn.model_selection.TimeSeriesSplit(
-                n_splits=num_cv_folds)
+                n_splits=num_cv_folds
+            )
 
         ts = ts.reshape(-1, 1)
         res = np.zeros(tskf.n_splits, dtype=float)
 
         if scale_range is not None:
             scaler = sklearn.preprocessing.MinMaxScaler(
-                feature_range=scale_range)
+                feature_range=scale_range
+            )
 
         with warnings.catch_warnings():
             # Note: We are ignoring these warnings because they are related to
@@ -230,16 +235,18 @@ class MFETSLandmarking:
             warnings.filterwarnings(
                 "ignore",
                 module="statsmodels",
-                category=statsmodels.tools.sm_exceptions.ConvergenceWarning)
+                category=statsmodels.tools.sm_exceptions.ConvergenceWarning,
+            )
 
-            warnings.filterwarnings("ignore",
-                                    module="statsmodels",
-                                    category=RuntimeWarning)
+            warnings.filterwarnings(
+                "ignore", module="statsmodels", category=RuntimeWarning
+            )
 
-            warnings.filterwarnings("ignore",
-                                    module="statsmodels",
-                                    category=statsmodels.tools.sm_exceptions.
-                                    HessianInversionWarning)
+            warnings.filterwarnings(
+                "ignore",
+                module="statsmodels",
+                category=statsmodels.tools.sm_exceptions.HessianInversionWarning,
+            )
 
             for ind_fold, (inds_train, inds_test) in enumerate(tskf.split(ts)):
                 ts_train, ts_test = ts[inds_train], ts[inds_test]
@@ -249,12 +256,14 @@ class MFETSLandmarking:
                     ts_test = scaler.transform(ts_test).ravel()
 
                 try:
-                    model = model_callable(ts_train,
-                                           **args_inst).fit(**args_fit)
+                    model = model_callable(ts_train, **args_inst).fit(
+                        **args_fit
+                    )
 
-                    ts_pred = model.predict(start=ts_train.size,
-                                            end=ts_train.size + ts_test.size -
-                                            1).ravel()
+                    ts_pred = model.predict(
+                        start=ts_train.size,
+                        end=ts_train.size + ts_test.size - 1,
+                    ).ravel()
 
                     res[ind_fold] = score(ts_pred, ts_test)
 
@@ -265,15 +274,16 @@ class MFETSLandmarking:
 
     @classmethod
     def _model_acf_first_nonpos(
-            cls,
-            ts: np.ndarray,
-            perf_ft_method: t.Callable[..., np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            unbiased: bool = True,
-            max_nlags: t.Optional[int] = None,
-            **kwargs) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        perf_ft_method: t.Callable[..., np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        adjusted: bool = True,
+        max_nlags: t.Optional[int] = None,
+        **kwargs
+    ) -> np.ndarray:
         """First non-positive autocorrelation lag of cross-validation erros.
 
         Parameters
@@ -295,7 +305,7 @@ class MFETSLandmarking:
             Must be a value in (0, 1] range. Only the most recent time-series
             observations (in the highest indices of ``ts``) are used.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -311,28 +321,32 @@ class MFETSLandmarking:
             Lag of the first non-positive in the autocorrelation function for
             each forward chaining cross-validation fold.
         """
+
         def score(ts_pred: np.ndarray, ts_test: np.ndarray) -> float:
             """Score function: autocorrelation of the errors."""
             return autocorr.MFETSAutocorr.ft_acf_first_nonpos(
-                ts=ts_pred - ts_test, unbiased=unbiased, max_nlags=max_nlags)
+                ts=ts_pred - ts_test, adjusted=adjusted, max_nlags=max_nlags
+            )
 
-        model_acf_first_nonpos = perf_ft_method(ts=ts,
-                                                tskf=tskf,
-                                                score=score,
-                                                num_cv_folds=num_cv_folds,
-                                                lm_sample_frac=lm_sample_frac,
-                                                **kwargs)
+        model_acf_first_nonpos = perf_ft_method(
+            ts=ts,
+            tskf=tskf,
+            score=score,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+            **kwargs
+        )
 
         return model_acf_first_nonpos
 
     @classmethod
     def ft_model_mean(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """Cross-validated performance of the global mean forecasting model.
 
@@ -380,7 +394,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (0, 0, 0)}
         args_fit = {
@@ -390,26 +404,28 @@ class MFETSLandmarking:
             "maxiter": 1,
         }
 
-        res = cls._standard_pipeline_statsmodels(ts=ts,
-                                                 model_callable=model_callable,
-                                                 args_inst=args_inst,
-                                                 args_fit=args_fit,
-                                                 score=score,
-                                                 tskf=tskf,
-                                                 num_cv_folds=num_cv_folds,
-                                                 lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_statsmodels(
+            ts=ts,
+            model_callable=model_callable,
+            args_inst=args_inst,
+            args_fit=args_fit,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_loc_mean(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            loc_prop: float = 0.25,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        loc_prop: float = 0.25,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """Cross-validated performance of the local mean forecasting model.
 
@@ -466,24 +482,26 @@ class MFETSLandmarking:
         """
         model = _models.TSLocalMean(train_prop=loc_prop)
 
-        res = cls._standard_pipeline_sklearn(y=ts,
-                                             model=model,
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_sklearn(
+            y=ts,
+            model=model,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_loc_median(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            loc_prop: float = 0.25,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        loc_prop: float = 0.25,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """Cross-validated performance of the local median forecasting model.
 
@@ -540,25 +558,27 @@ class MFETSLandmarking:
         """
         model = _models.TSLocalMedian(train_prop=loc_prop)
 
-        res = cls._standard_pipeline_sklearn(y=ts,
-                                             model=model,
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_sklearn(
+            y=ts,
+            model=model,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_sine(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            opt_initial_guess: bool = True,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            random_state: t.Optional[int] = None,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        opt_initial_guess: bool = True,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        random_state: t.Optional[int] = None,
     ) -> np.ndarray:
         """Cross-validated performance of the sine forecasting model.
 
@@ -622,26 +642,29 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model = _models.TSSine(opt_initial_guess=opt_initial_guess,
-                               random_state=random_state)
+        model = _models.TSSine(
+            opt_initial_guess=opt_initial_guess, random_state=random_state
+        )
 
-        res = cls._standard_pipeline_sklearn(y=ts,
-                                             model=model,
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_sklearn(
+            y=ts,
+            model=model,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_exp(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """Cross-validated performance of the exponential forecasting model.
 
@@ -699,24 +722,26 @@ class MFETSLandmarking:
         """
         model = _models.TSExp()
 
-        res = cls._standard_pipeline_sklearn(y=ts,
-                                             model=model,
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_sklearn(
+            y=ts,
+            model=model,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_gaussian(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            random_state: t.Optional[int] = None,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        random_state: t.Optional[int] = None,
     ) -> np.ndarray:
         """Cross-validated performance of the gaussian process model.
 
@@ -772,25 +797,28 @@ class MFETSLandmarking:
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
         model = sklearn.gaussian_process.GaussianProcessRegressor(
-            copy_X_train=False, random_state=random_state)
+            copy_X_train=False, random_state=random_state
+        )
 
-        res = cls._standard_pipeline_sklearn(y=ts,
-                                             model=model,
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_sklearn(
+            y=ts,
+            model=model,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_linear(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """Cross-validated performance of the linear model in time domain.
 
@@ -826,31 +854,33 @@ class MFETSLandmarking:
         """
         model = sklearn.linear_model.LinearRegression()
 
-        res = cls._standard_pipeline_sklearn(y=ts,
-                                             model=model,
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_sklearn(
+            y=ts,
+            model=model,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_linear_embed(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            emb_dim: t.Optional[int] = None,
-            lag: t.Optional[t.Union[str, int]] = None,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            max_nlags: t.Optional[int] = None,
-            detrended_acfs: t.Optional[np.ndarray] = None,
-            detrended_ami: t.Optional[np.ndarray] = None,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            emb_dim_cao_e1: t.Optional[np.ndarray] = None,
-            emb_dim_cao_e2: t.Optional[np.ndarray] = None,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        emb_dim: t.Optional[int] = None,
+        lag: t.Optional[t.Union[str, int]] = None,
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        max_nlags: t.Optional[int] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        emb_dim_cao_e1: t.Optional[np.ndarray] = None,
+        emb_dim_cao_e2: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Fit a linear model on the embedded time-series.
 
@@ -962,40 +992,45 @@ class MFETSLandmarking:
 
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        lag = _embed.embed_lag(ts=ts_scaled,
-                               lag=lag,
-                               max_nlags=max_nlags,
-                               detrended_acfs=detrended_acfs,
-                               detrended_ami=detrended_ami)
+        lag = _embed.embed_lag(
+            ts=ts_scaled,
+            lag=lag,
+            max_nlags=max_nlags,
+            detrended_acfs=detrended_acfs,
+            detrended_ami=detrended_ami,
+        )
 
         if emb_dim is None:
             emb_dim = general.MFETSGeneral.ft_emb_dim_cao(
                 ts=ts,
                 lag=lag,
                 emb_dim_cao_e1=emb_dim_cao_e1,
-                emb_dim_cao_e2=emb_dim_cao_e2)
+                emb_dim_cao_e2=emb_dim_cao_e2,
+            )
 
         X = _embed.embed_ts(ts=ts, dim=emb_dim, lag=lag)
 
-        res = cls._standard_pipeline_sklearn(y=X[:, 0],
-                                             X=X[:, 1:],
-                                             model=model,
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_sklearn(
+            y=X[:, 0],
+            X=X[:, 1:],
+            model=model,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_linear_seasonal(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            ts_period: t.Optional[int] = None,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        ts_period: t.Optional[int] = None,
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """Cross-validated performance of the seasonal linear model.
 
@@ -1049,34 +1084,38 @@ class MFETSLandmarking:
         if _ts_period <= 1:
             raise ValueError("Time-series is not seasonal (period <= 1).")
 
-        X = np.tile(np.arange(_ts_period),
-                    1 + ts.size // _ts_period)[:ts.size, np.newaxis]
+        X = np.tile(np.arange(_ts_period), 1 + ts.size // _ts_period)[
+            : ts.size, np.newaxis
+        ]
 
         # Note: remove one dummy variable to avoid the 'dummy
         # variable trap'.
         X = sklearn.preprocessing.OneHotEncoder(
-            sparse=False, drop="first").fit_transform(X)
+            sparse=False, drop="first"
+        ).fit_transform(X)
 
         model = sklearn.linear_model.LinearRegression()
 
-        res = cls._standard_pipeline_sklearn(y=ts,
-                                             X=X,
-                                             model=model,
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_sklearn(
+            y=ts,
+            X=X,
+            model=model,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_naive(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """Cross-validated performance of the naive model.
 
@@ -1121,23 +1160,25 @@ class MFETSLandmarking:
         """
         model = _models.TSNaive()
 
-        res = cls._standard_pipeline_sklearn(y=ts,
-                                             model=model,
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_sklearn(
+            y=ts,
+            model=model,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_naive_drift(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """Cross-validated performance of the naive model with drift.
 
@@ -1185,24 +1226,26 @@ class MFETSLandmarking:
         """
         model = _models.TSNaiveDrift()
 
-        res = cls._standard_pipeline_sklearn(y=ts,
-                                             model=model,
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_sklearn(
+            y=ts,
+            model=model,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_naive_seasonal(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            ts_period: t.Optional[int] = None,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        ts_period: t.Optional[int] = None,
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """Cross-validated performance of the seasonal linear model.
 
@@ -1258,25 +1301,27 @@ class MFETSLandmarking:
 
         model = _models.TSNaiveSeasonal(ts_period=_ts_period)
 
-        res = cls._standard_pipeline_sklearn(y=ts,
-                                             model=model,
-                                             score=score,
-                                             tskf=tskf,
-                                             num_cv_folds=num_cv_folds,
-                                             lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_sklearn(
+            y=ts,
+            model=model,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_arima_100_c(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """Cross-validated performance of the ARIMA(1,0,0) with constant model.
 
@@ -1328,7 +1373,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (1, 0, 0)}
         args_fit = {
@@ -1339,27 +1384,29 @@ class MFETSLandmarking:
             "solver": solver,
         }
 
-        res = cls._standard_pipeline_statsmodels(ts=ts,
-                                                 model_callable=model_callable,
-                                                 args_inst=args_inst,
-                                                 args_fit=args_fit,
-                                                 score=score,
-                                                 tskf=tskf,
-                                                 num_cv_folds=num_cv_folds,
-                                                 lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_statsmodels(
+            ts=ts,
+            model_callable=model_callable,
+            args_inst=args_inst,
+            args_fit=args_fit,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_arima_010_c(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """Cross-validated performance of the ARIMA(0,1,0) with constant model.
 
@@ -1411,7 +1458,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (0, 1, 0)}
         args_fit = {
@@ -1422,27 +1469,29 @@ class MFETSLandmarking:
             "solver": solver,
         }
 
-        res = cls._standard_pipeline_statsmodels(ts=ts,
-                                                 model_callable=model_callable,
-                                                 args_inst=args_inst,
-                                                 args_fit=args_fit,
-                                                 score=score,
-                                                 tskf=tskf,
-                                                 num_cv_folds=num_cv_folds,
-                                                 lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_statsmodels(
+            ts=ts,
+            model_callable=model_callable,
+            args_inst=args_inst,
+            args_fit=args_fit,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_arima_110_c(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """Cross-validated performance of the ARIMA(1,1,0) with constant model.
 
@@ -1494,7 +1543,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (1, 1, 0)}
         args_fit = {
@@ -1505,27 +1554,29 @@ class MFETSLandmarking:
             "solver": solver,
         }
 
-        res = cls._standard_pipeline_statsmodels(ts=ts,
-                                                 model_callable=model_callable,
-                                                 args_inst=args_inst,
-                                                 args_fit=args_fit,
-                                                 score=score,
-                                                 tskf=tskf,
-                                                 num_cv_folds=num_cv_folds,
-                                                 lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_statsmodels(
+            ts=ts,
+            model_callable=model_callable,
+            args_inst=args_inst,
+            args_fit=args_fit,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_arima_011_nc(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """Cross-validated performance of the ARIMA(0,1,1) (no constant) model.
 
@@ -1577,7 +1628,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (0, 1, 1)}
         args_fit = {
@@ -1588,27 +1639,29 @@ class MFETSLandmarking:
             "solver": solver,
         }
 
-        res = cls._standard_pipeline_statsmodels(ts=ts,
-                                                 model_callable=model_callable,
-                                                 args_inst=args_inst,
-                                                 args_fit=args_fit,
-                                                 score=score,
-                                                 tskf=tskf,
-                                                 num_cv_folds=num_cv_folds,
-                                                 lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_statsmodels(
+            ts=ts,
+            model_callable=model_callable,
+            args_inst=args_inst,
+            args_fit=args_fit,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_arima_011_c(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """Cross-validated performance of the ARIMA(0,1,1) with constant model.
 
@@ -1661,7 +1714,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (0, 1, 1)}
         args_fit = {
@@ -1672,27 +1725,29 @@ class MFETSLandmarking:
             "solver": solver,
         }
 
-        res = cls._standard_pipeline_statsmodels(ts=ts,
-                                                 model_callable=model_callable,
-                                                 args_inst=args_inst,
-                                                 args_fit=args_fit,
-                                                 score=score,
-                                                 tskf=tskf,
-                                                 num_cv_folds=num_cv_folds,
-                                                 lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_statsmodels(
+            ts=ts,
+            model_callable=model_callable,
+            args_inst=args_inst,
+            args_fit=args_fit,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_arima_021_c(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """Cross-validated performance of the ARIMA(0,2,1) with constant model.
 
@@ -1744,7 +1799,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (0, 2, 1)}
         args_fit = {
@@ -1755,27 +1810,29 @@ class MFETSLandmarking:
             "solver": solver,
         }
 
-        res = cls._standard_pipeline_statsmodels(ts=ts,
-                                                 model_callable=model_callable,
-                                                 args_inst=args_inst,
-                                                 args_fit=args_fit,
-                                                 score=score,
-                                                 tskf=tskf,
-                                                 num_cv_folds=num_cv_folds,
-                                                 lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_statsmodels(
+            ts=ts,
+            model_callable=model_callable,
+            args_inst=args_inst,
+            args_fit=args_fit,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_arima_112_nc(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            solver: str = "lbfgs",
-            maxiter: int = 512,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        solver: str = "lbfgs",
+        maxiter: int = 512,
     ) -> np.ndarray:
         """Cross-validated performance of the ARIMA(1,1,2) (no constant) model.
 
@@ -1828,7 +1885,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (1, 1, 2)}
         args_fit = {
@@ -1839,25 +1896,27 @@ class MFETSLandmarking:
             "solver": solver,
         }
 
-        res = cls._standard_pipeline_statsmodels(ts=ts,
-                                                 model_callable=model_callable,
-                                                 args_inst=args_inst,
-                                                 args_fit=args_fit,
-                                                 score=score,
-                                                 tskf=tskf,
-                                                 num_cv_folds=num_cv_folds,
-                                                 lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_statsmodels(
+            ts=ts,
+            model_callable=model_callable,
+            args_inst=args_inst,
+            args_fit=args_fit,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_ses(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """Cross-validated performance of a Single Exponential Smoothing model.
 
@@ -1903,26 +1962,33 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
+        args_inst = {
+            "initialization_method": "estimated",
+        }
+
         model_callable = statsmodels.tsa.holtwinters.SimpleExpSmoothing
 
-        res = cls._standard_pipeline_statsmodels(ts=ts,
-                                                 model_callable=model_callable,
-                                                 score=score,
-                                                 tskf=tskf,
-                                                 num_cv_folds=num_cv_folds,
-                                                 lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_statsmodels(
+            ts=ts,
+            model_callable=model_callable,
+            args_inst=args_inst,
+            score=score,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_hwes_ada(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            ts_period: t.Optional[int] = None,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        ts_period: t.Optional[int] = None,
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """Performance of a HW(A_{d},A) model.
 
@@ -1988,33 +2054,36 @@ class MFETSLandmarking:
             "seasonal_periods": _ts_period,
             "trend": "add",
             "seasonal": "add",
-            "damped": True,
+            "damped_trend": True,
+            "initialization_method": "estimated",
         }
 
         args_fit = {
             "use_brute": False,
         }
 
-        res = cls._standard_pipeline_statsmodels(ts=ts,
-                                                 model_callable=model_callable,
-                                                 score=score,
-                                                 args_inst=args_inst,
-                                                 args_fit=args_fit,
-                                                 tskf=tskf,
-                                                 num_cv_folds=num_cv_folds,
-                                                 lm_sample_frac=lm_sample_frac)
+        res = cls._standard_pipeline_statsmodels(
+            ts=ts,
+            model_callable=model_callable,
+            score=score,
+            args_inst=args_inst,
+            args_fit=args_fit,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+        )
 
         return res
 
     @classmethod
     def ft_model_hwes_adm(
-            cls,
-            ts: np.ndarray,
-            score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
-            ts_period: t.Optional[int] = None,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
+        cls,
+        ts: np.ndarray,
+        score: t.Callable[[np.ndarray, np.ndarray], np.ndarray],
+        ts_period: t.Optional[int] = None,
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
     ) -> np.ndarray:
         """Performance of a HW(A_{d},M) model.
 
@@ -2080,7 +2149,8 @@ class MFETSLandmarking:
             "seasonal_periods": _ts_period,
             "trend": "add",
             "seasonal": "mul",
-            "damped": True,
+            "damped_trend": True,
+            "initialization_method": "estimated",
         }
 
         args_fit = {
@@ -2090,27 +2160,29 @@ class MFETSLandmarking:
         # Note: scaling time-series in [1, 2] interval rather than
         # [0, 1] because for Multiplicative Exponential Models,
         # the time-series values must be strictly positive.
-        res = cls._standard_pipeline_statsmodels(ts=ts,
-                                                 model_callable=model_callable,
-                                                 score=score,
-                                                 args_inst=args_inst,
-                                                 args_fit=args_fit,
-                                                 tskf=tskf,
-                                                 num_cv_folds=num_cv_folds,
-                                                 lm_sample_frac=lm_sample_frac,
-                                                 scale_range=(1, 2))
+        res = cls._standard_pipeline_statsmodels(
+            ts=ts,
+            model_callable=model_callable,
+            score=score,
+            args_inst=args_inst,
+            args_fit=args_fit,
+            tskf=tskf,
+            num_cv_folds=num_cv_folds,
+            lm_sample_frac=lm_sample_frac,
+            scale_range=(1, 2),
+        )
 
         return res
 
     @classmethod
     def ft_model_mean_acf_first_nonpos(
-            cls,
-            ts: np.ndarray,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            unbiased: bool = True,
-            max_nlags: t.Optional[int] = None,
+        cls,
+        ts: np.ndarray,
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        adjusted: bool = True,
+        max_nlags: t.Optional[int] = None,
     ) -> np.ndarray:
         """First non-positive autocorrelation lags for Mean model errors.
 
@@ -2137,7 +2209,7 @@ class MFETSLandmarking:
             Must be a value in (0, 1] range. Only the most recent time-series
             observations (in the highest indices of ``ts``) are used.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -2170,20 +2242,21 @@ class MFETSLandmarking:
             tskf=tskf,
             num_cv_folds=num_cv_folds,
             lm_sample_frac=lm_sample_frac,
-            unbiased=unbiased,
-            max_nlags=max_nlags)
+            adjusted=adjusted,
+            max_nlags=max_nlags,
+        )
 
         return acf_first_nonpos_mean
 
     @classmethod
     def ft_model_linear_acf_first_nonpos(
-            cls,
-            ts: np.ndarray,
-            tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
-            num_cv_folds: int = 5,
-            lm_sample_frac: float = 1.0,
-            unbiased: bool = True,
-            max_nlags: t.Optional[int] = None,
+        cls,
+        ts: np.ndarray,
+        tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        adjusted: bool = True,
+        max_nlags: t.Optional[int] = None,
     ) -> np.ndarray:
         """First non-positive autocorrelation lags for Linear model errors.
 
@@ -2213,7 +2286,7 @@ class MFETSLandmarking:
             Must be a value in (0, 1] range. Only the most recent time-series
             observations (in the highest indices of ``ts``) are used.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -2246,7 +2319,8 @@ class MFETSLandmarking:
             tskf=tskf,
             num_cv_folds=num_cv_folds,
             lm_sample_frac=lm_sample_frac,
-            unbiased=unbiased,
-            max_nlags=max_nlags)
+            adjusted=adjusted,
+            max_nlags=max_nlags,
+        )
 
         return acf_first_nonpos_linear

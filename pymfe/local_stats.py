@@ -29,9 +29,11 @@ except ImportError:
 
 class MFETSLocalStats:
     """Extract time-series meta-features from Local Statistics group."""
+
     @classmethod
-    def precompute_ts_scaled(cls, ts: np.ndarray,
-                             **kwargs) -> t.Dict[str, np.ndarray]:
+    def precompute_ts_scaled(
+        cls, ts: np.ndarray, **kwargs
+    ) -> t.Dict[str, np.ndarray]:
         """Precompute a standardized time series.
 
         Parameters
@@ -59,10 +61,8 @@ class MFETSLocalStats:
 
     @classmethod
     def precompute_rolling_window(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            **kwargs) -> t.Dict[str, pd.core.window.rolling.Rolling]:
+        cls, ts: np.ndarray, window_size: t.Union[int, float] = 0.1, **kwargs
+    ) -> t.Dict[str, pd.core.window.rolling.Rolling]:
         """Precompute a configured rolling window.
 
         Parameters
@@ -101,21 +101,23 @@ class MFETSLocalStats:
             ts_scaled = precomp_vals["ts_scaled"]
 
         if "ts_tol_win" not in kwargs:
-            ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                                   window_size=window_size,
-                                                   ts_scaled=ts_scaled)
+            ts_rol_win = _utils.get_rolling_window(
+                ts=ts, window_size=window_size, ts_scaled=ts_scaled
+            )
 
             precomp_vals["ts_tol_win"] = ts_rol_win
 
         return precomp_vals
 
     @classmethod
-    def _rol_stat_postprocess(cls,
-                              rolling_stat: pd.Series,
-                              remove_nan: bool = True,
-                              diff_order: int = 0,
-                              diff_lag: int = 0,
-                              abs_value: bool = False) -> np.ndarray:
+    def _rol_stat_postprocess(
+        cls,
+        rolling_stat: pd.Series,
+        remove_nan: bool = True,
+        diff_order: int = 0,
+        diff_lag: int = 0,
+        abs_value: bool = False,
+    ) -> np.ndarray:
         """Postprocess a pandas Series rolling window result.
 
         Arguments
@@ -171,18 +173,19 @@ class MFETSLocalStats:
         return rolling_stat.values
 
     @classmethod
-    def _moving_stat_shift(cls,
-                           ts: np.ndarray,
-                           stat_func: t.Callable[..., np.ndarray],
-                           window_size: t.Union[int, float] = 0.1,
-                           diff_order: int = 1,
-                           diff_lag: int = 1,
-                           abs_value: bool = True,
-                           remove_nan: bool = True,
-                           ts_scaled: t.Optional[np.ndarray] = None,
-                           ts_rol_win: t.Optional[
-                               pd.core.window.rolling.Rolling] = None,
-                           **kwargs) -> np.ndarray:
+    def _moving_stat_shift(
+        cls,
+        ts: np.ndarray,
+        stat_func: t.Callable[..., np.ndarray],
+        window_size: t.Union[int, float] = 0.1,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        **kwargs
+    ) -> np.ndarray:
         """Calculate the n-lagged `m`th-order differenced of moving statistics.
 
         Parameters
@@ -230,29 +233,33 @@ class MFETSLocalStats:
         :obj:`np.ndarray`
             Post-processed rolling statistic values.
         """
-        rolling_stat = stat_func(ts=ts,
-                                 window_size=window_size,
-                                 remove_nan=remove_nan,
-                                 ts_scaled=ts_scaled,
-                                 ts_rol_win=ts_rol_win,
-                                 **kwargs)
+        rolling_stat = stat_func(
+            ts=ts,
+            window_size=window_size,
+            remove_nan=remove_nan,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+            **kwargs
+        )
 
-        rolling_stat_shifts = cls._rol_stat_postprocess(rolling_stat,
-                                                        remove_nan=False,
-                                                        diff_order=diff_order,
-                                                        diff_lag=diff_lag,
-                                                        abs_value=abs_value)
+        rolling_stat_shifts = cls._rol_stat_postprocess(
+            rolling_stat,
+            remove_nan=False,
+            diff_order=diff_order,
+            diff_lag=diff_lag,
+            abs_value=abs_value,
+        )
 
         return rolling_stat_shifts
 
     @classmethod
     def ft_moving_avg(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Moving average of overlapping windows.
 
@@ -284,10 +291,12 @@ class MFETSLocalStats:
         :obj:`np.ndarray`
             Moving average from overlapping windows in time-series values.
         """
-        ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                               window_size=window_size,
-                                               ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_win)
+        ts_rol_win = _utils.get_rolling_window(
+            ts=ts,
+            window_size=window_size,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+        )
 
         rolling_stat = ts_rol_win.mean()
 
@@ -295,15 +304,15 @@ class MFETSLocalStats:
 
     @classmethod
     def ft_moving_avg_shift(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            diff_order: int = 1,
-            diff_lag: int = 1,
-            abs_value: bool = True,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Absolute differenced moving average of overlapping windows.
 
@@ -370,19 +379,20 @@ class MFETSLocalStats:
             abs_value=abs_value,
             remove_nan=remove_nan,
             ts_scaled=ts_scaled,
-            ts_rol_win=ts_rol_win)
+            ts_rol_win=ts_rol_win,
+        )
 
         return rolling_stat_shift
 
     @classmethod
     def ft_moving_var(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            ddof: int = 1,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        ddof: int = 1,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Moving variance of overlapping windows.
 
@@ -431,10 +441,12 @@ class MFETSLocalStats:
             1, 2020, Pages 86-92, ISSN 0169-2070,
             https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
-        ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                               window_size=window_size,
-                                               ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_win)
+        ts_rol_win = _utils.get_rolling_window(
+            ts=ts,
+            window_size=window_size,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+        )
 
         rolling_stat = ts_rol_win.var(ddof=ddof)
 
@@ -442,16 +454,16 @@ class MFETSLocalStats:
 
     @classmethod
     def ft_moving_var_shift(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            ddof: int = 1,
-            diff_order: int = 1,
-            diff_lag: int = 1,
-            abs_value: bool = True,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        ddof: int = 1,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Absolute differenced moving variance of overlapping windows.
 
@@ -522,19 +534,20 @@ class MFETSLocalStats:
             remove_nan=remove_nan,
             ts_scaled=ts_scaled,
             ts_rol_win=ts_rol_win,
-            ddof=ddof)
+            ddof=ddof,
+        )
 
         return rolling_stat_shift
 
     @classmethod
     def ft_moving_sd(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            ddof: int = 1,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        ddof: int = 1,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Moving standard deviation of overlapping windows.
 
@@ -570,10 +583,12 @@ class MFETSLocalStats:
             Moving standard deviation from overlapping windows in
             time-series values.
         """
-        ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                               window_size=window_size,
-                                               ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_win)
+        ts_rol_win = _utils.get_rolling_window(
+            ts=ts,
+            window_size=window_size,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+        )
 
         rolling_stat = ts_rol_win.std(ddof=ddof)
 
@@ -581,16 +596,16 @@ class MFETSLocalStats:
 
     @classmethod
     def ft_moving_sd_shift(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            ddof: int = 1,
-            diff_order: int = 1,
-            diff_lag: int = 1,
-            abs_value: bool = True,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        ddof: int = 1,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Abs. diff. moving standard deviation of overlapping windows.
 
@@ -637,29 +652,31 @@ class MFETSLocalStats:
             Post-processed moving standard deviation from non-overlapping
             windows in time-series values.
         """
-        rolling_stat_shift = cls._moving_stat_shift(ts=ts,
-                                                    stat_func=cls.ft_moving_sd,
-                                                    window_size=window_size,
-                                                    diff_order=diff_order,
-                                                    diff_lag=diff_lag,
-                                                    abs_value=abs_value,
-                                                    remove_nan=remove_nan,
-                                                    ts_scaled=ts_scaled,
-                                                    ts_rol_win=ts_rol_win,
-                                                    ddof=ddof)
+        rolling_stat_shift = cls._moving_stat_shift(
+            ts=ts,
+            stat_func=cls.ft_moving_sd,
+            window_size=window_size,
+            diff_order=diff_order,
+            diff_lag=diff_lag,
+            abs_value=abs_value,
+            remove_nan=remove_nan,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+            ddof=ddof,
+        )
 
         return rolling_stat_shift
 
     @classmethod
     def ft_moving_skewness(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            method: int = 3,
-            unbiased: bool = False,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        method: int = 3,
+        adjusted: bool = False,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Moving skewness of overlapping windows.
 
@@ -697,7 +714,7 @@ class MFETSLocalStats:
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         remove_nan : bool, optional (default=True)
@@ -717,30 +734,32 @@ class MFETSLocalStats:
         :obj:`np.ndarray`
             Moving skewness from overlapping windows in time-series values.
         """
-        ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                               window_size=window_size,
-                                               ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_win)
+        ts_rol_win = _utils.get_rolling_window(
+            ts=ts,
+            window_size=window_size,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+        )
 
         rolling_stat = ts_rol_win.apply(
-            _summary.sum_skewness,
-            kwargs=dict(method=method, bias=~unbiased))
+            _summary.sum_skewness, kwargs=dict(method=method, bias=~adjusted)
+        )
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
     @classmethod
     def ft_moving_skewness_shift(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            method: int = 3,
-            unbiased: bool = False,
-            diff_order: int = 1,
-            diff_lag: int = 1,
-            abs_value: bool = True,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        method: int = 3,
+        adjusted: bool = False,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Absolute differenced moving skewness of overlapping windows.
 
@@ -778,7 +797,7 @@ class MFETSLocalStats:
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         diff_order : int, optional (default=1)
@@ -821,20 +840,21 @@ class MFETSLocalStats:
             ts_scaled=ts_scaled,
             ts_rol_win=ts_rol_win,
             method=method,
-            unbiased=unbiased)
+            adjusted=adjusted,
+        )
 
         return rolling_stat_shift
 
     @classmethod
     def ft_moving_kurtosis(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            method: int = 3,
-            unbiased: bool = False,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        method: int = 3,
+        adjusted: bool = False,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Moving kurtosis of overlapping windows.
 
@@ -874,7 +894,7 @@ class MFETSLocalStats:
             Note that if the selected method is unable to be calculated due
             to division by zero, then the first method is used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         remove_nan : bool, optional (default=True)
@@ -894,30 +914,32 @@ class MFETSLocalStats:
         :obj:`np.ndarray`
             Moving kurtosis from overlapping windows in time-series values.
         """
-        ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                               window_size=window_size,
-                                               ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_win)
+        ts_rol_win = _utils.get_rolling_window(
+            ts=ts,
+            window_size=window_size,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+        )
 
         rolling_stat = ts_rol_win.apply(
-            _summary.sum_kurtosis,
-            kwargs=dict(method=method, bias=~unbiased))
+            _summary.sum_kurtosis, kwargs=dict(method=method, bias=~adjusted)
+        )
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
     @classmethod
     def ft_moving_kurtosis_shift(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            method: int = 3,
-            unbiased: bool = False,
-            diff_order: int = 1,
-            diff_lag: int = 1,
-            abs_value: bool = True,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        method: int = 3,
+        adjusted: bool = False,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Absolute differenced moving kurtosis of overlapping windows.
 
@@ -957,7 +979,7 @@ class MFETSLocalStats:
             Note that if the selected method is unable to be calculated due
             to division by zero, then the first method is used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         diff_order : int, optional (default=1)
@@ -1000,19 +1022,20 @@ class MFETSLocalStats:
             ts_scaled=ts_scaled,
             ts_rol_win=ts_rol_win,
             method=method,
-            unbiased=unbiased)
+            adjusted=adjusted,
+        )
 
         return rolling_stat_shift
 
     @classmethod
     def ft_moving_acf(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            unbiased: bool = True,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        adjusted: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Moving autocorrelation of overlapping windows.
 
@@ -1027,7 +1050,7 @@ class MFETSLocalStats:
             If 0 < float < 1, this argument defines the fraction of the
             time-series length used as the window size.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         remove_nan : bool, optional (default=True)
@@ -1048,29 +1071,32 @@ class MFETSLocalStats:
             Moving autocorrelation from overlapping windows in time-series
             values.
         """
-        ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                               window_size=window_size,
-                                               ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_win)
+        ts_rol_win = _utils.get_rolling_window(
+            ts=ts,
+            window_size=window_size,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+        )
 
-        rolling_stat = ts_rol_win.apply(autocorr.MFETSAutocorr.ft_acf,
-                                        kwargs=dict(nlags=1,
-                                                    unbiased=unbiased))
+        rolling_stat = ts_rol_win.apply(
+            autocorr.MFETSAutocorr.ft_acf,
+            kwargs=dict(nlags=1, adjusted=adjusted),
+        )
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
     @classmethod
     def ft_moving_acf_shift(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            unbiased: bool = True,
-            diff_order: int = 1,
-            diff_lag: int = 1,
-            abs_value: bool = True,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        adjusted: bool = True,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Absolute differenced moving autocorrelation of overlapping windows.
 
@@ -1085,7 +1111,7 @@ class MFETSLocalStats:
             If 0 < float < 1, this argument defines the fraction of the
             time-series length used as the window size.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         diff_order : int, optional (default=1)
@@ -1127,18 +1153,19 @@ class MFETSLocalStats:
             remove_nan=remove_nan,
             ts_scaled=ts_scaled,
             ts_rol_win=ts_rol_win,
-            unbiased=unbiased)
+            adjusted=adjusted,
+        )
 
         return rolling_stat_shift
 
     @classmethod
     def ft_moving_gmean(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Moving geometric mean of overlapping windows.
 
@@ -1171,10 +1198,12 @@ class MFETSLocalStats:
             Moving geometric mean from overlapping windows in time-series
             values.
         """
-        ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                               window_size=window_size,
-                                               ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_win)
+        ts_rol_win = _utils.get_rolling_window(
+            ts=ts,
+            window_size=window_size,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+        )
 
         rolling_stat = ts_rol_win.apply(scipy.stats.gmean)
 
@@ -1182,15 +1211,15 @@ class MFETSLocalStats:
 
     @classmethod
     def ft_moving_gmean_shift(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            diff_order: int = 1,
-            diff_lag: int = 1,
-            abs_value: bool = True,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Absolute differenced moving geometric mean of overlapping windows.
 
@@ -1243,18 +1272,19 @@ class MFETSLocalStats:
             abs_value=abs_value,
             remove_nan=remove_nan,
             ts_scaled=ts_scaled,
-            ts_rol_win=ts_rol_win)
+            ts_rol_win=ts_rol_win,
+        )
 
         return rolling_stat_shift
 
     @classmethod
     def ft_moving_kldiv(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            remove_inf: bool = True,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        remove_inf: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Moving Kullback-Leibler divergence of overlapping windows.
 
@@ -1308,8 +1338,9 @@ class MFETSLocalStats:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        _window_size = _utils.process_window_size(ts=ts_scaled,
-                                                  window_size=window_size)
+        _window_size = _utils.process_window_size(
+            ts=ts_scaled, window_size=window_size
+        )
 
         rolling_stat = np.zeros(ts_scaled.size - _window_size, dtype=float)
 
@@ -1319,7 +1350,8 @@ class MFETSLocalStats:
         while i < ts_scaled.size - _window_size:
             cur_bin = next_bin
             next_bin = np.histogram(
-                ts_scaled[i:i + _window_size], density=True)[0]
+                ts_scaled[i : i + _window_size], density=True
+            )[0]
             rolling_stat[i - 1] = scipy.stats.entropy(next_bin, cur_bin)
             i += 1
 
@@ -1330,15 +1362,15 @@ class MFETSLocalStats:
 
     @classmethod
     def ft_moving_kldiv_shift(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            diff_order: int = 1,
-            diff_lag: int = 1,
-            abs_value: bool = True,
-            remove_inf: bool = True,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        diff_order: int = 1,
+        diff_lag: int = 1,
+        abs_value: bool = True,
+        remove_inf: bool = True,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Abs. diff. mov. Kullback-Leibler divergence of overlapping windows.
 
@@ -1397,30 +1429,34 @@ class MFETSLocalStats:
             1, 2020, Pages 86-92, ISSN 0169-2070,
             https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
-        rolling_stat = cls.ft_moving_kldiv(ts=ts,
-                                           window_size=window_size,
-                                           remove_nan=remove_nan,
-                                           remove_inf=remove_inf,
-                                           ts_scaled=ts_scaled)
+        rolling_stat = cls.ft_moving_kldiv(
+            ts=ts,
+            window_size=window_size,
+            remove_nan=remove_nan,
+            remove_inf=remove_inf,
+            ts_scaled=ts_scaled,
+        )
 
-        rolling_stat_shifts = cls._rol_stat_postprocess(rolling_stat,
-                                                        remove_nan=False,
-                                                        diff_order=diff_order,
-                                                        diff_lag=diff_lag,
-                                                        abs_value=abs_value)
+        rolling_stat_shifts = cls._rol_stat_postprocess(
+            rolling_stat,
+            remove_nan=False,
+            diff_order=diff_order,
+            diff_lag=diff_lag,
+            abs_value=abs_value,
+        )
 
         return rolling_stat_shifts
 
     @classmethod
     def ft_moving_lilliefors(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            distribution: str = "norm",
-            return_pval: bool = False,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        distribution: str = "norm",
+        return_pval: bool = False,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Moving Lilliefors test of overlapping windows.
 
@@ -1474,30 +1510,33 @@ class MFETSLocalStats:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
-        ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                               window_size=window_size,
-                                               ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_win)
+        ts_rol_win = _utils.get_rolling_window(
+            ts=ts,
+            window_size=window_size,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+        )
 
         rolling_stat = ts_rol_win.apply(
             stat_tests.MFETSStatTests.ft_test_lilliefors,
-            kwargs=dict(distribution=distribution, return_pval=return_pval))
+            kwargs=dict(distribution=distribution, return_pval=return_pval),
+        )
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
     @classmethod
     def ft_moving_approx_ent(
-            cls,
-            ts: np.ndarray,
-            window_size: t.Union[int, float] = 0.1,
-            embed_dim: int = 2,
-            embed_lag: int = 1,
-            threshold: float = 0.2,
-            metric: str = "chebyshev",
-            p: t.Union[int, float] = 2,
-            remove_nan: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+        cls,
+        ts: np.ndarray,
+        window_size: t.Union[int, float] = 0.1,
+        embed_dim: int = 2,
+        embed_lag: int = 1,
+        threshold: float = 0.2,
+        metric: str = "chebyshev",
+        p: t.Union[int, float] = 2,
+        remove_nan: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
     ) -> np.ndarray:
         """Moving approximate entropy of overlapping windows.
 
@@ -1561,27 +1600,34 @@ class MFETSLocalStats:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
-        ts_rol_win = _utils.get_rolling_window(ts=ts,
-                                               window_size=window_size,
-                                               ts_scaled=ts_scaled,
-                                               ts_rol_win=ts_rol_win)
+        ts_rol_win = _utils.get_rolling_window(
+            ts=ts,
+            window_size=window_size,
+            ts_scaled=ts_scaled,
+            ts_rol_win=ts_rol_win,
+        )
 
         rolling_stat = ts_rol_win.apply(
             info_theory.MFETSInfoTheory.ft_approx_entropy,
-            kwargs=dict(embed_dim=embed_dim,
-                        embed_lag=embed_lag,
-                        threshold=threshold,
-                        metric=metric,
-                        p=p))
+            kwargs=dict(
+                embed_dim=embed_dim,
+                embed_lag=embed_lag,
+                threshold=threshold,
+                metric=metric,
+                p=p,
+            ),
+        )
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
     @classmethod
-    def ft_lumpiness(cls,
-                     ts: np.ndarray,
-                     num_tiles: int = 16,
-                     ddof: int = 1,
-                     ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+    def ft_lumpiness(
+        cls,
+        ts: np.ndarray,
+        num_tiles: int = 16,
+        ddof: int = 1,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Lumpiness (the non-overlapping rolling variance) of the time-series.
 
         Originally, this meta-feature is calculated using the variance of the
@@ -1625,10 +1671,9 @@ class MFETSLocalStats:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        tilled_vars = _utils.apply_on_tiles(ts=ts_scaled,
-                                            num_tiles=num_tiles,
-                                            func=np.var,
-                                            ddof=ddof)
+        tilled_vars = _utils.apply_on_tiles(
+            ts=ts_scaled, num_tiles=num_tiles, func=np.var, ddof=ddof
+        )
 
         # Note: the 'lumpiness' is defined as the variance of the
         # tilled variances. However, here, to enable other summarization,
@@ -1636,10 +1681,12 @@ class MFETSLocalStats:
         return tilled_vars
 
     @classmethod
-    def ft_stability(cls,
-                     ts: np.ndarray,
-                     num_tiles: int = 16,
-                     ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+    def ft_stability(
+        cls,
+        ts: np.ndarray,
+        num_tiles: int = 16,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Stability (the non-overlapping rolling mean) of the time-series.
 
         Originally, this meta-feature is calculated using the variance of the
@@ -1676,9 +1723,9 @@ class MFETSLocalStats:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        tilled_means = _utils.apply_on_tiles(ts=ts_scaled,
-                                             num_tiles=num_tiles,
-                                             func=np.mean)
+        tilled_means = _utils.apply_on_tiles(
+            ts=ts_scaled, num_tiles=num_tiles, func=np.mean
+        )
 
         # Note: the 'stability' is defined as the variance of the
         # tilled means. However, here, to enable other summarization,
@@ -1687,10 +1734,11 @@ class MFETSLocalStats:
 
     @classmethod
     def ft_local_extrema(
-            cls,
-            ts: np.ndarray,
-            num_tiles: int = 16,
-            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        num_tiles: int = 16,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Non-overlapping rolling windows local extrema of the time-series.
 
         The local extrema is the more extreme observation within a window, and
@@ -1733,17 +1781,19 @@ class MFETSLocalStats:
             min_, max_ = np.quantile(tile, (0, 1))
             return max_ if abs(min_) <= max_ else min_
 
-        tilled_extrema = _utils.apply_on_tiles(ts=ts_scaled,
-                                               num_tiles=num_tiles,
-                                               func=get_extreme_val)
+        tilled_extrema = _utils.apply_on_tiles(
+            ts=ts_scaled, num_tiles=num_tiles, func=get_extreme_val
+        )
 
         return tilled_extrema
 
     @classmethod
-    def ft_local_range(cls,
-                       ts: np.ndarray,
-                       num_tiles: int = 16,
-                       ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+    def ft_local_range(
+        cls,
+        ts: np.ndarray,
+        num_tiles: int = 16,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Non-overlapping rolling windows range of the time-series.
 
         The local range is the local maximum minus the local minimum.
@@ -1779,8 +1829,8 @@ class MFETSLocalStats:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        tilled_range = _utils.apply_on_tiles(ts=ts_scaled,
-                                             num_tiles=num_tiles,
-                                             func=np.ptp)
+        tilled_range = _utils.apply_on_tiles(
+            ts=ts_scaled, num_tiles=num_tiles, func=np.ptp
+        )
 
         return tilled_range

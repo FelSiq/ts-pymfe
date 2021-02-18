@@ -11,9 +11,11 @@ except ImportError:
     pass
 
 
-def get_ts_period(ts: np.ndarray,
-                  ts_detrended: t.Optional[np.ndarray] = None,
-                  ts_period: t.Optional[int] = None) -> int:
+def get_ts_period(
+    ts: np.ndarray,
+    ts_detrended: t.Optional[np.ndarray] = None,
+    ts_period: t.Optional[int] = None,
+) -> int:
     """Return the time-series periodicity, if any.
 
     The time-series is detrended first using the Friedman's Super Smoother
@@ -34,10 +36,9 @@ def get_ts_period(ts: np.ndarray,
     if ts_detrended is None:
         ts_detrended = _detrend.decompose(ts=ts, ts_period=0)[2]
 
-    autocorr = statsmodels.tsa.stattools.acf(ts_detrended,
-                                             nlags=ts_detrended.size // 2,
-                                             fft=True,
-                                             unbiased=True)[1:]
+    autocorr = statsmodels.tsa.stattools.acf(
+        ts_detrended, nlags=ts_detrended.size // 2, fft=True, adjusted=True
+    )[1:]
 
     period = np.argmax(np.abs(autocorr)) + 1
 

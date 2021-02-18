@@ -13,9 +13,11 @@ import pymfe._utils as _utils
 
 class MFETSGeneral:
     """Extract time-series meta-features from General group."""
+
     @classmethod
-    def precompute_ts_scaled(cls, ts: np.ndarray,
-                             **kwargs) -> t.Dict[str, np.ndarray]:
+    def precompute_ts_scaled(
+        cls, ts: np.ndarray, **kwargs
+    ) -> t.Dict[str, np.ndarray]:
         """Precompute a standardized time series.
 
         Parameters
@@ -69,16 +71,17 @@ class MFETSGeneral:
 
     @classmethod
     def precompute_embed_caos_method(
-            cls,
-            ts: np.ndarray,
-            dims: t.Union[int, t.Sequence[int]] = 16,
-            lag: t.Optional[t.Union[str, int]] = None,
-            max_nlags: t.Optional[int] = None,
-            detrended_acfs: t.Optional[np.ndarray] = None,
-            detrended_ami: t.Optional[np.ndarray] = None,
-            emb_dim_cao_e1: t.Optional[np.ndarray] = None,
-            emb_dim_cao_e2: t.Optional[np.ndarray] = None,
-            **kwargs) -> t.Dict[str, np.ndarray]:
+        cls,
+        ts: np.ndarray,
+        dims: t.Union[int, t.Sequence[int]] = 16,
+        lag: t.Optional[t.Union[str, int]] = None,
+        max_nlags: t.Optional[int] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+        emb_dim_cao_e1: t.Optional[np.ndarray] = None,
+        emb_dim_cao_e2: t.Optional[np.ndarray] = None,
+        **kwargs
+    ) -> t.Dict[str, np.ndarray]:
         """Precompute estimated Cao's method E1 and E2 values.
 
         Using the Cao's embedding dimension estimation, it is calculated both
@@ -178,16 +181,19 @@ class MFETSGeneral:
             ts_scaled = precomp_vals["ts_scaled"]
 
         if lag is None or isinstance(lag, str):
-            lag = _embed.embed_lag(ts=ts_scaled,
-                                   detrended_acfs=detrended_acfs,
-                                   detrended_ami=detrended_ami,
-                                   max_nlags=max_nlags)
+            lag = _embed.embed_lag(
+                ts=ts_scaled,
+                detrended_acfs=detrended_acfs,
+                detrended_ami=detrended_ami,
+                max_nlags=max_nlags,
+            )
 
             precomp_vals["lag"] = lag
 
         if emb_dim_cao_e1 is None or emb_dim_cao_e2 is None:
             emb_dim_cao_e1, emb_dim_cao_e2 = _embed.embed_dim_cao(
-                ts=ts, ts_scaled=ts_scaled, dims=dims, lag=lag)
+                ts=ts, ts_scaled=ts_scaled, dims=dims, lag=lag
+            )
 
             precomp_vals["emb_dim_cao_e1"] = emb_dim_cao_e1
             precomp_vals["emb_dim_cao_e2"] = emb_dim_cao_e2
@@ -195,11 +201,13 @@ class MFETSGeneral:
         return precomp_vals
 
     @classmethod
-    def precompute_walker(cls,
-                          ts: np.ndarray,
-                          step_size: float = 0.1,
-                          start_point: t.Optional[t.Union[int, float]] = None,
-                          **kwargs) -> t.Dict[str, np.ndarray]:
+    def precompute_walker(
+        cls,
+        ts: np.ndarray,
+        step_size: float = 0.1,
+        start_point: t.Optional[t.Union[int, float]] = None,
+        **kwargs
+    ) -> t.Dict[str, np.ndarray]:
         """Precompute the path of a particle attracted by the time-series.
 
         Parameters
@@ -255,17 +263,20 @@ class MFETSGeneral:
                 precomp_vals.update(cls.precompute_ts_scaled(ts=ts))
                 ts_scaled = precomp_vals["ts_scaled"]
 
-            walker_path = cls._ts_walker(ts=ts_scaled,
-                                         step_size=step_size,
-                                         start_point=start_point)
+            walker_path = cls._ts_walker(
+                ts=ts_scaled, step_size=step_size, start_point=start_point
+            )
 
             precomp_vals["walker_path"] = walker_path
 
         return precomp_vals
 
     @staticmethod
-    def _calc_season_mode_ind(ts_season: np.ndarray, ts_period: int,
-                              indfunc: t.Callable[[np.ndarray], float]) -> int:
+    def _calc_season_mode_ind(
+        ts_season: np.ndarray,
+        ts_period: int,
+        indfunc: t.Callable[[np.ndarray], float],
+    ) -> int:
         """Calculate a mode index based on the time-series seasonality.
 
         Used by both ``ft_trough_frac`` and ``ft_peak_frac`` to calculate,
@@ -273,20 +284,24 @@ class MFETSGeneral:
         """
         inds = np.arange(ts_period)
 
-        inds = np.array([
-            indfunc(ts_season[i * ts_period + inds])
-            for i in np.arange(ts_season.size // ts_period)
-        ], dtype=int)
+        inds = np.array(
+            [
+                indfunc(ts_season[i * ts_period + inds])
+                for i in np.arange(ts_season.size // ts_period)
+            ],
+            dtype=int,
+        )
 
         mode_inds, _ = scipy.stats.mode(inds)
         return mode_inds[0] + 1
 
     @classmethod
     def _ts_walker(
-            cls,
-            ts: np.ndarray,
-            step_size: float = 0.1,
-            start_point: t.Optional[t.Union[int, float]] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        step_size: float = 0.1,
+        start_point: t.Optional[t.Union[int, float]] = None,
+    ) -> np.ndarray:
         """Simulate a particle attracted to the current time-series value.
 
         References
@@ -359,9 +374,9 @@ class MFETSGeneral:
         return np.diff(ts, n=order)
 
     @classmethod
-    def ft_period(cls,
-                  ts: np.ndarray,
-                  ts_period: t.Optional[int] = None) -> int:
+    def ft_period(
+        cls, ts: np.ndarray, ts_period: t.Optional[int] = None
+    ) -> int:
         """Period of the time-series.
 
         Parameters
@@ -479,18 +494,20 @@ class MFETSGeneral:
 
         ts_mean_abs_div = np.abs(ts[1:] - ts_cmeans[:-1])
 
-        step_changes = np.array([
-            int(ts_mean_abs_div[i - 1] > 2 * np.std(ts[:i], ddof=ddof))
-            for i in np.arange(1 + ddof, ts.size)
-        ],
-                                dtype=int)
+        step_changes = np.array(
+            [
+                int(ts_mean_abs_div[i - 1] > 2 * np.std(ts[:i], ddof=ddof))
+                for i in np.arange(1 + ddof, ts.size)
+            ],
+            dtype=int,
+        )
 
         return step_changes
 
     @classmethod
-    def ft_step_changes_trend(cls,
-                              ts_trend: np.ndarray,
-                              ddof: int = 1) -> np.ndarray:
+    def ft_step_changes_trend(
+        cls, ts_trend: np.ndarray, ddof: int = 1
+    ) -> np.ndarray:
         """Step change points in the time-series trend.
 
         Let p_{t_{a}}^{t_{b}} be the subsequence of observations from the
@@ -526,19 +543,21 @@ class MFETSGeneral:
         return step_changes
 
     @classmethod
-    def ft_pred(cls,
-                ts: np.ndarray,
-                embed_dim: int = 2,
-                std_range: t.Union[int, float] = 3,
-                num_spacing: t.Union[int, float] = 4,
-                metric: str = "minkowski",
-                p: t.Union[int, float] = 2,
-                ddof: int = 1,
-                lag: t.Optional[t.Union[int, str]] = None,
-                max_nlags: t.Optional[int] = None,
-                detrended_acfs: t.Optional[np.ndarray] = None,
-                detrended_ami: t.Optional[np.ndarray] = None,
-                ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+    def ft_pred(
+        cls,
+        ts: np.ndarray,
+        embed_dim: int = 2,
+        std_range: t.Union[int, float] = 3,
+        num_spacing: t.Union[int, float] = 4,
+        metric: str = "minkowski",
+        p: t.Union[int, float] = 2,
+        ddof: int = 1,
+        lag: t.Optional[t.Union[int, str]] = None,
+        max_nlags: t.Optional[int] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Signal predictability using delay vector variance method.
 
         Parameters
@@ -637,11 +656,13 @@ class MFETSGeneral:
             2016;3(1):150493. Published 2016 Jan 6. doi:10.1098/rsos.150493
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
-        lag = _embed.embed_lag(ts=ts_scaled,
-                               lag=lag,
-                               max_nlags=max_nlags,
-                               detrended_acfs=detrended_acfs,
-                               detrended_ami=detrended_ami)
+        lag = _embed.embed_lag(
+            ts=ts_scaled,
+            lag=lag,
+            max_nlags=max_nlags,
+            detrended_acfs=detrended_acfs,
+            detrended_ami=detrended_ami,
+        )
 
         ts_embed = _embed.embed_ts(ts_scaled, lag=lag, dim=embed_dim)
 
@@ -659,8 +680,10 @@ class MFETSGeneral:
 
         for i in np.arange(num_spacing):
             threshold = max(
-                0.0, dist_mean + std_range * dist_std *
-                (i * 2 / (num_spacing - 1) - 1))
+                0.0,
+                dist_mean
+                + std_range * dist_std * (i * 2 / (num_spacing - 1) - 1),
+            )
 
             neighbors = dist_mat <= threshold
 
@@ -677,11 +700,12 @@ class MFETSGeneral:
 
     @classmethod
     def ft_frac_cp(
-            cls,
-            ts: np.ndarray,
-            threshold: t.Optional[t.Union[int, float]] = None,
-            normalize: bool = True,
-            ts_scaled: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+        cls,
+        ts: np.ndarray,
+        threshold: t.Optional[t.Union[int, float]] = None,
+        normalize: bool = True,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> t.Union[int, float]:
         """Cross-points of a given horizontal line.
 
         This method calculates the fraction that the transition between
@@ -770,10 +794,9 @@ class MFETSGeneral:
         return (ts >= np.mean(ts)).astype(int)
 
     @classmethod
-    def ft_fs_len(cls,
-                  ts: np.ndarray,
-                  num_bins: int = 10,
-                  strategy: str = "equal-width") -> np.ndarray:
+    def ft_fs_len(
+        cls, ts: np.ndarray, num_bins: int = 10, strategy: str = "equal-width"
+    ) -> np.ndarray:
         """Lenght of discretized time-series values plateaus.
 
         The time-series is discretized using a histogram with number of bins
@@ -808,9 +831,9 @@ class MFETSGeneral:
             1, 2020, Pages 86-92, ISSN 0169-2070,
             https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
-        ts_disc = _utils.discretize(ts=ts,
-                                    num_bins=num_bins,
-                                    strategy=strategy)
+        ts_disc = _utils.discretize(
+            ts=ts, num_bins=num_bins, strategy=strategy
+        )
 
         i = 1
         counter = 1
@@ -829,10 +852,12 @@ class MFETSGeneral:
         return np.asarray(fs_len, dtype=float)
 
     @classmethod
-    def ft_peak_frac(cls,
-                     ts_season: np.ndarray,
-                     ts_period: t.Optional[int] = None,
-                     normalize: bool = True) -> t.Union[int, float]:
+    def ft_peak_frac(
+        cls,
+        ts_season: np.ndarray,
+        ts_period: t.Optional[int] = None,
+        normalize: bool = True,
+    ) -> t.Union[int, float]:
         """Fraction of where the seasonal peak is localed within a period.
 
         This method returns the fraction (relative to the time-series period)
@@ -887,9 +912,9 @@ class MFETSGeneral:
 
         ind_peak: t.Union[int, float]
 
-        ind_peak = cls._calc_season_mode_ind(ts_season=ts_season,
-                                             ts_period=_ts_period,
-                                             indfunc=np.argmax)
+        ind_peak = cls._calc_season_mode_ind(
+            ts_season=ts_season, ts_period=_ts_period, indfunc=np.argmax
+        )
 
         if normalize:
             ind_peak /= _ts_period
@@ -897,10 +922,12 @@ class MFETSGeneral:
         return ind_peak
 
     @classmethod
-    def ft_trough_frac(cls,
-                       ts_season: np.ndarray,
-                       ts_period: t.Optional[int] = None,
-                       normalize: bool = True) -> t.Union[int, float]:
+    def ft_trough_frac(
+        cls,
+        ts_season: np.ndarray,
+        ts_period: t.Optional[int] = None,
+        normalize: bool = True,
+    ) -> t.Union[int, float]:
         """Fraction of where the seasonal trough is localed within a period.
 
         This method returns the fraction (relative to the time-series period)
@@ -955,9 +982,9 @@ class MFETSGeneral:
 
         ind_trough: t.Union[int, float]
 
-        ind_trough = cls._calc_season_mode_ind(ts_season=ts_season,
-                                               ts_period=_ts_period,
-                                               indfunc=np.argmin)
+        ind_trough = cls._calc_season_mode_ind(
+            ts_season=ts_season, ts_period=_ts_period, indfunc=np.argmin
+        )
 
         if normalize:
             ind_trough /= _ts_period
@@ -965,13 +992,15 @@ class MFETSGeneral:
         return ind_trough
 
     @classmethod
-    def ft_walker_path(cls,
-                       ts: np.ndarray,
-                       step_size: float = 0.1,
-                       start_point: t.Optional[t.Union[int, float]] = None,
-                       relative_dist: bool = True,
-                       walker_path: t.Optional[np.ndarray] = None,
-                       ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+    def ft_walker_path(
+        cls,
+        ts: np.ndarray,
+        step_size: float = 0.1,
+        start_point: t.Optional[t.Union[int, float]] = None,
+        relative_dist: bool = True,
+        walker_path: t.Optional[np.ndarray] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Path of a particle attracted by the time-series values.
 
         Simulate a particle, starting from ``start_point``, which follows the
@@ -1027,9 +1056,9 @@ class MFETSGeneral:
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         if walker_path is None:
-            walker_path = cls._ts_walker(ts=ts_scaled,
-                                         step_size=step_size,
-                                         start_point=start_point)
+            walker_path = cls._ts_walker(
+                ts=ts_scaled, step_size=step_size, start_point=start_point
+            )
 
         if relative_dist:
             return np.abs(walker_path - ts_scaled)
@@ -1038,13 +1067,14 @@ class MFETSGeneral:
 
     @classmethod
     def ft_walker_cross_frac(
-            cls,
-            ts: np.ndarray,
-            step_size: float = 0.1,
-            start_point: t.Optional[t.Union[int, float]] = None,
-            normalize: bool = True,
-            walker_path: t.Optional[np.ndarray] = None,
-            ts_scaled: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+        cls,
+        ts: np.ndarray,
+        step_size: float = 0.1,
+        start_point: t.Optional[t.Union[int, float]] = None,
+        normalize: bool = True,
+        walker_path: t.Optional[np.ndarray] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> t.Union[int, float]:
         """Fraction of crosses by a particle attracted by the time-series.
 
         Simulate a particle, starting from ``start_point``, which follows the
@@ -1102,12 +1132,15 @@ class MFETSGeneral:
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
         if walker_path is None:
-            walker_path = cls._ts_walker(ts=ts_scaled,
-                                         step_size=step_size,
-                                         start_point=start_point)
+            walker_path = cls._ts_walker(
+                ts=ts_scaled, step_size=step_size, start_point=start_point
+            )
 
-        cross_num = np.sum((walker_path[:-1] - ts_scaled[:-1]) *
-                           (walker_path[1:] - ts_scaled[1:]) < 0)
+        cross_num = np.sum(
+            (walker_path[:-1] - ts_scaled[:-1])
+            * (walker_path[1:] - ts_scaled[1:])
+            < 0
+        )
 
         if normalize:
             cross_num /= walker_path.size - 1
@@ -1116,12 +1149,13 @@ class MFETSGeneral:
 
     @classmethod
     def ft_moving_threshold(
-            cls,
-            ts: np.ndarray,
-            rate_absorption: float = 0.1,
-            rate_decay: float = 0.1,
-            relative: bool = False,
-            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        rate_absorption: float = 0.1,
+        rate_decay: float = 0.1,
+        relative: bool = False,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Simulate a dynamic threshold based on the time-series values.
 
         The threshold is run over the absolute values of the standardize
@@ -1173,12 +1207,16 @@ class MFETSGeneral:
             DOI: 10.1098/rsif.2013.0048
         """
         if not 0 < rate_decay < 1:
-            raise ValueError("'rate_decay' must be in (0, 1) (got {})."
-                             "".format(rate_decay))
+            raise ValueError(
+                "'rate_decay' must be in (0, 1) (got {})."
+                "".format(rate_decay)
+            )
 
         if not 0 < rate_absorption < 1:
-            raise ValueError("'rate_absorption' must be in (0, 1) (got"
-                             " {}).".format(rate_absorption))
+            raise ValueError(
+                "'rate_absorption' must be in (0, 1) (got"
+                " {}).".format(rate_absorption)
+            )
 
         ts_scaled = np.abs(_utils.standardize_ts(ts=ts, ts_scaled=ts_scaled))
 
@@ -1204,16 +1242,17 @@ class MFETSGeneral:
 
     @classmethod
     def ft_embed_in_shell(
-            cls,
-            ts: np.ndarray,
-            radii: t.Tuple[float, float] = (0.0, 1.0),
-            embed_dim: int = 2,
-            lag: t.Optional[t.Union[str, int]] = None,
-            normalize: bool = True,
-            max_nlags: t.Optional[int] = None,
-            detrended_acfs: t.Optional[np.ndarray] = None,
-            detrended_ami: t.Optional[np.ndarray] = None,
-            ts_scaled: t.Optional[np.ndarray] = None) -> t.Union[int, float]:
+        cls,
+        ts: np.ndarray,
+        radii: t.Tuple[float, float] = (0.0, 1.0),
+        embed_dim: int = 2,
+        lag: t.Optional[t.Union[str, int]] = None,
+        normalize: bool = True,
+        max_nlags: t.Optional[int] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> t.Union[int, float]:
         """Fraction of embedded time-series observations inside a hypershell.
 
         The hypershell is defined as the region between (and including the
@@ -1296,24 +1335,32 @@ class MFETSGeneral:
         radius_inner, radius_outer = radii
 
         if radius_inner < 0:
-            raise ValueError("Inner radius must be non-negative (got {})."
-                             "".format(radius_inner))
+            raise ValueError(
+                "Inner radius must be non-negative (got {})."
+                "".format(radius_inner)
+            )
 
         if radius_outer <= 0:
-            raise ValueError("Outer radius must be positive (got {})."
-                             "".format(radius_outer))
+            raise ValueError(
+                "Outer radius must be positive (got {})."
+                "".format(radius_outer)
+            )
 
         if radius_outer <= radius_inner:
-            raise ValueError("Outer radius ({}) must be higher than the inner "
-                             "radius ({}).".format(radius_outer, radius_inner))
+            raise ValueError(
+                "Outer radius ({}) must be higher than the inner "
+                "radius ({}).".format(radius_outer, radius_inner)
+            )
 
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        lag = _embed.embed_lag(ts=ts_scaled,
-                               lag=lag,
-                               detrended_acfs=detrended_acfs,
-                               detrended_ami=detrended_ami,
-                               max_nlags=max_nlags)
+        lag = _embed.embed_lag(
+            ts=ts_scaled,
+            lag=lag,
+            detrended_acfs=detrended_acfs,
+            detrended_ami=detrended_ami,
+            max_nlags=max_nlags,
+        )
 
         # Note: embed is given by x(t) = [x(t), x(t-1), ..., x(t-m+1)]^T
         embed = _embed.embed_ts(ts_scaled, dim=embed_dim, lag=lag)
@@ -1326,8 +1373,10 @@ class MFETSGeneral:
         # Note: we can check if every embed is in the same zero-centered
         # hypershell because all hyperspheres embeds are also zero-centered.
         in_shape_num = np.sum(
-            np.logical_and(radius_inner <= embed_radius,
-                           embed_radius <= radius_outer))
+            np.logical_and(
+                radius_inner <= embed_radius, embed_radius <= radius_outer
+            )
+        )
 
         if normalize:
             in_shape_num /= embed_radius.size
@@ -1336,12 +1385,13 @@ class MFETSGeneral:
 
     @classmethod
     def ft_force_potential(
-            cls,
-            ts: np.ndarray,
-            potential: str = "sine",
-            params: t.Optional[t.Tuple[float, float, float]] = None,
-            start_point: t.Optional[t.Tuple[float, float]] = None,
-            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        potential: str = "sine",
+        params: t.Optional[t.Tuple[float, float, float]] = None,
+        start_point: t.Optional[t.Tuple[float, float]] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Simulate a force potential function using the time-series as input.
 
         Parameters
@@ -1394,12 +1444,14 @@ class MFETSGeneral:
         # potential_name: (default_parameters, force_function)
         DEF_PARAM = dict(
             sine=((1, 1, 0.1), lambda x: np.sin(x / alpha) / alpha),
-            dblwell=((2, 0.1, 0.1), lambda x: alpha**2 * x - x**3),
+            dblwell=((2, 0.1, 0.1), lambda x: alpha ** 2 * x - x ** 3),
         )
 
         if potential not in DEF_PARAM:
-            raise ValueError("'potential' must be in {} (got '{}')."
-                             "".format(DEF_PARAM.keys(), potential))
+            raise ValueError(
+                "'potential' must be in {} (got '{}')."
+                "".format(DEF_PARAM.keys(), potential)
+            )
 
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
@@ -1414,7 +1466,7 @@ class MFETSGeneral:
 
         for t_prev in np.arange(ts_scaled.size - 1):
             aux = f_force(pos[t_prev]) + ts_scaled[t_prev] - fric * vel[t_prev]
-            pos[t_prev + 1] = pos[t_prev] + dt * vel[t_prev] + dt**2 * aux
+            pos[t_prev + 1] = pos[t_prev] + dt * vel[t_prev] + dt ** 2 * aux
             vel[t_prev + 1] = vel[t_prev] + dt * aux
 
             if np.isinf(pos[t_prev + 1]):
@@ -1424,9 +1476,8 @@ class MFETSGeneral:
 
     @classmethod
     def ft_stick_angles(
-            cls,
-            ts: np.ndarray,
-            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls, ts: np.ndarray, ts_scaled: t.Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """Angle between observations with the same signal in the time domain.
 
         Parameters
@@ -1454,6 +1505,7 @@ class MFETSGeneral:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
+
         def calc_angles(arr: np.ndarray, inds: np.ndarray) -> np.ndarray:
             """Calculate the angle between adjacent ``arr`` indices values."""
             # Note: normalizing the indices in [0, 1] range to avoid too much
@@ -1473,13 +1525,15 @@ class MFETSGeneral:
         return angles
 
     @classmethod
-    def ft_emb_lag(cls,
-                   ts: np.ndarray,
-                   lag: t.Optional[t.Union[str, int]] = None,
-                   max_nlags: t.Optional[int] = None,
-                   detrended_acfs: t.Optional[np.ndarray] = None,
-                   detrended_ami: t.Optional[np.ndarray] = None,
-                   ts_scaled: t.Optional[np.ndarray] = None) -> int:
+    def ft_emb_lag(
+        cls,
+        ts: np.ndarray,
+        lag: t.Optional[t.Union[str, int]] = None,
+        max_nlags: t.Optional[int] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> int:
         """Estimated appropriate embedding lag.
 
         The lag is estimated using either the automutual information function
@@ -1548,26 +1602,30 @@ class MFETSGeneral:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        _lag = _embed.embed_lag(ts=ts_scaled,
-                                lag=lag,
-                                detrended_acfs=detrended_acfs,
-                                detrended_ami=detrended_ami,
-                                max_nlags=max_nlags)
+        _lag = _embed.embed_lag(
+            ts=ts_scaled,
+            lag=lag,
+            detrended_acfs=detrended_acfs,
+            detrended_ami=detrended_ami,
+            max_nlags=max_nlags,
+        )
         return _lag
 
     @classmethod
-    def ft_emb_dim_cao(cls,
-                       ts: np.ndarray,
-                       dims: t.Union[int, t.Sequence[int]] = 16,
-                       lag: t.Optional[t.Union[str, int]] = None,
-                       tol_threshold: float = 0.05,
-                       check_e2: bool = True,
-                       max_nlags: t.Optional[int] = None,
-                       ts_scaled: t.Optional[np.ndarray] = None,
-                       detrended_acfs: t.Optional[np.ndarray] = None,
-                       detrended_ami: t.Optional[np.ndarray] = None,
-                       emb_dim_cao_e1: t.Optional[np.ndarray] = None,
-                       emb_dim_cao_e2: t.Optional[np.ndarray] = None) -> int:
+    def ft_emb_dim_cao(
+        cls,
+        ts: np.ndarray,
+        dims: t.Union[int, t.Sequence[int]] = 16,
+        lag: t.Optional[t.Union[str, int]] = None,
+        tol_threshold: float = 0.05,
+        check_e2: bool = True,
+        max_nlags: t.Optional[int] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+        emb_dim_cao_e1: t.Optional[np.ndarray] = None,
+        emb_dim_cao_e2: t.Optional[np.ndarray] = None,
+    ) -> int:
         """Embedding dimension estimation using Cao's method.
 
         Using the Cao's embedding dimension estimation, it is calculated both
@@ -1661,18 +1719,24 @@ class MFETSGeneral:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        lag = _embed.embed_lag(ts=ts_scaled,
-                               lag=lag,
-                               detrended_acfs=detrended_acfs,
-                               detrended_ami=detrended_ami,
-                               max_nlags=max_nlags)
+        lag = _embed.embed_lag(
+            ts=ts_scaled,
+            lag=lag,
+            detrended_acfs=detrended_acfs,
+            detrended_ami=detrended_ami,
+            max_nlags=max_nlags,
+        )
 
         if emb_dim_cao_e1 is None or (check_e2 and emb_dim_cao_e2 is None):
             emb_dim_cao_e1, emb_dim_cao_e2 = _embed.embed_dim_cao(
-                ts=ts, ts_scaled=ts_scaled, dims=dims, lag=lag)
+                ts=ts, ts_scaled=ts_scaled, dims=dims, lag=lag
+            )
 
-        if (check_e2 and emb_dim_cao_e2 is not None and
-                np.all(np.abs(emb_dim_cao_e2 - 1) < tol_threshold)):
+        if (
+            check_e2
+            and emb_dim_cao_e2 is not None
+            and np.all(np.abs(emb_dim_cao_e2 - 1) < tol_threshold)
+        ):
             return 1
 
         e1_abs_diff = np.abs(np.diff(emb_dim_cao_e1))
@@ -1688,15 +1752,17 @@ class MFETSGeneral:
         return first_max_ind + 1
 
     @classmethod
-    def ft_cao_e1(cls,
-                  ts: np.ndarray,
-                  dims: t.Union[int, t.Sequence[int]] = 16,
-                  lag: t.Optional[t.Union[str, int]] = None,
-                  max_nlags: t.Optional[int] = None,
-                  ts_scaled: t.Optional[np.ndarray] = None,
-                  detrended_acfs: t.Optional[np.ndarray] = None,
-                  detrended_ami: t.Optional[np.ndarray] = None,
-                  emb_dim_cao_e1: t.Optional[np.ndarray] = None) -> np.ndarray:
+    def ft_cao_e1(
+        cls,
+        ts: np.ndarray,
+        dims: t.Union[int, t.Sequence[int]] = 16,
+        lag: t.Optional[t.Union[str, int]] = None,
+        max_nlags: t.Optional[int] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+        emb_dim_cao_e1: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Estimated Cao's method E1 values.
 
         Using the Cao's embedding dimension estimation, it is calculated both
@@ -1774,30 +1840,33 @@ class MFETSGeneral:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        lag = _embed.embed_lag(ts=ts_scaled,
-                               lag=lag,
-                               detrended_acfs=detrended_acfs,
-                               detrended_ami=detrended_ami,
-                               max_nlags=max_nlags)
+        lag = _embed.embed_lag(
+            ts=ts_scaled,
+            lag=lag,
+            detrended_acfs=detrended_acfs,
+            detrended_ami=detrended_ami,
+            max_nlags=max_nlags,
+        )
 
         if emb_dim_cao_e1 is None:
-            emb_dim_cao_e1, _ = _embed.embed_dim_cao(ts=ts,
-                                                     ts_scaled=ts_scaled,
-                                                     dims=dims,
-                                                     lag=lag)
+            emb_dim_cao_e1, _ = _embed.embed_dim_cao(
+                ts=ts, ts_scaled=ts_scaled, dims=dims, lag=lag
+            )
 
         return emb_dim_cao_e1
 
     @classmethod
-    def ft_cao_e2(cls,
-                  ts: np.ndarray,
-                  dims: t.Union[int, t.Sequence[int]] = 16,
-                  lag: t.Optional[t.Union[str, int]] = None,
-                  max_nlags: t.Optional[int] = None,
-                  ts_scaled: t.Optional[np.ndarray] = None,
-                  detrended_acfs: t.Optional[np.ndarray] = None,
-                  detrended_ami: t.Optional[np.ndarray] = None,
-                  emb_dim_cao_e2: t.Optional[np.ndarray] = None) -> np.ndarray:
+    def ft_cao_e2(
+        cls,
+        ts: np.ndarray,
+        dims: t.Union[int, t.Sequence[int]] = 16,
+        lag: t.Optional[t.Union[str, int]] = None,
+        max_nlags: t.Optional[int] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+        emb_dim_cao_e2: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Estimated Cao's method E2 values.
 
         Using the Cao's embedding dimension estimation, it is calculated both
@@ -1875,30 +1944,32 @@ class MFETSGeneral:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        lag = _embed.embed_lag(ts=ts_scaled,
-                               lag=lag,
-                               detrended_acfs=detrended_acfs,
-                               detrended_ami=detrended_ami,
-                               max_nlags=max_nlags)
+        lag = _embed.embed_lag(
+            ts=ts_scaled,
+            lag=lag,
+            detrended_acfs=detrended_acfs,
+            detrended_ami=detrended_ami,
+            max_nlags=max_nlags,
+        )
 
         if emb_dim_cao_e2 is None:
-            _, emb_dim_cao_e2 = _embed.embed_dim_cao(ts=ts,
-                                                     ts_scaled=ts_scaled,
-                                                     dims=dims,
-                                                     lag=lag)
+            _, emb_dim_cao_e2 = _embed.embed_dim_cao(
+                ts=ts, ts_scaled=ts_scaled, dims=dims, lag=lag
+            )
 
         return emb_dim_cao_e2
 
     @classmethod
     def ft_fnn_prop(
-            cls,
-            ts: np.ndarray,
-            dims: t.Union[int, t.Sequence[int]] = 16,
-            lag: t.Optional[t.Union[str, int]] = None,
-            max_nlags: t.Optional[int] = None,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            detrended_acfs: t.Optional[np.ndarray] = None,
-            detrended_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        dims: t.Union[int, t.Sequence[int]] = 16,
+        lag: t.Optional[t.Union[str, int]] = None,
+        max_nlags: t.Optional[int] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Proportion of False Nearest Neighbors in the embedded time-series.
 
         Parameters
@@ -1961,15 +2032,16 @@ class MFETSGeneral:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        lag = _embed.embed_lag(ts=ts_scaled,
-                               lag=lag,
-                               detrended_acfs=detrended_acfs,
-                               detrended_ami=detrended_ami,
-                               max_nlags=max_nlags)
+        lag = _embed.embed_lag(
+            ts=ts_scaled,
+            lag=lag,
+            detrended_acfs=detrended_acfs,
+            detrended_ami=detrended_ami,
+            max_nlags=max_nlags,
+        )
 
-        fnn_prop = _embed.embed_dim_fnn(ts=ts,
-                                        ts_scaled=ts_scaled,
-                                        dims=dims,
-                                        lag=lag)
+        fnn_prop = _embed.embed_dim_fnn(
+            ts=ts, ts_scaled=ts_scaled, dims=dims, lag=lag
+        )
 
         return fnn_prop

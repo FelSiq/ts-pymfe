@@ -18,9 +18,11 @@ except ImportError:
 
 class MFETSInfoTheory:
     """Extract time-series meta-features from Information Theory group."""
+
     @classmethod
-    def precompute_ts_scaled(cls, ts: np.ndarray,
-                             **kwargs) -> t.Dict[str, np.ndarray]:
+    def precompute_ts_scaled(
+        cls, ts: np.ndarray, **kwargs
+    ) -> t.Dict[str, np.ndarray]:
         """Precompute a standardized time series.
 
         Parameters
@@ -48,14 +50,15 @@ class MFETSInfoTheory:
 
     @classmethod
     def precompute_detrended_ami(
-            cls,
-            ts: np.ndarray,
-            num_bins: int = 64,
-            lags: t.Optional[t.Union[int, t.Sequence[int]]] = None,
-            return_dist: bool = False,
-            max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
-            **kwargs) -> t.Dict[str, np.ndarray]:
+        cls,
+        ts: np.ndarray,
+        num_bins: int = 64,
+        lags: t.Optional[t.Union[int, t.Sequence[int]]] = None,
+        return_dist: bool = False,
+        max_nlags: t.Optional[int] = None,
+        adjusted: bool = True,
+        **kwargs
+    ) -> t.Dict[str, np.ndarray]:
         """Precompute detrended time-series Automutual Information function.
 
         Parameters
@@ -89,7 +92,7 @@ class MFETSInfoTheory:
             function up to `max_nlags`, if any. Otherwise, lag 1 will be used.
             Used only if ``lags`` is None.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, correct the autocorrelation function for statistical
             bias. Used only if ``lags`` is None.
 
@@ -124,9 +127,9 @@ class MFETSInfoTheory:
         if lags is None and detrended_acfs is None:
             precomp_vals.update(
                 autocorr.MFETSAutocorr.precompute_detrended_acf(
-                    ts=ts,
-                    nlags=max_nlags,
-                    unbiased=unbiased))
+                    ts=ts, nlags=max_nlags, adjusted=adjusted
+                )
+            )
 
             detrended_acfs = precomp_vals["detrended_acfs"]
 
@@ -136,16 +139,19 @@ class MFETSInfoTheory:
                 lags=lags,
                 num_bins=num_bins,
                 return_dist=return_dist,
-                detrended_acfs=detrended_acfs)
+                detrended_acfs=detrended_acfs,
+            )
 
         return precomp_vals
 
     @classmethod
-    def _calc_ami(cls,
-                  ts: np.ndarray,
-                  lag: int,
-                  num_bins: int = 64,
-                  return_dist: bool = False) -> float:
+    def _calc_ami(
+        cls,
+        ts: np.ndarray,
+        lag: int,
+        num_bins: int = 64,
+        return_dist: bool = False,
+    ) -> float:
         """Calculate the Automutual Information of a time-series for a lag.
 
         The automutual information AMI is defined as:
@@ -212,10 +218,9 @@ class MFETSInfoTheory:
         return ami
 
     @classmethod
-    def ft_hist_entropy(cls,
-                        ts: np.ndarray,
-                        num_bins: int = 10,
-                        normalize: bool = True) -> float:
+    def ft_hist_entropy(
+        cls, ts: np.ndarray, num_bins: int = 10, normalize: bool = True
+    ) -> float:
         """Shannon's Entropy from a histogram frequencies.
 
         Parameters
@@ -250,11 +255,13 @@ class MFETSInfoTheory:
         return entropy
 
     @classmethod
-    def ft_hist_ent_out_diff(cls,
-                             ts: np.ndarray,
-                             num_bins: int = 10,
-                             pcut: float = 0.05,
-                             normalize: bool = True) -> float:
+    def ft_hist_ent_out_diff(
+        cls,
+        ts: np.ndarray,
+        num_bins: int = 10,
+        pcut: float = 0.05,
+        normalize: bool = True,
+    ) -> float:
         """Difference of histogram entropy with and without outliers.
 
         Parameters
@@ -290,31 +297,34 @@ class MFETSInfoTheory:
             DOI: 10.1098/rsif.2013.0048
         """
         if not 0 < pcut < 0.5:
-            raise ValueError("'pcut' must be in (0.0, 0.5) (got "
-                             "{}).".format(pcut))
+            raise ValueError(
+                "'pcut' must be in (0.0, 0.5) (got " "{}).".format(pcut)
+            )
 
         cut_low, cut_high = np.quantile(ts, (pcut, 1 - pcut))
         ts_inliners = ts[np.logical_and(cut_low <= ts, ts <= cut_high)]
 
-        ent_ts = cls.ft_hist_entropy(ts=ts,
-                                     num_bins=num_bins,
-                                     normalize=normalize)
-        ent_ts_inliners = cls.ft_hist_entropy(ts=ts_inliners,
-                                              num_bins=num_bins,
-                                              normalize=normalize)
+        ent_ts = cls.ft_hist_entropy(
+            ts=ts, num_bins=num_bins, normalize=normalize
+        )
+        ent_ts_inliners = cls.ft_hist_entropy(
+            ts=ts_inliners, num_bins=num_bins, normalize=normalize
+        )
 
         entropy_diff = ent_ts - ent_ts_inliners
 
         return entropy_diff
 
     @classmethod
-    def ft_ami(cls,
-               ts: np.ndarray,
-               num_bins: int = 64,
-               lags: t.Optional[t.Sequence[int]] = None,
-               return_dist: bool = False,
-               max_nlags: t.Optional[int] = None,
-               detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
+    def ft_ami(
+        cls,
+        ts: np.ndarray,
+        num_bins: int = 64,
+        lags: t.Optional[t.Sequence[int]] = None,
+        return_dist: bool = False,
+        max_nlags: t.Optional[int] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Automutual information of the time-series.
 
         The automutual information AMI is defined as:
@@ -383,27 +393,30 @@ class MFETSInfoTheory:
             theory. Wiley-Interscience, USA.
         """
         # Note: using ts_detrended=ts to avoid detrending.
-        non_detrended_ami = cls.ft_ami_detrended(ts=ts,
-                                                 num_bins=num_bins,
-                                                 lags=lags,
-                                                 return_dist=return_dist,
-                                                 max_nlags=max_nlags,
-                                                 detrended_acfs=detrended_acfs,
-                                                 ts_detrended=ts)
+        non_detrended_ami = cls.ft_ami_detrended(
+            ts=ts,
+            num_bins=num_bins,
+            lags=lags,
+            return_dist=return_dist,
+            max_nlags=max_nlags,
+            detrended_acfs=detrended_acfs,
+            ts_detrended=ts,
+        )
 
         return non_detrended_ami
 
     @classmethod
     def ft_ami_detrended(
-            cls,
-            ts: np.ndarray,
-            num_bins: int = 64,
-            lags: t.Optional[t.Union[int, t.Sequence[int]]] = None,
-            return_dist: bool = False,
-            max_nlags: t.Optional[int] = None,
-            ts_detrended: t.Optional[np.ndarray] = None,
-            detrended_acfs: t.Optional[np.ndarray] = None,
-            detrended_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        num_bins: int = 64,
+        lags: t.Optional[t.Union[int, t.Sequence[int]]] = None,
+        return_dist: bool = False,
+        max_nlags: t.Optional[int] = None,
+        ts_detrended: t.Optional[np.ndarray] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Automutual information of the detrended time-series.
 
         The automutual information AMI is defined as:
@@ -491,10 +504,12 @@ class MFETSInfoTheory:
             return detrended_ami
 
         if lags is None:
-            lags = _embed.embed_lag(ts=ts,
-                                    lag="acf",
-                                    max_nlags=max_nlags,
-                                    detrended_acfs=detrended_acfs)
+            lags = _embed.embed_lag(
+                ts=ts,
+                lag="acf",
+                max_nlags=max_nlags,
+                detrended_acfs=detrended_acfs,
+            )
 
         if np.isscalar(lags):
             lags = np.arange(1, 1 + int(lags))  # type: ignore
@@ -506,21 +521,23 @@ class MFETSInfoTheory:
         ami = np.zeros(len(_lags), dtype=float)
 
         for ind, lag in enumerate(_lags):
-            ami[ind] = cls._calc_ami(ts=ts_detrended,
-                                     lag=lag,
-                                     num_bins=num_bins,
-                                     return_dist=return_dist)
+            ami[ind] = cls._calc_ami(
+                ts=ts_detrended,
+                lag=lag,
+                num_bins=num_bins,
+                return_dist=return_dist,
+            )
 
         return ami
 
     @classmethod
     def ft_ami_first_critpt(
-            cls,
-            ts: np.ndarray,
-            num_bins: int = 64,
-            max_nlags: t.Optional[int] = None,
-            dist_ami: bool = False,
-            detrended_ami: t.Optional[np.ndarray] = None
+        cls,
+        ts: np.ndarray,
+        num_bins: int = 64,
+        max_nlags: t.Optional[int] = None,
+        dist_ami: bool = False,
+        detrended_ami: t.Optional[np.ndarray] = None,
     ) -> t.Union[int, float]:
         """First critical point of the automutual information function.
 
@@ -588,10 +605,9 @@ class MFETSInfoTheory:
             if max_nlags is None:
                 max_nlags = min(64, ts.size // 2)
 
-            detrended_ami = cls.ft_ami_detrended(ts=ts,
-                                                 num_bins=num_bins,
-                                                 lags=max_nlags,
-                                                 return_dist=dist_ami)
+            detrended_ami = cls.ft_ami_detrended(
+                ts=ts, num_bins=num_bins, lags=max_nlags, return_dist=dist_ami
+            )
 
         # Note: if 'return_dist=True', return the first local maximum.
         # If otherwise, return the first local minimum.
@@ -607,15 +623,15 @@ class MFETSInfoTheory:
 
     @classmethod
     def ft_ami_curvature(
-            cls,
-            ts: np.ndarray,
-            noise_range: t.Tuple[float, float] = (0, 3),
-            noise_inc_num: float = 10,
-            lag: t.Optional[t.Union[str, int]] = None,
-            random_state: t.Optional[int] = None,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            max_nlags: t.Optional[int] = None,
-            detrended_acfs: t.Optional[np.ndarray] = None,
+        cls,
+        ts: np.ndarray,
+        noise_range: t.Tuple[float, float] = (0, 3),
+        noise_inc_num: float = 10,
+        lag: t.Optional[t.Union[str, int]] = None,
+        random_state: t.Optional[int] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        max_nlags: t.Optional[int] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> float:
         """Estimate the Automutual information curvature.
 
@@ -708,12 +724,16 @@ class MFETSInfoTheory:
 
         # Note: casting lag to an array since 'ft_ami_detrended' demands
         # a sequence of lags.
-        _lag = np.asarray([
-            _embed.embed_lag(ts=ts_scaled,
-                             lag=lag,
-                             max_nlags=max_nlags,
-                             detrended_acfs=detrended_acfs)
-        ])
+        _lag = np.asarray(
+            [
+                _embed.embed_lag(
+                    ts=ts_scaled,
+                    lag=lag,
+                    max_nlags=max_nlags,
+                    detrended_acfs=detrended_acfs,
+                )
+            ]
+        )
 
         if random_state is not None:
             np.random.seed(random_state)
@@ -728,27 +748,29 @@ class MFETSInfoTheory:
         for ind, cur_std in enumerate(noise_std):
             ts_corrupted = ts_scaled + cur_std * gaussian_noise
 
-            ami[ind] = cls.ft_ami_detrended(ts=ts_corrupted,
-                                            num_bins=32,
-                                            lags=_lag,
-                                            return_dist=False)
+            ami[ind] = cls.ft_ami_detrended(
+                ts=ts_corrupted, num_bins=32, lags=_lag, return_dist=False
+            )
 
         model = sklearn.linear_model.LinearRegression().fit(
-            X=noise_std.reshape(-1, 1), y=ami)
+            X=noise_std.reshape(-1, 1), y=ami
+        )
 
         curvature = model.coef_[0]
 
         return curvature
 
     @classmethod
-    def ft_approx_entropy(cls,
-                          ts: np.ndarray,
-                          embed_dim: int = 2,
-                          embed_lag: int = 1,
-                          threshold: float = 0.2,
-                          metric: str = "chebyshev",
-                          p: t.Union[int, float] = 2,
-                          ts_scaled: t.Optional[np.ndarray] = None) -> float:
+    def ft_approx_entropy(
+        cls,
+        ts: np.ndarray,
+        embed_dim: int = 2,
+        embed_lag: int = 1,
+        threshold: float = 0.2,
+        metric: str = "chebyshev",
+        p: t.Union[int, float] = 2,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> float:
         """Approximate entropy of the time-series.
 
         Parameters
@@ -799,13 +821,13 @@ class MFETSInfoTheory:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
+
         def neigh_num(dim: int) -> int:
             """Mean-log-mean of the number of radius neighbors."""
             embed = _embed.embed_ts(ts_scaled, dim=dim, lag=embed_lag)
-            dist_mat = scipy.spatial.distance.cdist(embed,
-                                                    embed,
-                                                    metric=metric,
-                                                    p=p)
+            dist_mat = scipy.spatial.distance.cdist(
+                embed, embed, metric=metric, p=p
+            )
             return np.mean(np.log(np.mean(dist_mat < threshold, axis=1)))
 
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
@@ -815,14 +837,16 @@ class MFETSInfoTheory:
         return approx_entropy
 
     @classmethod
-    def ft_sample_entropy(cls,
-                          ts: np.ndarray,
-                          embed_dim: int = 2,
-                          embed_lag: int = 1,
-                          threshold: float = 0.2,
-                          metric: str = "chebyshev",
-                          p: t.Union[int, float] = 2,
-                          ts_scaled: t.Optional[np.ndarray] = None) -> float:
+    def ft_sample_entropy(
+        cls,
+        ts: np.ndarray,
+        embed_dim: int = 2,
+        embed_lag: int = 1,
+        threshold: float = 0.2,
+        metric: str = "chebyshev",
+        p: t.Union[int, float] = 2,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> float:
         """Sample entropy of the time-series.
 
         Parameters
@@ -874,6 +898,7 @@ class MFETSInfoTheory:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
+
         def log_neigh_num(dim: int) -> int:
             """Logarithm of the number of nearest neighbors."""
             embed = _embed.embed_ts(ts_scaled, dim=dim, lag=embed_lag)
@@ -882,20 +907,23 @@ class MFETSInfoTheory:
 
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        sample_entropy = log_neigh_num(embed_dim) - log_neigh_num(embed_dim +
-                                                                  1)
+        sample_entropy = log_neigh_num(embed_dim) - log_neigh_num(
+            embed_dim + 1
+        )
 
         return sample_entropy
 
     @classmethod
-    def ft_control_entropy(cls,
-                           ts: np.ndarray,
-                           embed_dim: int = 2,
-                           threshold: float = 0.2,
-                           metric: str = "chebyshev",
-                           p: t.Union[int, float] = 2,
-                           embed_lag: int = 1,
-                           ts_scaled: t.Optional[np.ndarray] = None) -> float:
+    def ft_control_entropy(
+        cls,
+        ts: np.ndarray,
+        embed_dim: int = 2,
+        threshold: float = 0.2,
+        metric: str = "chebyshev",
+        p: t.Union[int, float] = 2,
+        embed_lag: int = 1,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> float:
         """Control entropy of the time-series.
 
         Parameters
@@ -947,26 +975,30 @@ class MFETSInfoTheory:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
-        control_entropy = cls.ft_sample_entropy(ts=np.diff(ts),
-                                                embed_dim=embed_dim,
-                                                embed_lag=embed_lag,
-                                                threshold=threshold,
-                                                metric=metric,
-                                                p=p,
-                                                ts_scaled=ts_scaled)
+        control_entropy = cls.ft_sample_entropy(
+            ts=np.diff(ts),
+            embed_dim=embed_dim,
+            embed_lag=embed_lag,
+            threshold=threshold,
+            metric=metric,
+            p=p,
+            ts_scaled=ts_scaled,
+        )
 
         return control_entropy
 
     @classmethod
-    def ft_surprise(cls,
-                    ts: np.ndarray,
-                    num_bins: int = 10,
-                    memory_size: t.Union[float, int] = 0.1,
-                    num_it: int = 128,
-                    method: str = "distribution",
-                    diff_order: int = 1,
-                    epsilon: float = 1e-8,
-                    random_state: t.Optional[int] = None) -> np.ndarray:
+    def ft_surprise(
+        cls,
+        ts: np.ndarray,
+        num_bins: int = 10,
+        memory_size: t.Union[float, int] = 0.1,
+        num_it: int = 128,
+        method: str = "distribution",
+        diff_order: int = 1,
+        epsilon: float = 1e-8,
+        random_state: t.Optional[int] = None,
+    ) -> np.ndarray:
         """Surprise factor of a nth-order differenced time-series.
 
         The surprise measure is an estimation of the negative log-probablity of
@@ -1045,16 +1077,21 @@ class MFETSInfoTheory:
         VALID_METHODS = ("distribution", "1-transition")
 
         if method not in VALID_METHODS:
-            raise ValueError("'method' must in {} (got '{}')."
-                             "".format(VALID_METHODS, method))
+            raise ValueError(
+                "'method' must in {} (got '{}')."
+                "".format(VALID_METHODS, method)
+            )
 
         if memory_size <= 0:
-            raise ValueError("'memory_size' must be positive (got "
-                             "{}).".format(memory_size))
+            raise ValueError(
+                "'memory_size' must be positive (got "
+                "{}).".format(memory_size)
+            )
 
         if num_it <= 0:
-            raise ValueError("'num_it' must be positive (got {})."
-                             "".format(num_it))
+            raise ValueError(
+                "'num_it' must be positive (got {})." "".format(num_it)
+            )
 
         def get_reference_inds(inds_num: int, max_ind: int) -> np.ndarray:
             """Get min(ts.size - memory_size, inds_num) random indices.
@@ -1070,7 +1107,8 @@ class MFETSInfoTheory:
                 # 'memory_size' (i.e., we need at least 'memory_size' past
                 # indices). Therefore, we always skip they.
                 return memory_size + np.random.choice(
-                    max_ind - memory_size, size=inds_num, replace=False)
+                    max_ind - memory_size, size=inds_num, replace=False
+                )
 
             # Note: the requested number of indices is not smaller than
             # the number of available indices. Therefore, just return
@@ -1082,21 +1120,25 @@ class MFETSInfoTheory:
 
         if method == "distribution":
 
-            def prob_func(ref_ind: int, ts_bin: np.ndarray,
-                          hor_len: int) -> float:
+            def prob_func(
+                ref_ind: int, ts_bin: np.ndarray, hor_len: int
+            ) -> float:
                 """Return probability of the referenced value."""
-                return np.mean(ts_bin[ref_ind -
-                                      hor_len:ref_ind] == ts_bin[ref_ind])
+                return np.mean(
+                    ts_bin[ref_ind - hor_len : ref_ind] == ts_bin[ref_ind]
+                )
 
         else:
             if memory_size <= 1:
-                raise ValueError("'memory_size' must be >= 2 with "
-                                 "'1-transition' method.")
+                raise ValueError(
+                    "'memory_size' must be >= 2 with " "'1-transition' method."
+                )
 
-            def prob_func(ref_ind: int, ts_bin: np.ndarray,
-                          hor_len: int) -> float:
+            def prob_func(
+                ref_ind: int, ts_bin: np.ndarray, hor_len: int
+            ) -> float:
                 """Return probability of the referenced transition."""
-                mem_data = ts_bin[ref_ind - hor_len:ref_ind]
+                mem_data = ts_bin[ref_ind - hor_len : ref_ind]
                 prev_val = mem_data[-1]
                 prev_val_inds = np.flatnonzero(mem_data[:-1] == prev_val)
                 equal_vals = mem_data[prev_val_inds + 1] == ts_bin[ref_ind]
@@ -1106,17 +1148,17 @@ class MFETSInfoTheory:
 
         # Note: discretize time-series using an equiprobable histogram
         # (i.e. all bins have approximately the same number of instances).
-        ts_bin = _utils.discretize(ts=ts_diff,
-                                   num_bins=num_bins,
-                                   strategy="equiprobable")
+        ts_bin = _utils.discretize(
+            ts=ts_diff, num_bins=num_bins, strategy="equiprobable"
+        )
 
         probs = np.zeros(num_it, dtype=float)
         ref_inds = get_reference_inds(inds_num=num_it, max_ind=ts_diff.size)
 
         for ind, ref_ind in enumerate(ref_inds):
-            probs[ind] = prob_func(ref_ind=ref_ind,
-                                   ts_bin=ts_bin,
-                                   hor_len=int(memory_size))
+            probs[ind] = prob_func(
+                ref_ind=ref_ind, ts_bin=ts_bin, hor_len=int(memory_size)
+            )
 
         probs[probs < epsilon] = 1.0
         surprise = -np.log(probs)
@@ -1124,10 +1166,9 @@ class MFETSInfoTheory:
         return surprise
 
     @classmethod
-    def ft_lz_complexity(cls,
-                         ts: np.ndarray,
-                         num_bins: int = 10,
-                         normalize: bool = True) -> float:
+    def ft_lz_complexity(
+        cls, ts: np.ndarray, num_bins: int = 10, normalize: bool = True
+    ) -> float:
         """Lempel-Ziv complexity of the discretized time-series.
 
         Parameters
@@ -1165,10 +1206,10 @@ class MFETSInfoTheory:
             DOI: 10.1098/rsif.2013.0048
         """
         ts_bin = tuple(
-            _utils.discretize(ts=ts,
-                              num_bins=num_bins,
-                              strategy="equal-width",
-                              dtype=int))
+            _utils.discretize(
+                ts=ts, num_bins=num_bins, strategy="equal-width", dtype=int
+            )
+        )
 
         ind_start, ind_end = 0, 1
         substrings = set()

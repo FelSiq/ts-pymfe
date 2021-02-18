@@ -18,9 +18,11 @@ except ImportError:
 
 class MFETSRandomize:
     """Extract time-series meta-features from Randomize group."""
+
     @classmethod
-    def precompute_ts_scaled(cls, ts: np.ndarray,
-                             **kwargs) -> t.Dict[str, np.ndarray]:
+    def precompute_ts_scaled(
+        cls, ts: np.ndarray, **kwargs
+    ) -> t.Dict[str, np.ndarray]:
         """Precompute a standardized time series.
 
         Parameters
@@ -47,13 +49,15 @@ class MFETSRandomize:
         return precomp_vals
 
     @classmethod
-    def precompute_itrand_stats(cls,
-                                ts: np.ndarray,
-                                strategy: str = "dist-dynamic",
-                                prop_rep: t.Union[int, float] = 2,
-                                prop_interval: float = 0.1,
-                                random_state: t.Optional[int] = None,
-                                **kwargs) -> t.Dict[str, np.ndarray]:
+    def precompute_itrand_stats(
+        cls,
+        ts: np.ndarray,
+        strategy: str = "dist-dynamic",
+        prop_rep: t.Union[int, float] = 2,
+        prop_interval: float = 0.1,
+        random_state: t.Optional[int] = None,
+        **kwargs
+    ) -> t.Dict[str, np.ndarray]:
         """Precompute global statistics with iterative perturbation method.
 
         In the iterative perturbation method, a copy of the time-series is
@@ -141,35 +145,43 @@ class MFETSRandomize:
             (
                 ("mean", np.mean),
                 ("std", np.std),
-                ("acf", lambda arr: statsmodels.tsa.stattools.acf(
-                    arr, nlags=1, fft=True)[1]),
+                (
+                    "acf",
+                    lambda arr: statsmodels.tsa.stattools.acf(
+                        arr, nlags=1, fft=True
+                    )[1],
+                ),
             )
         )  # type: collections.OrderedDict[str,t.Callable[[np.ndarray], float]]
 
         stat_names = list(map("itrand_stat_{}".format, stats.keys()))
 
         if not set(stat_names).issubset(kwargs):
-            stat_vals = cls._itrand_stat(ts=ts,
-                                         func_stats=stats.values(),
-                                         strategy=strategy,
-                                         prop_rep=prop_rep,
-                                         prop_interval=prop_interval,
-                                         random_state=random_state,
-                                         ts_scaled=ts_scaled)
+            stat_vals = cls._itrand_stat(
+                ts=ts,
+                func_stats=stats.values(),
+                strategy=strategy,
+                prop_rep=prop_rep,
+                prop_interval=prop_interval,
+                random_state=random_state,
+                ts_scaled=ts_scaled,
+            )
 
             precomp_vals.update(zip(stat_names, stat_vals))
 
         return precomp_vals
 
     @classmethod
-    def _itrand_stat(cls,
-                     ts: np.ndarray,
-                     func_stats: t.Collection[t.Callable[[np.ndarray], float]],
-                     strategy: str = "dist-dynamic",
-                     prop_rep: t.Union[int, float] = 2,
-                     prop_interval: float = 0.1,
-                     ts_scaled: t.Optional[np.ndarray] = None,
-                     random_state: t.Optional[int] = None) -> np.ndarray:
+    def _itrand_stat(
+        cls,
+        ts: np.ndarray,
+        func_stats: t.Collection[t.Callable[[np.ndarray], float]],
+        strategy: str = "dist-dynamic",
+        prop_rep: t.Union[int, float] = 2,
+        prop_interval: float = 0.1,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        random_state: t.Optional[int] = None,
+    ) -> np.ndarray:
         """Calculate global statistics with iterative perturbation method.
 
         In the iterative perturbation method, a copy of the time-series is
@@ -243,18 +255,23 @@ class MFETSRandomize:
         """
         if prop_rep <= 0:
             raise ValueError(
-                "'prop_rep' must be positive (got {}).".format(prop_rep))
+                "'prop_rep' must be positive (got {}).".format(prop_rep)
+            )
 
         if prop_interval <= 0:
             raise ValueError(
                 "'prop_interval' must be positive (got {}).".format(
-                    prop_interval))
+                    prop_interval
+                )
+            )
 
         VALID_STRATEGY = ("dist-static", "dist-dynamic", "permute")
 
         if strategy not in VALID_STRATEGY:
-            raise ValueError("'strategy' not in {} (got '{}')."
-                             "".format(VALID_STRATEGY, strategy))
+            raise ValueError(
+                "'strategy' not in {} (got '{}')."
+                "".format(VALID_STRATEGY, strategy)
+            )
 
         if not hasattr(func_stats, "__len__"):
             func_stats = [func_stats]  # type: ignore
@@ -266,7 +283,7 @@ class MFETSRandomize:
         # Note: adding (num_it % rep_it) to avoid lose computation of
         # the remaining iterations that do not produce a statistic.
         num_it = int(np.ceil(prop_rep * ts_scaled.size))
-        num_it += (num_it % rep_it)
+        num_it += num_it % rep_it
 
         res = np.zeros((len(func_stats), 1 + num_it // rep_it))
         ts_rnd = np.copy(ts_scaled)
@@ -296,14 +313,15 @@ class MFETSRandomize:
 
     @classmethod
     def ft_itrand_mean(
-            cls,
-            ts: np.ndarray,
-            strategy: str = "dist-dynamic",
-            prop_rep: t.Union[int, float] = 2,
-            prop_interval: float = 0.1,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            random_state: t.Optional[int] = None,
-            itrand_stat_mean: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        strategy: str = "dist-dynamic",
+        prop_rep: t.Union[int, float] = 2,
+        prop_interval: float = 0.1,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        random_state: t.Optional[int] = None,
+        itrand_stat_mean: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Calculate time-series mean with iterative perturbation method.
 
         In the iterative perturbation method, a copy of the time-series is
@@ -376,26 +394,29 @@ class MFETSRandomize:
         if itrand_stat_mean is not None:
             return itrand_stat_mean
 
-        res = cls._itrand_stat(ts=ts,
-                               func_stats=np.mean,
-                               strategy=strategy,
-                               prop_rep=prop_rep,
-                               prop_interval=prop_interval,
-                               random_state=random_state,
-                               ts_scaled=ts_scaled)
+        res = cls._itrand_stat(
+            ts=ts,
+            func_stats=np.mean,
+            strategy=strategy,
+            prop_rep=prop_rep,
+            prop_interval=prop_interval,
+            random_state=random_state,
+            ts_scaled=ts_scaled,
+        )
 
         return res
 
     @classmethod
     def ft_itrand_sd(
-            cls,
-            ts: np.ndarray,
-            strategy: str = "dist-dynamic",
-            prop_rep: t.Union[int, float] = 2,
-            prop_interval: float = 0.1,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            random_state: t.Optional[int] = None,
-            itrand_stat_std: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        strategy: str = "dist-dynamic",
+        prop_rep: t.Union[int, float] = 2,
+        prop_interval: float = 0.1,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        random_state: t.Optional[int] = None,
+        itrand_stat_std: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Time-series standard deviation with iterative perturbation method.
 
         In the iterative perturbation method, a copy of the time-series is
@@ -468,26 +489,29 @@ class MFETSRandomize:
         if itrand_stat_std is not None:
             return itrand_stat_std
 
-        res = cls._itrand_stat(ts=ts,
-                               func_stats=np.std,
-                               strategy=strategy,
-                               prop_rep=prop_rep,
-                               prop_interval=prop_interval,
-                               random_state=random_state,
-                               ts_scaled=ts_scaled)
+        res = cls._itrand_stat(
+            ts=ts,
+            func_stats=np.std,
+            strategy=strategy,
+            prop_rep=prop_rep,
+            prop_interval=prop_interval,
+            random_state=random_state,
+            ts_scaled=ts_scaled,
+        )
 
         return res
 
     @classmethod
     def ft_itrand_acf(
-            cls,
-            ts: np.ndarray,
-            strategy: str = "dist-dynamic",
-            prop_rep: t.Union[int, float] = 2,
-            prop_interval: float = 0.1,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            random_state: t.Optional[int] = None,
-            itrand_stat_acf: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        strategy: str = "dist-dynamic",
+        prop_rep: t.Union[int, float] = 2,
+        prop_interval: float = 0.1,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        random_state: t.Optional[int] = None,
+        itrand_stat_acf: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Time-series autocorrelation with iterative perturbation method.
 
         In the iterative perturbation method, a copy of the time-series is
@@ -564,25 +588,28 @@ class MFETSRandomize:
             """Autocorrelation of the first lag."""
             return statsmodels.tsa.stattools.acf(arr, nlags=1, fft=True)[1]
 
-        res = cls._itrand_stat(ts=ts,
-                               func_stats=[func_acf],
-                               strategy=strategy,
-                               prop_rep=prop_rep,
-                               prop_interval=prop_interval,
-                               random_state=random_state,
-                               ts_scaled=ts_scaled)
+        res = cls._itrand_stat(
+            ts=ts,
+            func_stats=[func_acf],
+            strategy=strategy,
+            prop_rep=prop_rep,
+            prop_interval=prop_interval,
+            random_state=random_state,
+            ts_scaled=ts_scaled,
+        )
 
         return res
 
     @classmethod
     def ft_resample_std(
-            cls,
-            ts: np.ndarray,
-            num_samples: int = 64,
-            sample_size_frac: float = 0.1,
-            ddof: int = 1,
-            random_state: t.Optional[int] = None,
-            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        num_samples: int = 64,
+        sample_size_frac: float = 0.1,
+        ddof: int = 1,
+        random_state: t.Optional[int] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Time-series standard deviation from repeated subsampling.
 
         A subsample of size L is L consecutive observations from the
@@ -616,24 +643,27 @@ class MFETSRandomize:
         """
         ts_scaled = _utils.standardize_ts(ts=ts, ts_scaled=ts_scaled)
 
-        sample_std = _utils.apply_on_samples(ts=ts_scaled,
-                                             func=np.std,
-                                             num_samples=num_samples,
-                                             sample_size_frac=sample_size_frac,
-                                             random_state=random_state,
-                                             ddof=ddof)
+        sample_std = _utils.apply_on_samples(
+            ts=ts_scaled,
+            func=np.std,
+            num_samples=num_samples,
+            sample_size_frac=sample_size_frac,
+            random_state=random_state,
+            ddof=ddof,
+        )
 
         return sample_std
 
     @classmethod
     def ft_resample_first_acf_nonpos(
-            cls,
-            ts: np.ndarray,
-            num_samples: int = 128,
-            sample_size_frac: float = 0.2,
-            max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
-            random_state: t.Optional[int] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        num_samples: int = 128,
+        sample_size_frac: float = 0.2,
+        max_nlags: t.Optional[int] = None,
+        adjusted: bool = True,
+        random_state: t.Optional[int] = None,
+    ) -> np.ndarray:
         """First non-positive autocorrelation lag using repeated subsampling.
 
         A subsample of size L is L consecutive observations from the
@@ -672,19 +702,21 @@ class MFETSRandomize:
             sample_size_frac=sample_size_frac,
             random_state=random_state,
             max_nlags=max_nlags,
-            unbiased=unbiased)
+            adjusted=adjusted,
+        )
 
         return sample_acf_nonpos
 
     @classmethod
     def ft_resample_first_acf_locmin(
-            cls,
-            ts: np.ndarray,
-            num_samples: int = 128,
-            sample_size_frac: float = 0.2,
-            max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
-            random_state: t.Optional[int] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        num_samples: int = 128,
+        sample_size_frac: float = 0.2,
+        max_nlags: t.Optional[int] = None,
+        adjusted: bool = True,
+        random_state: t.Optional[int] = None,
+    ) -> np.ndarray:
         """First local minima autocorrelation lag using repeated subsampling.
 
         A subsample of size L is L consecutive observations from the
@@ -723,23 +755,25 @@ class MFETSRandomize:
             sample_size_frac=sample_size_frac,
             random_state=random_state,
             max_nlags=max_nlags,
-            unbiased=unbiased)
+            adjusted=adjusted,
+        )
 
         return sample_acf_locmin
 
     @classmethod
     def ft_surr_trev(
-            cls,
-            ts: np.ndarray,
-            surrogate_num: int = 32,
-            max_iter: int = 128,
-            relative: bool = True,
-            lag: t.Optional[t.Union[str, int]] = None,
-            only_numerator: bool = False,
-            random_state: t.Optional[int] = None,
-            max_nlags: t.Optional[int] = None,
-            detrended_acfs: t.Optional[np.ndarray] = None,
-            detrended_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        surrogate_num: int = 32,
+        max_iter: int = 128,
+        relative: bool = True,
+        lag: t.Optional[t.Union[str, int]] = None,
+        only_numerator: bool = False,
+        random_state: t.Optional[int] = None,
+        max_nlags: t.Optional[int] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Trev statistic extracted from surrogate time-series.
 
         The surrogate time-series are generated using the IAAFT algorithm.
@@ -828,11 +862,13 @@ class MFETSRandomize:
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
         """
-        lag = _embed.embed_lag(ts=ts,
-                               lag=lag,
-                               max_nlags=max_nlags,
-                               detrended_acfs=detrended_acfs,
-                               detrended_ami=detrended_ami)
+        lag = _embed.embed_lag(
+            ts=ts,
+            lag=lag,
+            max_nlags=max_nlags,
+            detrended_acfs=detrended_acfs,
+            detrended_ami=detrended_ami,
+        )
 
         surr_trev = _surrogates.apply_on_surrogates(
             ts=ts,
@@ -841,27 +877,30 @@ class MFETSRandomize:
             max_iter=max_iter,
             random_state=random_state,
             only_numerator=only_numerator,
-            lag=lag)
+            lag=lag,
+        )
 
         if relative:
             surr_trev /= autocorr.MFETSAutocorr.ft_trev(
-                ts=ts, lag=lag, only_numerator=only_numerator)
+                ts=ts, lag=lag, only_numerator=only_numerator
+            )
 
         return surr_trev
 
     @classmethod
     def ft_surr_tc3(
-            cls,
-            ts: np.ndarray,
-            surrogate_num: int = 32,
-            max_iter: int = 128,
-            relative: bool = True,
-            lag: t.Optional[t.Union[str, int]] = None,
-            only_numerator: bool = False,
-            random_state: t.Optional[int] = None,
-            max_nlags: t.Optional[int] = None,
-            detrended_acfs: t.Optional[np.ndarray] = None,
-            detrended_ami: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        surrogate_num: int = 32,
+        max_iter: int = 128,
+        relative: bool = True,
+        lag: t.Optional[t.Union[str, int]] = None,
+        only_numerator: bool = False,
+        random_state: t.Optional[int] = None,
+        max_nlags: t.Optional[int] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Tc3 statistic extracted from surrogate time-series.
 
         The surrogate time-series are generated using the IAAFT algorithm.
@@ -950,11 +989,13 @@ class MFETSRandomize:
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
         """
-        lag = _embed.embed_lag(ts=ts,
-                               lag=lag,
-                               max_nlags=max_nlags,
-                               detrended_acfs=detrended_acfs,
-                               detrended_ami=detrended_ami)
+        lag = _embed.embed_lag(
+            ts=ts,
+            lag=lag,
+            max_nlags=max_nlags,
+            detrended_acfs=detrended_acfs,
+            detrended_ami=detrended_ami,
+        )
 
         surr_tc3 = _surrogates.apply_on_surrogates(
             ts=ts,
@@ -963,10 +1004,12 @@ class MFETSRandomize:
             max_iter=max_iter,
             random_state=random_state,
             only_numerator=only_numerator,
-            lag=lag)
+            lag=lag,
+        )
 
         if relative:
             surr_tc3 /= autocorr.MFETSAutocorr.ft_tc3(
-                ts=ts, lag=lag, only_numerator=only_numerator)
+                ts=ts, lag=lag, only_numerator=only_numerator
+            )
 
         return surr_tc3

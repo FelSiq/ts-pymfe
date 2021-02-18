@@ -2,17 +2,20 @@
 import numpy as np
 
 
-def ortho_poly(ts: np.ndarray,
-               degree: int = 1,
-               return_coeffs: bool = True,
-               check_degree: bool = True) -> np.ndarray:
+def ortho_poly(
+    ts: np.ndarray,
+    degree: int = 1,
+    return_coeffs: bool = True,
+    check_degree: bool = True,
+) -> np.ndarray:
     """Fit a orthogonal polynomial with given ``degree``.
 
     Compatible with the R implementation ``poly``.
     """
     if check_degree and degree >= np.unique(ts).size:
-        raise ValueError("'degree' must be less than number "
-                         "of unique points.")
+        raise ValueError(
+            "'degree' must be less than number " "of unique points."
+        )
 
     ts_mean = np.mean(ts)
     ts = ts - ts_mean
@@ -28,8 +31,9 @@ def ortho_poly(ts: np.ndarray,
     res = (raw / np.sqrt(sum_raw_sqr))[:, 1:]
 
     if return_coeffs:
-        alpha = (np.sum(raw_sqr * ts.reshape(-1, 1), axis=0) / sum_raw_sqr +
-                 ts_mean)[:degree]
+        alpha = (
+            np.sum(raw_sqr * ts.reshape(-1, 1), axis=0) / sum_raw_sqr + ts_mean
+        )[:degree]
 
         return res, alpha, np.hstack((1, sum_raw_sqr))
 

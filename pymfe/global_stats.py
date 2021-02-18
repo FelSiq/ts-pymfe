@@ -13,6 +13,7 @@ import pymfe._summary as _summary
 
 class MFETSGlobalStats:
     """Extract time-series meta-features from Global Statistics group."""
+
     @classmethod
     def precompute_period(cls, ts: np.ndarray, **kwargs) -> t.Dict[str, int]:
         """Precompute the time-series period.
@@ -41,12 +42,13 @@ class MFETSGlobalStats:
 
     @classmethod
     def ft_ioe_tdelta_mean(
-            cls,
-            ts: np.ndarray,
-            step_size: float = 0.05,
-            normalize: bool = True,
-            differentiate: bool = False,
-            ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        step_size: float = 0.05,
+        normalize: bool = True,
+        differentiate: bool = False,
+        ts_scaled: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Mean change of interval length with iterative outlier exclusion.
 
         This method calculates, at each iteration, the mean of the differences
@@ -100,11 +102,13 @@ class MFETSGlobalStats:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
-        tdelta_it_mean = _utils.calc_ioe_stats(ts=ts,
-                                               funcs=np.mean,
-                                               ts_scaled=ts_scaled,
-                                               step_size=step_size,
-                                               differentiate=differentiate)
+        tdelta_it_mean = _utils.calc_ioe_stats(
+            ts=ts,
+            funcs=np.mean,
+            ts_scaled=ts_scaled,
+            step_size=step_size,
+            differentiate=differentiate,
+        )
 
         if normalize:
             tdelta_it_mean = 2 * tdelta_it_mean / ts.size - 1
@@ -112,10 +116,12 @@ class MFETSGlobalStats:
         return tdelta_it_mean
 
     @classmethod
-    def ft_trend_strenght(cls,
-                          ts_residuals: np.ndarray,
-                          ts_deseasonalized: np.ndarray,
-                          ddof: int = 1) -> float:
+    def ft_trend_strenght(
+        cls,
+        ts_residuals: np.ndarray,
+        ts_deseasonalized: np.ndarray,
+        ddof: int = 1,
+    ) -> float:
         """Ratio of standard deviations of time-series and after detrend.
 
         Parameters
@@ -149,16 +155,17 @@ class MFETSGlobalStats:
             1, 2020, Pages 86-92, ISSN 0169-2070,
             https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
-        trend = 1.0 - (np.var(ts_residuals, ddof=ddof) /
-                       np.var(ts_deseasonalized, ddof=ddof))
+        trend = 1.0 - (
+            np.var(ts_residuals, ddof=ddof)
+            / np.var(ts_deseasonalized, ddof=ddof)
+        )
 
         return min(1.0, max(0.0, trend))
 
     @classmethod
-    def ft_season_strenght(cls,
-                           ts_residuals: np.ndarray,
-                           ts_detrended: np.ndarray,
-                           ddof: int = 1) -> float:
+    def ft_season_strenght(
+        cls, ts_residuals: np.ndarray, ts_detrended: np.ndarray, ddof: int = 1
+    ) -> float:
         """Ratio of standard deviations of time-series and after deseasoning.
 
         Parameters
@@ -193,8 +200,9 @@ class MFETSGlobalStats:
             https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
 
-        seas = 1.0 - (np.var(ts_residuals, ddof=ddof) /
-                      np.var(ts_detrended, ddof=ddof))
+        seas = 1.0 - (
+            np.var(ts_residuals, ddof=ddof) / np.var(ts_detrended, ddof=ddof)
+        )
 
         return min(1.0, max(0.0, seas))
 
@@ -218,10 +226,9 @@ class MFETSGlobalStats:
         return np.std(ts_residuals, ddof=ddof)
 
     @classmethod
-    def ft_sd_diff(cls,
-                   ts: np.ndarray,
-                   num_diff: int = 1,
-                   ddof: int = 1) -> float:
+    def ft_sd_diff(
+        cls, ts: np.ndarray, num_diff: int = 1, ddof: int = 1
+    ) -> float:
         """Standard deviation of the nth-order differenced time-series.
 
         Parameters
@@ -243,10 +250,9 @@ class MFETSGlobalStats:
         return np.std(np.diff(ts, n=num_diff), ddof=ddof)
 
     @classmethod
-    def ft_sd_sdiff(cls,
-                    ts: np.ndarray,
-                    ddof: int = 1,
-                    ts_period: t.Optional[int] = None) -> float:
+    def ft_sd_sdiff(
+        cls, ts: np.ndarray, ddof: int = 1, ts_period: t.Optional[int] = None
+    ) -> float:
         """Seasonal standard dev.  of the first-order differenced time-series.
 
         Parameters
@@ -271,10 +277,9 @@ class MFETSGlobalStats:
         return np.std(ts_sdiff, ddof=ddof)
 
     @classmethod
-    def ft_skewness_residuals(cls,
-                              ts_residuals: np.ndarray,
-                              method: int = 3,
-                              unbiased: bool = False) -> float:
+    def ft_skewness_residuals(
+        cls, ts_residuals: np.ndarray, method: int = 3, adjusted: bool = False
+    ) -> float:
         """Compute the skewness of the time-series residuals.
 
         Parameters
@@ -305,7 +310,7 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         Returns
@@ -319,18 +324,20 @@ class MFETSGlobalStats:
            John Campbell. Machine Learning, Neural and Statistical
            Classification, volume 37. Ellis Horwood Upper Saddle River, 1994.
         """
-        ts_skew = _summary.sum_skewness(values=ts_residuals,
-                                        method=method,
-                                        bias=not unbiased)
+        ts_skew = _summary.sum_skewness(
+            values=ts_residuals, method=method, bias=not adjusted
+        )
 
         return float(ts_skew)
 
     @classmethod
-    def ft_skewness_diff(cls,
-                         ts: np.ndarray,
-                         num_diff: int = 1,
-                         method: int = 3,
-                         unbiased: bool = False) -> float:
+    def ft_skewness_diff(
+        cls,
+        ts: np.ndarray,
+        num_diff: int = 1,
+        method: int = 3,
+        adjusted: bool = False,
+    ) -> float:
         """Skewness of the nth-order differenced time-series.
 
         This method calculates the skewness of the nth-order differenced
@@ -367,7 +374,7 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         Returns
@@ -382,18 +389,20 @@ class MFETSGlobalStats:
            Classification, volume 37. Ellis Horwood Upper Saddle River, 1994.
         """
         ts_diff = np.diff(ts, n=num_diff)
-        ts_skew = _summary.sum_skewness(values=ts_diff,
-                                        method=method,
-                                        bias=not unbiased)
+        ts_skew = _summary.sum_skewness(
+            values=ts_diff, method=method, bias=not adjusted
+        )
 
         return float(ts_skew)
 
     @classmethod
-    def ft_skewness_sdiff(cls,
-                          ts: np.ndarray,
-                          method: int = 3,
-                          unbiased: bool = False,
-                          ts_period: t.Optional[int] = None) -> float:
+    def ft_skewness_sdiff(
+        cls,
+        ts: np.ndarray,
+        method: int = 3,
+        adjusted: bool = False,
+        ts_period: t.Optional[int] = None,
+    ) -> float:
         """Seasonal skewness of the first-order differenced time-series.
 
         This method calculates the skewness of the first-order differenced
@@ -429,7 +438,7 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         ts_period : int, optional
@@ -443,17 +452,16 @@ class MFETSGlobalStats:
         """
         _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
         ts_sdiff = ts[_ts_period:] - ts[:-_ts_period]
-        ts_skew = _summary.sum_skewness(values=ts_sdiff,
-                                        method=method,
-                                        bias=not unbiased)
+        ts_skew = _summary.sum_skewness(
+            values=ts_sdiff, method=method, bias=not adjusted
+        )
 
         return float(ts_skew)
 
     @classmethod
-    def ft_kurtosis_residuals(cls,
-                              ts_residuals: np.ndarray,
-                              method: int = 3,
-                              unbiased: bool = False) -> float:
+    def ft_kurtosis_residuals(
+        cls, ts_residuals: np.ndarray, method: int = 3, adjusted: bool = False
+    ) -> float:
         """Compute the kurtosis of the time-series residuals.
 
         Parameters
@@ -486,7 +494,7 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due
             to division by zero, then the first method is used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         Returns
@@ -500,18 +508,20 @@ class MFETSGlobalStats:
            John Campbell. Machine Learning, Neural and Statistical
            Classification, volume 37. Ellis Horwood Upper Saddle River, 1994.
         """
-        ts_kurt = _summary.sum_kurtosis(values=ts_residuals,
-                                        method=method,
-                                        bias=not unbiased)
+        ts_kurt = _summary.sum_kurtosis(
+            values=ts_residuals, method=method, bias=not adjusted
+        )
 
         return float(ts_kurt)
 
     @classmethod
-    def ft_kurtosis_diff(cls,
-                         ts: np.ndarray,
-                         num_diff: int = 1,
-                         method: int = 3,
-                         unbiased: bool = False) -> float:
+    def ft_kurtosis_diff(
+        cls,
+        ts: np.ndarray,
+        num_diff: int = 1,
+        method: int = 3,
+        adjusted: bool = False,
+    ) -> float:
         """Kurtosis of the nth-order differenced time-series.
 
         This method calculates the kurtosis of the nth-order differenced
@@ -550,7 +560,7 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due
             to division by zero, then the first method is used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         Returns
@@ -559,18 +569,20 @@ class MFETSGlobalStats:
             Kurtosis of the nth-order differenced time-series
         """
         ts_diff = np.diff(ts, n=num_diff)
-        ts_kurt = _summary.sum_kurtosis(values=ts_diff,
-                                        method=method,
-                                        bias=not unbiased)
+        ts_kurt = _summary.sum_kurtosis(
+            values=ts_diff, method=method, bias=not adjusted
+        )
 
         return float(ts_kurt)
 
     @classmethod
-    def ft_kurtosis_sdiff(cls,
-                          ts: np.ndarray,
-                          method: int = 3,
-                          unbiased: bool = False,
-                          ts_period: t.Optional[int] = None) -> float:
+    def ft_kurtosis_sdiff(
+        cls,
+        ts: np.ndarray,
+        method: int = 3,
+        adjusted: bool = False,
+        ts_period: t.Optional[int] = None,
+    ) -> float:
         """Seasonal kurtosis of the first-order differenced time-series.
 
         This method calculates the kurtosis of the first-order differenced
@@ -608,7 +620,7 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due
             to division by zero, then the first method is used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         ts_period : int, optional
@@ -622,17 +634,16 @@ class MFETSGlobalStats:
         """
         _ts_period = _period.get_ts_period(ts=ts, ts_period=ts_period)
         ts_sdiff = ts[_ts_period:] - ts[:-_ts_period]
-        ts_kurt = _summary.sum_kurtosis(values=ts_sdiff,
-                                        method=method,
-                                        bias=not unbiased)
+        ts_kurt = _summary.sum_kurtosis(
+            values=ts_sdiff, method=method, bias=not adjusted
+        )
 
         return float(ts_kurt)
 
     @classmethod
-    def ft_exp_max_lyap(cls,
-                        ts: np.ndarray,
-                        embed_dim: int = 10,
-                        lag: t.Optional[int] = None) -> float:
+    def ft_exp_max_lyap(
+        cls, ts: np.ndarray, embed_dim: int = 10, lag: t.Optional[int] = None
+    ) -> float:
         """Estimation of the maximum Lyapunov coefficient.
 
         Parameters
@@ -668,9 +679,9 @@ class MFETSGlobalStats:
             73. 2006-2016. 10.1016/j.neucom.2009.09.020.
         """
         with warnings.catch_warnings():
-            warnings.filterwarnings("ignore",
-                                    module="nolds",
-                                    category=RuntimeWarning)
+            warnings.filterwarnings(
+                "ignore", module="nolds", category=RuntimeWarning
+            )
 
             max_lyap_exp = nolds.lyap_r(data=ts, lag=lag, emb_dim=embed_dim)
 
@@ -709,10 +720,9 @@ class MFETSGlobalStats:
         return nolds.hurst_rs(data=ts)
 
     @classmethod
-    def ft_dfa(cls,
-               ts: np.ndarray,
-               pol_order: int = 1,
-               overlap_windows: bool = True) -> float:
+    def ft_dfa(
+        cls, ts: np.ndarray, pol_order: int = 1, overlap_windows: bool = True
+    ) -> float:
         """Calculate the Hurst parameter from Detrended fluctuation analysis.
 
         Note that the ``Hurst parameter`` is not the same quantity as the
@@ -797,9 +807,9 @@ class MFETSGlobalStats:
         return corr_dim
 
     @classmethod
-    def ft_opt_boxcox_coef(cls,
-                           ts: np.ndarray,
-                           adjust_data: bool = True) -> float:
+    def ft_opt_boxcox_coef(
+        cls, ts: np.ndarray, adjust_data: bool = True
+    ) -> float:
         """Estimated optimal box-cox transformation coefficient.
 
         Parameters
@@ -865,9 +875,9 @@ class MFETSGlobalStats:
         return scipy.stats.trim_mean(ts, proportiontocut=pcut)
 
     @classmethod
-    def ft_spikiness(cls,
-                     ts_residuals: np.ndarray,
-                     ddof: int = 1) -> np.ndarray:
+    def ft_spikiness(
+        cls, ts_residuals: np.ndarray, ddof: int = 1
+    ) -> np.ndarray:
         """Spikiness of the time-series residuals.
 
         The spikiness of the time-series residuals is the variance of the
@@ -902,10 +912,12 @@ class MFETSGlobalStats:
             1, 2020, Pages 86-92, ISSN 0169-2070,
             https://doi.org/10.1016/j.ijforecast.2019.02.011.
         """
-        vars_ = np.array([
-            np.var(np.delete(ts_residuals, i), ddof=ddof)
-            for i in np.arange(ts_residuals.size)
-        ])
+        vars_ = np.array(
+            [
+                np.var(np.delete(ts_residuals, i), ddof=ddof)
+                for i in np.arange(ts_residuals.size)
+            ]
+        )
 
         # Note: on the original reference paper, the spikiness is calculated
         # as the variance of the 'vars_'. However, to enable summarization,

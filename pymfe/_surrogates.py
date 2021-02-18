@@ -5,11 +5,13 @@ import numpy as np
 import sklearn.metrics
 
 
-def iaaft(ts: np.ndarray,
-          max_iter: int = 128,
-          atol: float = 1e-8,
-          rtol: float = 1e-10,
-          random_state: t.Optional[int] = None) -> np.ndarray:
+def iaaft(
+    ts: np.ndarray,
+    max_iter: int = 128,
+    atol: float = 1e-8,
+    rtol: float = 1e-10,
+    random_state: t.Optional[int] = None,
+) -> np.ndarray:
     """Return iterative amplitude adjusted Fourier transform surrogates.
 
     Parameters
@@ -68,9 +70,9 @@ def iaaft(ts: np.ndarray,
         s = np.fft.irfft(ampl * ts_fft / np.abs(ts_fft), n=ts.size).real
         ts_sur = sort[np.argsort(np.argsort(s))]
         ts_fft = np.fft.rfft(ts_sur)
-        err_cur = sklearn.metrics.mean_squared_error(ampl**2,
-                                                     np.abs(ts_fft)**2,
-                                                     squared=False)
+        err_cur = sklearn.metrics.mean_squared_error(
+            ampl ** 2, np.abs(ts_fft) ** 2, squared=False
+        )
 
         if abs(err_cur - err_prev) <= atol + rtol * abs(err_prev):
             break
@@ -80,14 +82,16 @@ def iaaft(ts: np.ndarray,
     return ts_sur
 
 
-def apply_on_surrogates(ts: np.ndarray,
-                        surrogate_num: int,
-                        func: t.Callable[..., float],
-                        max_iter: int = 128,
-                        atol: float = 1e-8,
-                        rtol: float = 1e-10,
-                        random_state: t.Optional[np.ndarray] = None,
-                        **kwargs) -> np.ndarray:
+def apply_on_surrogates(
+    ts: np.ndarray,
+    surrogate_num: int,
+    func: t.Callable[..., float],
+    max_iter: int = 128,
+    atol: float = 1e-8,
+    rtol: float = 1e-10,
+    random_state: t.Optional[np.ndarray] = None,
+    **kwargs
+) -> np.ndarray:
     """Extract a statistic from surrogate time-series.
 
     Parameters
@@ -153,11 +157,13 @@ def apply_on_surrogates(ts: np.ndarray,
             # determinism of the procedure.
             random_state += 1
 
-        ts_surr = iaaft(ts=ts,
-                        max_iter=max_iter,
-                        random_state=random_state,
-                        atol=atol,
-                        rtol=rtol)
+        ts_surr = iaaft(
+            ts=ts,
+            max_iter=max_iter,
+            random_state=random_state,
+            atol=atol,
+            rtol=rtol,
+        )
 
         stats[ind] = func(ts_surr, **kwargs)
 

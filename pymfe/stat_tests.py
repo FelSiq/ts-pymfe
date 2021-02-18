@@ -9,6 +9,7 @@ import statsmodels.stats.diagnostic
 
 class MFETSStatTests:
     """Extract time-series meta-features from Statistical Tests group."""
+
     @staticmethod
     def _extract_arch_module_pval(arch_result: t.Any) -> float:
         """Extract the p-value from a result of the `arch` module."""
@@ -20,9 +21,9 @@ class MFETSStatTests:
             return np.nan
 
     @classmethod
-    def ft_test_dw(cls,
-                   ts_residuals: np.ndarray,
-                   normalize: bool = True) -> float:
+    def ft_test_dw(
+        cls, ts_residuals: np.ndarray, normalize: bool = True
+    ) -> float:
         """Durbin-Watson test statistic value.
 
         This tests tries to detect autocorrelation of lag 1 in the given
@@ -65,10 +66,12 @@ class MFETSStatTests:
         return dw_stat
 
     @classmethod
-    def ft_test_lb(cls,
-                   ts_residuals: np.ndarray,
-                   max_nlags: t.Optional[int] = 16,
-                   return_pval: bool = True) -> np.ndarray:
+    def ft_test_lb(
+        cls,
+        ts_residuals: np.ndarray,
+        max_nlags: t.Optional[int] = 16,
+        return_pval: bool = True,
+    ) -> np.ndarray:
         """Ljung-Box (LB) test of autocorrelation in residuals.
 
         The test is defined as:
@@ -106,9 +109,9 @@ class MFETSStatTests:
             series models, Biometrika, Volume 65, Issue 2, August 1978, Pages
             297–303, https://doi.org/10.1093/biomet/65.2.297
         """
-        res = statsmodels.stats.diagnostic.acorr_ljungbox(ts_residuals,
-                                                          lags=max_nlags,
-                                                          return_df=False)
+        res = statsmodels.stats.diagnostic.acorr_ljungbox(
+            ts_residuals, lags=max_nlags, return_df=False
+        )
 
         stat, pvalue = res
 
@@ -118,10 +121,12 @@ class MFETSStatTests:
         return stat
 
     @classmethod
-    def ft_test_earch(cls,
-                      ts_residuals: np.ndarray,
-                      max_nlags: t.Optional[int] = 16,
-                      return_pval: bool = True) -> float:
+    def ft_test_earch(
+        cls,
+        ts_residuals: np.ndarray,
+        max_nlags: t.Optional[int] = 16,
+        return_pval: bool = True,
+    ) -> float:
         """Engle's Test for Autoregressive Conditional Heteroscedasticity.
 
         The Engle's test works as follows:
@@ -156,7 +161,8 @@ class MFETSStatTests:
             Econometrica. Vol. 50, 1982, pp. 987–1007.
         """
         stat, pvalue = statsmodels.stats.diagnostic.het_arch(
-            ts_residuals, nlags=max_nlags)[:2]
+            ts_residuals, nlags=max_nlags
+        )[:2]
 
         if return_pval:
             return pvalue
@@ -164,10 +170,12 @@ class MFETSStatTests:
         return stat
 
     @classmethod
-    def ft_test_adf(cls,
-                    ts: np.ndarray,
-                    max_nlags: t.Optional[int] = 16,
-                    return_pval: bool = True) -> float:
+    def ft_test_adf(
+        cls,
+        ts: np.ndarray,
+        max_nlags: t.Optional[int] = 16,
+        return_pval: bool = True,
+    ) -> float:
         """Augmented Dickey-Fuller (ADF) test.
 
         The ADF test works as follows:
@@ -204,8 +212,9 @@ class MFETSStatTests:
             of the American Statistical Association, 74:366a, 427-431,
             DOI: 10.1080/01621459.1979.10482531
         """
-        stat, pvalue = statsmodels.tsa.stattools.adfuller(ts,
-                                                          maxlag=max_nlags)[:2]
+        stat, pvalue = statsmodels.tsa.stattools.adfuller(
+            ts, maxlag=max_nlags
+        )[:2]
 
         if return_pval:
             return pvalue
@@ -213,11 +222,13 @@ class MFETSStatTests:
         return stat
 
     @classmethod
-    def ft_test_adf_gls(cls,
-                        ts: np.ndarray,
-                        lags: t.Optional[int] = None,
-                        max_nlags: t.Optional[int] = 16,
-                        return_pval: bool = True) -> float:
+    def ft_test_adf_gls(
+        cls,
+        ts: np.ndarray,
+        lags: t.Optional[int] = None,
+        max_nlags: t.Optional[int] = 16,
+        return_pval: bool = True,
+    ) -> float:
         """Dickey-Fuller GLS (ADF-GLS) test.
 
         The ADF-GLS test works as follows:
@@ -267,10 +278,12 @@ class MFETSStatTests:
         return res.stat
 
     @classmethod
-    def ft_test_pp(cls,
-                   ts: np.ndarray,
-                   max_nlags: t.Optional[int] = 16,
-                   return_pval: bool = True) -> float:
+    def ft_test_pp(
+        cls,
+        ts: np.ndarray,
+        max_nlags: t.Optional[int] = 16,
+        return_pval: bool = True,
+    ) -> float:
         """Phillips-Perron (PP) test.
 
         The PP test works as follows:
@@ -315,10 +328,12 @@ class MFETSStatTests:
         return res.stat
 
     @classmethod
-    def ft_test_kpss(cls,
-                     ts: np.ndarray,
-                     max_nlags: t.Optional[int] = 16,
-                     return_pval: bool = True) -> float:
+    def ft_test_kpss(
+        cls,
+        ts: np.ndarray,
+        max_nlags: t.Optional[int] = 16,
+        return_pval: bool = True,
+    ) -> float:
         """Kwiatkowski-Phillips-Schmidt-Shin (KPSS) test.
 
         The KPSS test works as follows:
@@ -406,10 +421,12 @@ class MFETSStatTests:
         return res.stat
 
     @classmethod
-    def ft_test_lilliefors(cls,
-                           ts: np.ndarray,
-                           distribution: str = "norm",
-                           return_pval: bool = True) -> float:
+    def ft_test_lilliefors(
+        cls,
+        ts: np.ndarray,
+        distribution: str = "norm",
+        return_pval: bool = True,
+    ) -> float:
         """Lilliefors test.
 
         The Lilliefors test works as follows:
@@ -453,7 +470,8 @@ class MFETSStatTests:
             DOI: 10.1080/01621459.1969.10500983
         """
         stat, pvalue = statsmodels.stats.diagnostic.lilliefors(
-            ts, dist=distribution, pvalmethod="approx")
+            ts, dist=distribution, pvalmethod="approx"
+        )
 
         if return_pval:
             return pvalue
