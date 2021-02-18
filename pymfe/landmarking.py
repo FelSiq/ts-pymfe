@@ -6,7 +6,7 @@ import numpy as np
 import sklearn.model_selection
 import sklearn.gaussian_process
 import sklearn.base
-import statsmodels.tsa.arima_model
+import statsmodels.tsa.arima.model
 import statsmodels.tsa.holtwinters
 import statsmodels.tools.sm_exceptions
 import statsmodels.base.model
@@ -380,7 +380,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (0, 0, 0)}
         args_fit = {
@@ -1328,7 +1328,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (1, 0, 0)}
         args_fit = {
@@ -1411,7 +1411,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (0, 1, 0)}
         args_fit = {
@@ -1494,7 +1494,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (1, 1, 0)}
         args_fit = {
@@ -1577,7 +1577,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (0, 1, 1)}
         args_fit = {
@@ -1661,7 +1661,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (0, 1, 1)}
         args_fit = {
@@ -1744,7 +1744,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (0, 2, 1)}
         args_fit = {
@@ -1828,7 +1828,7 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
-        model_callable = statsmodels.tsa.arima_model.ARIMA
+        model_callable = statsmodels.tsa.arima.model.ARIMA
 
         args_inst = {"order": (1, 1, 2)}
         args_fit = {
