@@ -183,10 +183,10 @@ print(summaries)
 1. avg_cycle_period
 2. curvature
 3. des_level
-4. des_slope
+4. des_trend
 5. ets_level
 6. ets_season
-7. ets_slope
+7. ets_trend
 8. gaussian_r_sqr
 9. ioe_std_adj_r_sqr
 10. ioe_std_slope
