@@ -2049,7 +2049,7 @@ class MFETSLandmarking:
             "seasonal_periods": _ts_period,
             "trend": "add",
             "seasonal": "add",
-            "damped": True,
+            "damped_trend": True,
         }
 
         args_fit = {
@@ -2143,7 +2143,7 @@ class MFETSLandmarking:
             "seasonal_periods": _ts_period,
             "trend": "add",
             "seasonal": "mul",
-            "damped": True,
+            "damped_trend": True,
         }
 
         args_fit = {
