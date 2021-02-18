@@ -505,16 +505,16 @@ class MFETSModelBased:
         return param_level
 
     @classmethod
-    def ft_des_slope(
+    def ft_des_trend(
         cls,
         ts: np.ndarray,
         damped_trend: bool = False,
         ts_scaled: t.Optional[np.ndarray] = None,
         res_model_des: t.Optional[t.Any] = None,
     ) -> float:
-        """Double exponential smoothing model (additive trend) slope parameter.
+        """Double exponential smoothing model (additive trend) trend parameter.
 
-        The `slope` parameter is also known as the `beta` parameter, from the
+        The `trend` parameter is also known as the `beta` parameter, from the
         traditional Double Exponential Smoothing definition formula. This
         parameter controls the decay of the influence of the trend change into
         the model.
@@ -539,7 +539,7 @@ class MFETSModelBased:
         Returns
         -------
         float
-            `Slope` (or `beta`) parameter from a double exponential smoothing
+            `Trend` (or `beta`) parameter from a double exponential smoothing
             model.
 
         References
@@ -560,9 +560,9 @@ class MFETSModelBased:
                 ts=ts, ts_scaled=ts_scaled, damped_trend=damped_trend
             )
 
-        param_slope = res_model_des.params["smoothing_slope"]
+        param_trend = res_model_des.params["smoothing_trend"]
 
-        return param_slope
+        return param_trend
 
     @classmethod
     def ft_ets_level(
@@ -636,7 +636,7 @@ class MFETSModelBased:
         return param_level
 
     @classmethod
-    def ft_ets_slope(
+    def ft_ets_trend(
         cls,
         ts: np.ndarray,
         damped_trend: bool = True,
@@ -644,11 +644,11 @@ class MFETSModelBased:
         ts_scaled: t.Optional[np.ndarray] = None,
         res_model_ets: t.Optional[t.Any] = None,
     ) -> float:
-        """ETS (additive components) model slope parameter.
+        """ETS (additive components) model trend parameter.
 
         ETS models are also known as `Holt-Winters Exponential Smoothing`.
 
-        The `slope` parameter is also known as the `beta` parameter, from the
+        The `trend` parameter is also known as the `beta` parameter, from the
         traditional Triple Exponential Smoothing definition formula. This
         parameter controls the decay of the influence of the trend change into
         the model.
@@ -676,7 +676,7 @@ class MFETSModelBased:
         Returns
         -------
         float
-            `Slope` (or `beta`) parameter from a ETS model.
+            `Trend` (or `beta`) parameter from a ETS model.
 
         References
         ----------
@@ -703,9 +703,9 @@ class MFETSModelBased:
                 damped_trend=damped_trend,
             )
 
-        param_slope = res_model_ets.params["smoothing_slope"]
+        param_trend = res_model_ets.params["smoothing_trend"]
 
-        return param_slope
+        return param_trend
 
     @classmethod
     def ft_ets_season(
