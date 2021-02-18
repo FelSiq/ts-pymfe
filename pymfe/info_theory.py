@@ -54,7 +54,7 @@ class MFETSInfoTheory:
             lags: t.Optional[t.Union[int, t.Sequence[int]]] = None,
             return_dist: bool = False,
             max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
+            adjusted: bool = True,
             **kwargs) -> t.Dict[str, np.ndarray]:
         """Precompute detrended time-series Automutual Information function.
 
@@ -89,7 +89,7 @@ class MFETSInfoTheory:
             function up to `max_nlags`, if any. Otherwise, lag 1 will be used.
             Used only if ``lags`` is None.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, correct the autocorrelation function for statistical
             bias. Used only if ``lags`` is None.
 
@@ -126,7 +126,7 @@ class MFETSInfoTheory:
                 autocorr.MFETSAutocorr.precompute_detrended_acf(
                     ts=ts,
                     nlags=max_nlags,
-                    unbiased=unbiased))
+                    adjusted=adjusted))
 
             detrended_acfs = precomp_vals["detrended_acfs"]
 

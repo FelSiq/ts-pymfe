@@ -75,7 +75,7 @@ class MFETSModelBased:
     def precompute_model_ets(
             cls,
             ts: np.ndarray,
-            damped: bool = False,
+            damped_trend: bool = False,
             ts_period: t.Optional[int] = None,
             **kwargs
     ) -> t.Dict[str, t.Any]:
@@ -86,7 +86,7 @@ class MFETSModelBased:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        damped : bool, optional (default=False)
+        damped_trend : bool, optional (default=False)
             If True, the exponential smoothing models will be have damping
             effects.
 
@@ -135,7 +135,7 @@ class MFETSModelBased:
             ts_scaled = precomp_vals["ts_scaled"]
 
         if "res_model_des" not in kwargs:
-            model = cls._fit_res_model_des(ts=ts_scaled, damped=damped)
+            model = cls._fit_res_model_des(ts=ts_scaled, damped_trend=damped_trend)
             precomp_vals["res_model_des"] = model
 
         if ts_period is None:
@@ -145,7 +145,7 @@ class MFETSModelBased:
         if "res_model_ets" not in kwargs:
             model = cls._fit_res_model_ets(ts=ts_scaled,
                                            ts_period=ts_period,
-                                           damped=damped)
+                                           damped_trend=damped_trend)
             precomp_vals["res_model_ets"] = model
 
         return precomp_vals
@@ -286,7 +286,7 @@ class MFETSModelBased:
     @staticmethod
     def _fit_res_model_des(
             ts: np.ndarray,
-            damped: bool = False,
+            damped_trend: bool = False,
             ts_scaled: t.Optional[np.ndarray] = None,
     ) -> t.Any:
         """Fit a double exponential smoothing model with additive trend.
@@ -296,7 +296,7 @@ class MFETSModelBased:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        damped : bool, optional (default=False)
+        damped_trend : bool, optional (default=False)
             Whether or not the exponential smoothing model should include a
             damping component.
 
@@ -325,7 +325,7 @@ class MFETSModelBased:
                 category=statsmodels.tools.sm_exceptions.ConvergenceWarning)
 
             model = statsmodels.tsa.holtwinters.ExponentialSmoothing(
-                endog=ts_scaled, trend="additive", damped=damped,
+                endog=ts_scaled, trend="additive", damped_trend=damped_trend,
                 seasonal=None).fit()
 
         return model
@@ -333,7 +333,7 @@ class MFETSModelBased:
     @staticmethod
     def _fit_res_model_ets(
             ts: np.ndarray,
-            damped: bool = False,
+            damped_trend: bool = False,
             grid_search_guess: bool = True,
             ts_period: t.Optional[int] = None,
             ts_scaled: t.Optional[np.ndarray] = None,
@@ -345,7 +345,7 @@ class MFETSModelBased:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        damped : bool, optional (default=False)
+        damped_trend : bool, optional (default=False)
             Whether or not the exponential smoothing model should include a
             damping component.
 
@@ -391,7 +391,7 @@ class MFETSModelBased:
                 endog=ts_scaled,
                 trend="additive",
                 seasonal="additive",
-                damped=damped,
+                damped_trend=damped_trend,
                 seasonal_periods=ts_period).fit(use_brute=grid_search_guess)
 
         return model
@@ -433,7 +433,7 @@ class MFETSModelBased:
     def ft_des_level(
             cls,
             ts: np.ndarray,
-            damped: bool = False,
+            damped_trend: bool = False,
             ts_scaled: t.Optional[np.ndarray] = None,
             res_model_des: t.Optional[
                 t.Any] = None,
@@ -449,7 +449,7 @@ class MFETSModelBased:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        damped : bool, optional (default=False)
+        damped_trend : bool, optional (default=False)
             Whether or not the exponential smoothing model should include a
             damping component.
 
@@ -483,7 +483,7 @@ class MFETSModelBased:
         if res_model_des is None:
             res_model_des = cls._fit_res_model_des(ts=ts,
                                                    ts_scaled=ts_scaled,
-                                                   damped=damped)
+                                                   damped_trend=damped_trend)
 
         param_level = res_model_des.params["smoothing_level"]
 
@@ -493,7 +493,7 @@ class MFETSModelBased:
     def ft_des_slope(
             cls,
             ts: np.ndarray,
-            damped: bool = False,
+            damped_trend: bool = False,
             ts_scaled: t.Optional[np.ndarray] = None,
             res_model_des: t.Optional[
                 t.Any] = None,
@@ -510,7 +510,7 @@ class MFETSModelBased:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        damped : bool, optional (default=False)
+        damped_trend : bool, optional (default=False)
             Whether or not the exponential smoothing model should include a
             damping component.
 
@@ -544,7 +544,7 @@ class MFETSModelBased:
         if res_model_des is None:
             res_model_des = cls._fit_res_model_des(ts=ts,
                                                    ts_scaled=ts_scaled,
-                                                   damped=damped)
+                                                   damped_trend=damped_trend)
 
         param_slope = res_model_des.params["smoothing_slope"]
 
@@ -554,7 +554,7 @@ class MFETSModelBased:
     def ft_ets_level(
             cls,
             ts: np.ndarray,
-            damped: bool = True,
+            damped_trend: bool = True,
             ts_period: t.Optional[int] = None,
             ts_scaled: t.Optional[np.ndarray] = None,
             res_model_ets: t.Optional[
@@ -573,7 +573,7 @@ class MFETSModelBased:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        damped : bool, optional (default=False)
+        damped_trend : bool, optional (default=False)
             Whether or not the exponential smoothing model should include a
             damping component.
 
@@ -614,7 +614,7 @@ class MFETSModelBased:
             res_model_ets = cls._fit_res_model_ets(ts=ts,
                                                    ts_scaled=ts_scaled,
                                                    ts_period=ts_period,
-                                                   damped=damped)
+                                                   damped_trend=damped_trend)
 
         param_level = res_model_ets.params["smoothing_level"]
 
@@ -624,7 +624,7 @@ class MFETSModelBased:
     def ft_ets_slope(
             cls,
             ts: np.ndarray,
-            damped: bool = True,
+            damped_trend: bool = True,
             ts_period: t.Optional[int] = None,
             ts_scaled: t.Optional[np.ndarray] = None,
             res_model_ets: t.Optional[
@@ -644,7 +644,7 @@ class MFETSModelBased:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        damped : bool, optional (default=False)
+        damped_trend : bool, optional (default=False)
             Whether or not the exponential smoothing model should include a
             damping component.
 
@@ -685,7 +685,7 @@ class MFETSModelBased:
             res_model_ets = cls._fit_res_model_ets(ts=ts,
                                                    ts_scaled=ts_scaled,
                                                    ts_period=ts_period,
-                                                   damped=damped)
+                                                   damped_trend=damped_trend)
 
         param_slope = res_model_ets.params["smoothing_slope"]
 
@@ -695,7 +695,7 @@ class MFETSModelBased:
     def ft_ets_season(
             cls,
             ts: np.ndarray,
-            damped: bool = True,
+            damped_trend: bool = True,
             ts_period: t.Optional[int] = None,
             ts_scaled: t.Optional[np.ndarray] = None,
             res_model_ets: t.Optional[
@@ -714,7 +714,7 @@ class MFETSModelBased:
         ts : :obj:`np.ndarray`
             One-dimensional time-series values.
 
-        damped : bool, optional (default=False)
+        damped_trend : bool, optional (default=False)
             Whether or not the exponential smoothing model should include a
             damping component.
 
@@ -755,7 +755,7 @@ class MFETSModelBased:
             res_model_ets = cls._fit_res_model_ets(ts=ts,
                                                    ts_scaled=ts_scaled,
                                                    ts_period=ts_period,
-                                                   damped=damped)
+                                                   damped_trend=damped_trend)
 
         param_season = res_model_ets.params["smoothing_seasonal"]
 

@@ -271,7 +271,7 @@ class MFETSLandmarking:
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
             num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
-            unbiased: bool = True,
+            adjusted: bool = True,
             max_nlags: t.Optional[int] = None,
             **kwargs) -> np.ndarray:
         """First non-positive autocorrelation lag of cross-validation erros.
@@ -295,7 +295,7 @@ class MFETSLandmarking:
             Must be a value in (0, 1] range. Only the most recent time-series
             observations (in the highest indices of ``ts``) are used.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -314,7 +314,7 @@ class MFETSLandmarking:
         def score(ts_pred: np.ndarray, ts_test: np.ndarray) -> float:
             """Score function: autocorrelation of the errors."""
             return autocorr.MFETSAutocorr.ft_acf_first_nonpos(
-                ts=ts_pred - ts_test, unbiased=unbiased, max_nlags=max_nlags)
+                ts=ts_pred - ts_test, adjusted=adjusted, max_nlags=max_nlags)
 
         model_acf_first_nonpos = perf_ft_method(ts=ts,
                                                 tskf=tskf,
@@ -2109,7 +2109,7 @@ class MFETSLandmarking:
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
             num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
-            unbiased: bool = True,
+            adjusted: bool = True,
             max_nlags: t.Optional[int] = None,
     ) -> np.ndarray:
         """First non-positive autocorrelation lags for Mean model errors.
@@ -2137,7 +2137,7 @@ class MFETSLandmarking:
             Must be a value in (0, 1] range. Only the most recent time-series
             observations (in the highest indices of ``ts``) are used.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -2170,7 +2170,7 @@ class MFETSLandmarking:
             tskf=tskf,
             num_cv_folds=num_cv_folds,
             lm_sample_frac=lm_sample_frac,
-            unbiased=unbiased,
+            adjusted=adjusted,
             max_nlags=max_nlags)
 
         return acf_first_nonpos_mean
@@ -2182,7 +2182,7 @@ class MFETSLandmarking:
             tskf: t.Optional[sklearn.model_selection.TimeSeriesSplit] = None,
             num_cv_folds: int = 5,
             lm_sample_frac: float = 1.0,
-            unbiased: bool = True,
+            adjusted: bool = True,
             max_nlags: t.Optional[int] = None,
     ) -> np.ndarray:
         """First non-positive autocorrelation lags for Linear model errors.
@@ -2213,7 +2213,7 @@ class MFETSLandmarking:
             Must be a value in (0, 1] range. Only the most recent time-series
             observations (in the highest indices of ``ts``) are used.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -2246,7 +2246,7 @@ class MFETSLandmarking:
             tskf=tskf,
             num_cv_folds=num_cv_folds,
             lm_sample_frac=lm_sample_frac,
-            unbiased=unbiased,
+            adjusted=adjusted,
             max_nlags=max_nlags)
 
         return acf_first_nonpos_linear

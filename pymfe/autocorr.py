@@ -22,7 +22,7 @@ class MFETSAutocorr:
     def precompute_detrended_acf(cls,
                                  ts: np.ndarray,
                                  nlags: t.Optional[int] = None,
-                                 unbiased: bool = True,
+                                 adjusted: bool = True,
                                  **kwargs) -> t.Dict[str, np.ndarray]:
         """Precompute the detrended autocorrelation function.
 
@@ -34,7 +34,7 @@ class MFETSAutocorr:
         nlags : int, optional
             Number of lags to calculate the autocorrelation function.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -53,7 +53,7 @@ class MFETSAutocorr:
 
         if "detrended_acfs" not in kwargs:
             precomp_vals["detrended_acfs"] = cls.ft_acf_detrended(
-                ts=ts, nlags=nlags, unbiased=unbiased)
+                ts=ts, nlags=nlags, adjusted=adjusted)
 
         return precomp_vals
 
@@ -122,7 +122,7 @@ class MFETSAutocorr:
     def _calc_acf(cls,
                   ts: np.ndarray,
                   nlags: t.Optional[int] = None,
-                  unbiased: bool = True,
+                  adjusted: bool = True,
                   detrend: bool = True,
                   detrended_acfs: t.Optional[np.ndarray] = None,
                   ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
@@ -136,7 +136,7 @@ class MFETSAutocorr:
         nlags : int, optional
             Number of lags to calculate the autocorrelation function.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -178,7 +178,7 @@ class MFETSAutocorr:
 
         acf = statsmodels.tsa.stattools.acf(ts_detrended,
                                             nlags=nlags,
-                                            unbiased=unbiased,
+                                            adjusted=adjusted,
                                             fft=True)
         return acf[1:]
 
@@ -186,7 +186,7 @@ class MFETSAutocorr:
     def _calc_pacf(cls,
                    ts: np.ndarray,
                    nlags: t.Optional[int] = None,
-                   method: str = "ols-unbiased",
+                   method: str = "ols-adjusted",
                    detrend: bool = True,
                    ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
         """Precompute the partial autocorrelation function.
@@ -199,7 +199,7 @@ class MFETSAutocorr:
         nlags : int, optional
             Number of lags to calculate the partial autocorrelation function.
 
-        method : str, optional (default="ols-unbiased")
+        method : str, optional (default="ols-adjusted")
             Method used to estimate the partial autocorrelations. Check the
             `statsmodels.tsa.stattools.pacf` documentation for the complete
             list of the available methods.
@@ -246,7 +246,7 @@ class MFETSAutocorr:
             threshold: float,
             abs_acf_vals: bool = False,
             max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
+            adjusted: bool = True,
             detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> t.Union[int, float]:
         """First autocorrelation lag below a given threshold.
@@ -266,7 +266,7 @@ class MFETSAutocorr:
         max_nlags : int, optional
             Number of lags to avaluate the autocorrelation function.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -283,7 +283,7 @@ class MFETSAutocorr:
         """
         detrended_acfs = cls._calc_acf(ts=ts,
                                        nlags=max_nlags,
-                                       unbiased=unbiased,
+                                       adjusted=adjusted,
                                        detrended_acfs=detrended_acfs)
 
         if abs_acf_vals:
@@ -303,7 +303,7 @@ class MFETSAutocorr:
     def ft_acf(cls,
                ts: np.ndarray,
                nlags: t.Optional[int] = None,
-               unbiased: bool = True) -> np.ndarray:
+               adjusted: bool = True) -> np.ndarray:
         """Autocorrelation function of the time-series.
 
         Parameters
@@ -314,7 +314,7 @@ class MFETSAutocorr:
         nlags : int, optional
             Number of lags to calculate the autocorrelation function.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -325,7 +325,7 @@ class MFETSAutocorr:
         """
         return cls._calc_acf(ts=ts,
                              nlags=nlags,
-                             unbiased=unbiased,
+                             adjusted=adjusted,
                              detrend=False)
 
     @classmethod
@@ -333,7 +333,7 @@ class MFETSAutocorr:
             cls,
             ts: np.ndarray,
             nlags: t.Optional[int] = None,
-            unbiased: bool = True,
+            adjusted: bool = True,
             ts_detrended: t.Optional[np.ndarray] = None,
             detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
         """Autocorrelation function of the detrended time-series.
@@ -346,7 +346,7 @@ class MFETSAutocorr:
         nlags : int, optional
             Number of lags to calculate the autocorrelation function.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -366,7 +366,7 @@ class MFETSAutocorr:
         """
         return cls._calc_acf(ts=ts,
                              nlags=nlags,
-                             unbiased=unbiased,
+                             adjusted=adjusted,
                              detrend=True,
                              detrended_acfs=detrended_acfs,
                              ts_detrended=ts_detrended)
@@ -378,7 +378,7 @@ class MFETSAutocorr:
                     nlags: t.Optional[int] = None,
                     detrend: bool = True,
                     ts_detrended: t.Optional[np.ndarray] = None,
-                    unbiased: bool = True) -> np.ndarray:
+                    adjusted: bool = True) -> np.ndarray:
         """Autocorrelation function of the differenced time-series.
 
         Parameters
@@ -402,7 +402,7 @@ class MFETSAutocorr:
             time-series is detrended within this method using Friedman's Super
             Smoother.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -415,14 +415,14 @@ class MFETSAutocorr:
         return cls._calc_acf(ts=np.diff(ts, n=num_diff),
                              detrend=detrend,
                              nlags=nlags,
-                             unbiased=unbiased,
+                             adjusted=adjusted,
                              ts_detrended=ts_detrended)
 
     @classmethod
     def ft_pacf(cls,
                 ts: np.ndarray,
                 nlags: t.Optional[int] = None,
-                method: str = "ols-unbiased") -> np.ndarray:
+                method: str = "ols-adjusted") -> np.ndarray:
         """Partial autocorrelation function of the time-series.
 
         Parameters
@@ -433,7 +433,7 @@ class MFETSAutocorr:
         nlags : int, optional
             Number of lags to calculate the partial autocorrelation function.
 
-        method : str, optional (default="ols-unbiased")
+        method : str, optional (default="ols-adjusted")
             Method used to estimate the partial autocorrelations. Check the
             `statsmodels.tsa.stattools.pacf` documentation for the complete
             list of the available methods.
@@ -450,7 +450,7 @@ class MFETSAutocorr:
             cls,
             ts: np.ndarray,
             nlags: t.Optional[int] = None,
-            method: str = "ols-unbiased",
+            method: str = "ols-adjusted",
             ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
         """Partial autocorrelation function of the detrended time-series.
 
@@ -462,7 +462,7 @@ class MFETSAutocorr:
         nlags : int, optional
             Number of lags to calculate the partial autocorrelation function.
 
-        method : str, optional (default="ols-unbiased")
+        method : str, optional (default="ols-adjusted")
             Method used to estimate the partial autocorrelations. Check the
             `statsmodels.tsa.stattools.pacf` documentation for the complete
             list of the available methods.
@@ -489,7 +489,7 @@ class MFETSAutocorr:
             ts: np.ndarray,
             num_diff: int = 1,
             nlags: t.Optional[int] = None,
-            method: str = "ols-unbiased",
+            method: str = "ols-adjusted",
             detrend: bool = True,
             ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
         """Partial autocorrelation function of the differenced time-series.
@@ -502,7 +502,7 @@ class MFETSAutocorr:
         nlags : int, optional
             Number of lags to calculate the partial autocorrelation function.
 
-        method : str, optional (default="ols-unbiased")
+        method : str, optional (default="ols-adjusted")
             Method used to estimate the partial autocorrelations. Check the
             `statsmodels.tsa.stattools.pacf` documentation for the complete
             list of the available methods.
@@ -535,7 +535,7 @@ class MFETSAutocorr:
             cls,
             ts: np.ndarray,
             max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
+            adjusted: bool = True,
             threshold: t.Optional[t.Union[int, float]] = None,
             detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> t.Union[int, float]:
@@ -553,7 +553,7 @@ class MFETSAutocorr:
         max_nlags : int, optional
             Number of lags to avaluate the autocorrelation function.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -582,7 +582,7 @@ class MFETSAutocorr:
                                              threshold=threshold,
                                              abs_acf_vals=True,
                                              max_nlags=max_nlags,
-                                             unbiased=unbiased,
+                                             adjusted=adjusted,
                                              detrended_acfs=detrended_acfs)
         return res
 
@@ -591,7 +591,7 @@ class MFETSAutocorr:
             cls,
             ts: np.ndarray,
             max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
+            adjusted: bool = True,
             detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> t.Union[int, float]:
         """First non-positive detrended autocorrelation lag.
@@ -604,7 +604,7 @@ class MFETSAutocorr:
         max_nlags : int, optional
             Number of lags to avaluate the autocorrelation function.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -622,7 +622,7 @@ class MFETSAutocorr:
                                              threshold=0,
                                              abs_acf_vals=False,
                                              max_nlags=max_nlags,
-                                             unbiased=unbiased,
+                                             adjusted=adjusted,
                                              detrended_acfs=detrended_acfs)
         return res
 
@@ -631,7 +631,7 @@ class MFETSAutocorr:
             cls,
             ts: np.ndarray,
             max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
+            adjusted: bool = True,
             detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> t.Union[int, float]:
         """First local minima detrended autocorrelation lag.
@@ -644,7 +644,7 @@ class MFETSAutocorr:
         max_nlags : int, optional
             Number of lags to avaluate the autocorrelation function.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -660,7 +660,7 @@ class MFETSAutocorr:
         """
         detrended_acfs = cls._calc_acf(ts=ts,
                                        nlags=max_nlags,
-                                       unbiased=unbiased,
+                                       adjusted=adjusted,
                                        detrended_acfs=detrended_acfs)
 
         acfs_locmin = np.flatnonzero(
@@ -964,7 +964,7 @@ class MFETSAutocorr:
             crit_point_type: str = "non-plateau",
             return_lags: bool = True,
             max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
+            adjusted: bool = True,
             detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
         """Lags corresponding to minima or maxima of autocorrelation function.
 
@@ -986,7 +986,7 @@ class MFETSAutocorr:
         max_nlags : int, optional
             Number of lags to avaluate the autocorrelation function.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -1016,7 +1016,7 @@ class MFETSAutocorr:
         """
         detrended_acfs = cls._calc_acf(ts=ts,
                                        nlags=max_nlags,
-                                       unbiased=unbiased,
+                                       adjusted=adjusted,
                                        detrended_acfs=detrended_acfs)
 
         ac_shape = _utils.find_crit_pt(arr=detrended_acfs,
@@ -1036,7 +1036,7 @@ class MFETSAutocorr:
             cls,
             ts: np.ndarray,
             nlags: int = 8,
-            unbiased: bool = True,
+            adjusted: bool = True,
             random_state: t.Optional[int] = None,
             ts_scaled: t.Optional[np.ndarray] = None,
             gaussian_resid: t.Optional[np.ndarray] = None,
@@ -1053,7 +1053,7 @@ class MFETSAutocorr:
         nlags : int, optional (default=8)
             Number of lags evaluated in the autocorrelation function.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -1100,7 +1100,7 @@ class MFETSAutocorr:
 
         gaussian_resid_acf = cls._calc_acf(ts=gaussian_resid,
                                            nlags=nlags,
-                                           unbiased=unbiased)
+                                           adjusted=adjusted)
 
         return gaussian_resid_acf
 
@@ -1186,7 +1186,7 @@ class MFETSAutocorr:
             ts: np.ndarray,
             p: float = 0.8,
             max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
+            adjusted: bool = True,
             detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
         """Distance between the autocorrelation with and without outliers.
 
@@ -1208,7 +1208,7 @@ class MFETSAutocorr:
         max_nlags : int, optional
             Number of lags to avaluate the autocorrelation function.
 
-        unbiased : bool, optional (default=True)
+        adjusted : bool, optional (default=True)
             If True, the autocorrelation function is corrected for statistical
             bias.
 
@@ -1235,7 +1235,7 @@ class MFETSAutocorr:
         """
         detrended_acfs = cls._calc_acf(ts=ts,
                                        nlags=max_nlags,
-                                       unbiased=unbiased,
+                                       adjusted=adjusted,
                                        detrended_acfs=detrended_acfs)
 
         ts_abs = np.abs(ts)
@@ -1243,7 +1243,7 @@ class MFETSAutocorr:
 
         ts_inliners_acfs = cls._calc_acf(ts=ts_inliners,
                                          nlags=max_nlags,
-                                         unbiased=unbiased)
+                                         adjusted=adjusted)
 
         dist_acfs = np.abs(detrended_acfs[:ts_inliners_acfs.size] -
                            ts_inliners_acfs)

@@ -274,7 +274,7 @@ class MFETSGlobalStats:
     def ft_skewness_residuals(cls,
                               ts_residuals: np.ndarray,
                               method: int = 3,
-                              unbiased: bool = False) -> float:
+                              adjusted: bool = False) -> float:
         """Compute the skewness of the time-series residuals.
 
         Parameters
@@ -305,7 +305,7 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         Returns
@@ -321,7 +321,7 @@ class MFETSGlobalStats:
         """
         ts_skew = _summary.sum_skewness(values=ts_residuals,
                                         method=method,
-                                        bias=not unbiased)
+                                        bias=not adjusted)
 
         return float(ts_skew)
 
@@ -330,7 +330,7 @@ class MFETSGlobalStats:
                          ts: np.ndarray,
                          num_diff: int = 1,
                          method: int = 3,
-                         unbiased: bool = False) -> float:
+                         adjusted: bool = False) -> float:
         """Skewness of the nth-order differenced time-series.
 
         This method calculates the skewness of the nth-order differenced
@@ -367,7 +367,7 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         Returns
@@ -384,7 +384,7 @@ class MFETSGlobalStats:
         ts_diff = np.diff(ts, n=num_diff)
         ts_skew = _summary.sum_skewness(values=ts_diff,
                                         method=method,
-                                        bias=not unbiased)
+                                        bias=not adjusted)
 
         return float(ts_skew)
 
@@ -392,7 +392,7 @@ class MFETSGlobalStats:
     def ft_skewness_sdiff(cls,
                           ts: np.ndarray,
                           method: int = 3,
-                          unbiased: bool = False,
+                          adjusted: bool = False,
                           ts_period: t.Optional[int] = None) -> float:
         """Seasonal skewness of the first-order differenced time-series.
 
@@ -429,7 +429,7 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         ts_period : int, optional
@@ -445,7 +445,7 @@ class MFETSGlobalStats:
         ts_sdiff = ts[_ts_period:] - ts[:-_ts_period]
         ts_skew = _summary.sum_skewness(values=ts_sdiff,
                                         method=method,
-                                        bias=not unbiased)
+                                        bias=not adjusted)
 
         return float(ts_skew)
 
@@ -453,7 +453,7 @@ class MFETSGlobalStats:
     def ft_kurtosis_residuals(cls,
                               ts_residuals: np.ndarray,
                               method: int = 3,
-                              unbiased: bool = False) -> float:
+                              adjusted: bool = False) -> float:
         """Compute the kurtosis of the time-series residuals.
 
         Parameters
@@ -486,7 +486,7 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due
             to division by zero, then the first method is used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         Returns
@@ -502,7 +502,7 @@ class MFETSGlobalStats:
         """
         ts_kurt = _summary.sum_kurtosis(values=ts_residuals,
                                         method=method,
-                                        bias=not unbiased)
+                                        bias=not adjusted)
 
         return float(ts_kurt)
 
@@ -511,7 +511,7 @@ class MFETSGlobalStats:
                          ts: np.ndarray,
                          num_diff: int = 1,
                          method: int = 3,
-                         unbiased: bool = False) -> float:
+                         adjusted: bool = False) -> float:
         """Kurtosis of the nth-order differenced time-series.
 
         This method calculates the kurtosis of the nth-order differenced
@@ -550,7 +550,7 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due
             to division by zero, then the first method is used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         Returns
@@ -561,7 +561,7 @@ class MFETSGlobalStats:
         ts_diff = np.diff(ts, n=num_diff)
         ts_kurt = _summary.sum_kurtosis(values=ts_diff,
                                         method=method,
-                                        bias=not unbiased)
+                                        bias=not adjusted)
 
         return float(ts_kurt)
 
@@ -569,7 +569,7 @@ class MFETSGlobalStats:
     def ft_kurtosis_sdiff(cls,
                           ts: np.ndarray,
                           method: int = 3,
-                          unbiased: bool = False,
+                          adjusted: bool = False,
                           ts_period: t.Optional[int] = None) -> float:
         """Seasonal kurtosis of the first-order differenced time-series.
 
@@ -608,7 +608,7 @@ class MFETSGlobalStats:
             Note that if the selected method is unable to be calculated due
             to division by zero, then the first method is used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         ts_period : int, optional
@@ -624,7 +624,7 @@ class MFETSGlobalStats:
         ts_sdiff = ts[_ts_period:] - ts[:-_ts_period]
         ts_kurt = _summary.sum_kurtosis(values=ts_sdiff,
                                         method=method,
-                                        bias=not unbiased)
+                                        bias=not adjusted)
 
         return float(ts_kurt)
 

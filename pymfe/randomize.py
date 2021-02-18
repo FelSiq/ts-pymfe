@@ -632,7 +632,7 @@ class MFETSRandomize:
             num_samples: int = 128,
             sample_size_frac: float = 0.2,
             max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
+            adjusted: bool = True,
             random_state: t.Optional[int] = None) -> np.ndarray:
         """First non-positive autocorrelation lag using repeated subsampling.
 
@@ -672,7 +672,7 @@ class MFETSRandomize:
             sample_size_frac=sample_size_frac,
             random_state=random_state,
             max_nlags=max_nlags,
-            unbiased=unbiased)
+            adjusted=adjusted)
 
         return sample_acf_nonpos
 
@@ -683,7 +683,7 @@ class MFETSRandomize:
             num_samples: int = 128,
             sample_size_frac: float = 0.2,
             max_nlags: t.Optional[int] = None,
-            unbiased: bool = True,
+            adjusted: bool = True,
             random_state: t.Optional[int] = None) -> np.ndarray:
         """First local minima autocorrelation lag using repeated subsampling.
 
@@ -723,7 +723,7 @@ class MFETSRandomize:
             sample_size_frac=sample_size_frac,
             random_state=random_state,
             max_nlags=max_nlags,
-            unbiased=unbiased)
+            adjusted=adjusted)
 
         return sample_acf_locmin
 

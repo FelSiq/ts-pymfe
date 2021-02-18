@@ -37,7 +37,7 @@ def get_ts_period(ts: np.ndarray,
     autocorr = statsmodels.tsa.stattools.acf(ts_detrended,
                                              nlags=ts_detrended.size // 2,
                                              fft=True,
-                                             unbiased=True)[1:]
+                                             adjusted=True)[1:]
 
     period = np.argmax(np.abs(autocorr)) + 1
 

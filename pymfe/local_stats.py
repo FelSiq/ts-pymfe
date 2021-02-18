@@ -656,7 +656,7 @@ class MFETSLocalStats:
             ts: np.ndarray,
             window_size: t.Union[int, float] = 0.1,
             method: int = 3,
-            unbiased: bool = False,
+            adjusted: bool = False,
             remove_nan: bool = True,
             ts_scaled: t.Optional[np.ndarray] = None,
             ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
@@ -697,7 +697,7 @@ class MFETSLocalStats:
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         remove_nan : bool, optional (default=True)
@@ -724,7 +724,7 @@ class MFETSLocalStats:
 
         rolling_stat = ts_rol_win.apply(
             _summary.sum_skewness,
-            kwargs=dict(method=method, bias=~unbiased))
+            kwargs=dict(method=method, bias=~adjusted))
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
@@ -734,7 +734,7 @@ class MFETSLocalStats:
             ts: np.ndarray,
             window_size: t.Union[int, float] = 0.1,
             method: int = 3,
-            unbiased: bool = False,
+            adjusted: bool = False,
             diff_order: int = 1,
             diff_lag: int = 1,
             abs_value: bool = True,
@@ -778,7 +778,7 @@ class MFETSLocalStats:
             Note that if the selected method is unable to be calculated due to
             division by zero, then the first method will be used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         diff_order : int, optional (default=1)
@@ -821,7 +821,7 @@ class MFETSLocalStats:
             ts_scaled=ts_scaled,
             ts_rol_win=ts_rol_win,
             method=method,
-            unbiased=unbiased)
+            adjusted=adjusted)
 
         return rolling_stat_shift
 
@@ -831,7 +831,7 @@ class MFETSLocalStats:
             ts: np.ndarray,
             window_size: t.Union[int, float] = 0.1,
             method: int = 3,
-            unbiased: bool = False,
+            adjusted: bool = False,
             remove_nan: bool = True,
             ts_scaled: t.Optional[np.ndarray] = None,
             ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
@@ -874,7 +874,7 @@ class MFETSLocalStats:
             Note that if the selected method is unable to be calculated due
             to division by zero, then the first method is used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         remove_nan : bool, optional (default=True)
@@ -901,7 +901,7 @@ class MFETSLocalStats:
 
         rolling_stat = ts_rol_win.apply(
             _summary.sum_kurtosis,
-            kwargs=dict(method=method, bias=~unbiased))
+            kwargs=dict(method=method, bias=~adjusted))
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
@@ -911,7 +911,7 @@ class MFETSLocalStats:
             ts: np.ndarray,
             window_size: t.Union[int, float] = 0.1,
             method: int = 3,
-            unbiased: bool = False,
+            adjusted: bool = False,
             diff_order: int = 1,
             diff_lag: int = 1,
             abs_value: bool = True,
@@ -957,7 +957,7 @@ class MFETSLocalStats:
             Note that if the selected method is unable to be calculated due
             to division by zero, then the first method is used instead.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         diff_order : int, optional (default=1)
@@ -1000,7 +1000,7 @@ class MFETSLocalStats:
             ts_scaled=ts_scaled,
             ts_rol_win=ts_rol_win,
             method=method,
-            unbiased=unbiased)
+            adjusted=adjusted)
 
         return rolling_stat_shift
 
@@ -1009,7 +1009,7 @@ class MFETSLocalStats:
             cls,
             ts: np.ndarray,
             window_size: t.Union[int, float] = 0.1,
-            unbiased: bool = True,
+            adjusted: bool = True,
             remove_nan: bool = True,
             ts_scaled: t.Optional[np.ndarray] = None,
             ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
@@ -1027,7 +1027,7 @@ class MFETSLocalStats:
             If 0 < float < 1, this argument defines the fraction of the
             time-series length used as the window size.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         remove_nan : bool, optional (default=True)
@@ -1055,7 +1055,7 @@ class MFETSLocalStats:
 
         rolling_stat = ts_rol_win.apply(autocorr.MFETSAutocorr.ft_acf,
                                         kwargs=dict(nlags=1,
-                                                    unbiased=unbiased))
+                                                    adjusted=adjusted))
 
         return cls._rol_stat_postprocess(rolling_stat, remove_nan=remove_nan)
 
@@ -1064,7 +1064,7 @@ class MFETSLocalStats:
             cls,
             ts: np.ndarray,
             window_size: t.Union[int, float] = 0.1,
-            unbiased: bool = True,
+            adjusted: bool = True,
             diff_order: int = 1,
             diff_lag: int = 1,
             abs_value: bool = True,
@@ -1085,7 +1085,7 @@ class MFETSLocalStats:
             If 0 < float < 1, this argument defines the fraction of the
             time-series length used as the window size.
 
-        unbiased : bool, optional
+        adjusted : bool, optional
             If True, then the calculations are corrected for statistical bias.
 
         diff_order : int, optional (default=1)
@@ -1127,7 +1127,7 @@ class MFETSLocalStats:
             remove_nan=remove_nan,
             ts_scaled=ts_scaled,
             ts_rol_win=ts_rol_win,
-            unbiased=unbiased)
+            adjusted=adjusted)
 
         return rolling_stat_shift
 
