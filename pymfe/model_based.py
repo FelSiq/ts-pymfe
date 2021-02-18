@@ -911,9 +911,7 @@ class MFETSModelBased:
             Australia. OTexts.com/fpp2. Accessed on May 23 2020.
             URL to this fomula: https://otexts.com/fpp2/non-seasonal-arima.html
         """
-        model_res = statsmodels.tsa.arima.model.ARIMA(ts, order=(2, 0, 0)).fit(
-            disp=-1, full_output=False
-        )
+        model_res = statsmodels.tsa.arima.model.ARIMA(ts, order=(2, 0, 0)).fit()
         theta_a, theta_b = model_res.arparams
 
         has_cycle = theta_a ** 2 + 4 * theta_b < 0
