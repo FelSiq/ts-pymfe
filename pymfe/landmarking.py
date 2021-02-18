@@ -1962,11 +1962,16 @@ class MFETSLandmarking:
             principles and practice, 2nd edition, OTexts: Melbourne,
             Australia. OTexts.com/fpp2. Accessed on 26 May 2020.
         """
+        args_inst = {
+            "initialization_method": "estimated",
+        }
+
         model_callable = statsmodels.tsa.holtwinters.SimpleExpSmoothing
 
         res = cls._standard_pipeline_statsmodels(
             ts=ts,
             model_callable=model_callable,
+            args_inst=args_inst,
             score=score,
             tskf=tskf,
             num_cv_folds=num_cv_folds,
@@ -2050,6 +2055,7 @@ class MFETSLandmarking:
             "trend": "add",
             "seasonal": "add",
             "damped_trend": True,
+            "initialization_method": "estimated",
         }
 
         args_fit = {
@@ -2144,6 +2150,7 @@ class MFETSLandmarking:
             "trend": "add",
             "seasonal": "mul",
             "damped_trend": True,
+            "initialization_method": "estimated",
         }
 
         args_fit = {

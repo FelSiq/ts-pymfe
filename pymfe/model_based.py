@@ -335,6 +335,7 @@ class MFETSModelBased:
 
             model = statsmodels.tsa.holtwinters.ExponentialSmoothing(
                 endog=ts_scaled,
+                initialization_method="estimated",
                 trend="additive",
                 damped_trend=damped_trend,
                 seasonal=None,
@@ -402,6 +403,7 @@ class MFETSModelBased:
 
             model = statsmodels.tsa.holtwinters.ExponentialSmoothing(
                 endog=ts_scaled,
+                initialization_method="estimated",
                 trend="additive",
                 seasonal="additive",
                 damped_trend=damped_trend,
