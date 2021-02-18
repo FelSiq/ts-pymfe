@@ -1,7 +1,7 @@
 nolds
 numpy
 pymfe
-statsmodels
+statsmodels>=0.12.2
 scipy
 scikit-learn
 matplotlib
