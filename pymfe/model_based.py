@@ -296,7 +296,7 @@ class MFETSModelBased:
         ts: np.ndarray,
         damped_trend: bool = False,
         ts_scaled: t.Optional[np.ndarray] = None,
-    ) -> t.Any:
+    ) -> statsmodels.tsa.holtwinters.results.HoltWintersResultsWrapper:
         """Fit a double exponential smoothing model with additive trend.
 
         Parameters
@@ -314,7 +314,7 @@ class MFETSModelBased:
 
         Returns
         -------
-        :obj:`t.Any`
+        :obj:`statsmodels.tsa.holtwinters.results.HoltWintersResultsWrapper`
             Results of a optimized double exponential smoothing model.
 
         References
@@ -350,7 +350,7 @@ class MFETSModelBased:
         grid_search_guess: bool = True,
         ts_period: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
-    ) -> t.Any:
+    ) -> statsmodels.tsa.holtwinters.results.HoltWintersResultsWrapper:
         """Fit a triple exponential smoothing model with additive components.
 
         Parameters
@@ -377,7 +377,7 @@ class MFETSModelBased:
 
         Returns
         -------
-        :obj:`t.Any`
+        :obj:`statsmodels.tsa.holtwinters.results.HoltWintersResultsWrapper`
             Results of a optimized triple exponential smoothing model.
 
         References
@@ -453,7 +453,9 @@ class MFETSModelBased:
         ts: np.ndarray,
         damped_trend: bool = False,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_des: t.Optional[t.Any] = None,
+        res_model_des: t.Optional[
+            statsmodels.tsa.holtwinters.results.HoltWintersResultsWrapper
+        ] = None,
     ) -> float:
         """Double exponential smoothing model (additive trend) level parameter.
 
@@ -512,7 +514,9 @@ class MFETSModelBased:
         ts: np.ndarray,
         damped_trend: bool = False,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_des: t.Optional[t.Any] = None,
+        res_model_des: t.Optional[
+            statsmodels.tsa.holtwinters.results.HoltWintersResultsWrapper
+        ] = None,
     ) -> float:
         """Double exponential smoothing model (additive trend) trend parameter.
 
@@ -573,7 +577,9 @@ class MFETSModelBased:
         damped_trend: bool = True,
         ts_period: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_ets: t.Optional[t.Any] = None,
+        res_model_ets: t.Optional[
+            statsmodels.tsa.holtwinters.results.HoltWintersResultsWrapper
+        ] = None,
     ) -> float:
         """ETS (additive components) model level parameter.
 
@@ -644,7 +650,9 @@ class MFETSModelBased:
         damped_trend: bool = True,
         ts_period: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_ets: t.Optional[t.Any] = None,
+        res_model_ets: t.Optional[
+            statsmodels.tsa.holtwinters.results.HoltWintersResultsWrapper
+        ] = None,
     ) -> float:
         """ETS (additive components) model trend parameter.
 
@@ -716,7 +724,9 @@ class MFETSModelBased:
         damped_trend: bool = True,
         ts_period: t.Optional[int] = None,
         ts_scaled: t.Optional[np.ndarray] = None,
-        res_model_ets: t.Optional[t.Any] = None,
+        res_model_ets: t.Optional[
+            statsmodels.tsa.holtwinters.results.HoltWintersResultsWrapper
+        ] = None,
     ) -> float:
         """ETS (additive components) model seasonal parameter.
 
@@ -913,7 +923,9 @@ class MFETSModelBased:
             Australia. OTexts.com/fpp2. Accessed on May 23 2020.
             URL to this fomula: https://otexts.com/fpp2/non-seasonal-arima.html
         """
-        model_res = statsmodels.tsa.arima.model.ARIMA(ts, order=(2, 0, 0)).fit()
+        model_res = statsmodels.tsa.arima.model.ARIMA(
+            ts, order=(2, 0, 0)
+        ).fit()
         theta_a, theta_b = model_res.arparams
 
         has_cycle = theta_a ** 2 + 4 * theta_b < 0
