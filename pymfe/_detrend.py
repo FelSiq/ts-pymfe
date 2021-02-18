@@ -16,8 +16,9 @@ except ImportError:
     pass
 
 
-def _decompose_ssmoother(ts: t.Union[np.ndarray, pd.core.series.Series],
-                         plot: bool = False) -> t.Tuple[np.ndarray, ...]:
+def _decompose_ssmoother(
+    ts: t.Union[np.ndarray, pd.core.series.Series], plot: bool = False
+) -> t.Tuple[np.ndarray, ...]:
     """Time-series decomposition using Friedman's Super Smoother.
 
     The seasonal component returned is an array full of zeros with the same
@@ -72,9 +73,11 @@ def _decompose_ssmoother(ts: t.Union[np.ndarray, pd.core.series.Series],
     return comp_trend, comp_season, comp_resid
 
 
-def _decompose_stl(ts: t.Union[np.ndarray, pd.core.series.Series],
-                   ts_period: t.Optional[int] = None,
-                   plot: bool = False) -> t.Tuple[np.ndarray, ...]:
+def _decompose_stl(
+    ts: t.Union[np.ndarray, pd.core.series.Series],
+    ts_period: t.Optional[int] = None,
+    plot: bool = False,
+) -> t.Tuple[np.ndarray, ...]:
     """Decompose a time-series in STL decomposition.
 
     STL stands for `Seasonal-Trend Decomposition Procedure Based on Loess`.
@@ -111,9 +114,11 @@ def _decompose_stl(ts: t.Union[np.ndarray, pd.core.series.Series],
     return components.trend, components.seasonal, components.resid
 
 
-def decompose(ts: t.Union[np.ndarray, pd.core.series.Series],
-              ts_period: t.Optional[int] = None,
-              plot: bool = False) -> t.Tuple[np.ndarray, ...]:
+def decompose(
+    ts: t.Union[np.ndarray, pd.core.series.Series],
+    ts_period: t.Optional[int] = None,
+    plot: bool = False,
+) -> t.Tuple[np.ndarray, ...]:
     """Decompose a time-series into separated additive components.
 
     If the time-series is seasonal (period > 1), then it is used the STL

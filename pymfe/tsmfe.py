@@ -11,8 +11,9 @@ import pymfe._internal as _internal
 import pymfe._period as _period
 import pymfe._detrend as _detrend
 
-_TypeSeqExt = t.Sequence[t.Tuple[str, t.Callable, t.Tuple[str, ...],
-                                 t.Tuple[str, ...]]]
+_TypeSeqExt = t.Sequence[
+    t.Tuple[str, t.Callable, t.Tuple[str, ...], t.Tuple[str, ...]]
+]
 """Type annotation for a sequence of TypeExtMtdTuple objects."""
 
 
@@ -37,19 +38,22 @@ class TSMFE:
             Tuple object which contains summary functions names for features
             summarization.
     """
-    groups_alias = [('default', _internal.DEFAULT_GROUP)]
 
-    def __init__(self,
-                 groups: t.Union[str, t.Iterable[str]] = "default",
-                 features: t.Union[str, t.Iterable[str]] = "all",
-                 summary: t.Union[str, t.Iterable[str]] = ("mean", "sd"),
-                 measure_time: t.Optional[str] = None,
-                 wildcard: str = "all",
-                 score: str = "rmse",
-                 num_cv_folds: int = 5,
-                 lm_sample_frac: float = 1.0,
-                 suppress_warnings: bool = False,
-                 random_state: t.Optional[int] = None) -> None:
+    groups_alias = [("default", _internal.DEFAULT_GROUP)]
+
+    def __init__(
+        self,
+        groups: t.Union[str, t.Iterable[str]] = "default",
+        features: t.Union[str, t.Iterable[str]] = "all",
+        summary: t.Union[str, t.Iterable[str]] = ("mean", "sd"),
+        measure_time: t.Optional[str] = None,
+        wildcard: str = "all",
+        score: str = "rmse",
+        num_cv_folds: int = 5,
+        lm_sample_frac: float = 1.0,
+        suppress_warnings: bool = False,
+        random_state: t.Optional[int] = None,
+    ) -> None:
         """Provides easy access for metafeature extraction from datasets.
 
         It expected that user first calls ``fit`` method after instantiation
@@ -216,13 +220,16 @@ class TSMFE:
 
         """
         self.groups = _internal.process_generic_set(
-            values=groups, group_name="groups",
+            values=groups,
+            group_name="groups",
             groups_alias=TSMFE.groups_alias,
-            wildcard=wildcard)  # type: t.Tuple[str, ...]
+            wildcard=wildcard,
+        )  # type: t.Tuple[str, ...]
 
-        self.groups, self.inserted_group_dep = (
-            _internal.solve_group_dependencies(
-                groups=self.groups))
+        (
+            self.groups,
+            self.inserted_group_dep,
+        ) = _internal.solve_group_dependencies(groups=self.groups)
 
         proc_feat = _internal.process_features(
             features=features,
@@ -235,12 +242,12 @@ class TSMFE:
         del proc_feat
 
         self.summary, self._metadata_mtd_sm = _internal.process_summary(
-            summary,
-            wildcard=wildcard)  # type: t.Tuple[t.Tuple[str, ...], _TypeSeqExt]
+            summary, wildcard=wildcard
+        )  # type: t.Tuple[t.Tuple[str, ...], _TypeSeqExt]
 
         self.timeopt = _internal.process_generic_option(
-            value=measure_time, group_name="timeopt",
-            allow_none=True)  # type: t.Optional[str]
+            value=measure_time, group_name="timeopt", allow_none=True
+        )  # type: t.Optional[str]
 
         self.ts = None  # type: t.Optional[np.ndarray]
         self.ts_trend = None  # type: t.Optional[np.ndarray]
@@ -269,26 +276,29 @@ class TSMFE:
         else:
             raise ValueError(
                 'Invalid "random_state" argument ({0}). '
-                'Expecting None or an integer.'.format(random_state))
+                "Expecting None or an integer.".format(random_state)
+            )
 
         if isinstance(num_cv_folds, int):
             self.num_cv_folds = num_cv_folds
 
         else:
-            raise ValueError('Invalid "num_cv_folds" argument ({0}). '
-                             'Expecting an integer.'.format(random_state))
+            raise ValueError(
+                'Invalid "num_cv_folds" argument ({0}). '
+                "Expecting an integer.".format(random_state)
+            )
 
         if isinstance(lm_sample_frac, int):
             lm_sample_frac = float(lm_sample_frac)
 
-        if isinstance(lm_sample_frac, float)\
-           and 0.5 <= lm_sample_frac <= 1.0:
+        if isinstance(lm_sample_frac, float) and 0.5 <= lm_sample_frac <= 1.0:
             self.lm_sample_frac = lm_sample_frac
 
         else:
-            raise ValueError('Invalid "lm_sample_frac" argument ({0}). '
-                             'Expecting an float [0.5, 1].'
-                             .format(random_state))
+            raise ValueError(
+                'Invalid "lm_sample_frac" argument ({0}). '
+                "Expecting an float [0.5, 1].".format(random_state)
+            )
 
         self.score = _internal.check_score(score, self.groups)
 
@@ -302,14 +312,15 @@ class TSMFE:
         self.time_total = -1.0
 
     def _call_summary_methods(
-            self,
-            feature_values: t.Sequence[_internal.TypeNumeric],
-            feature_name: str,
-            verbose: int = 0,
-            suppress_warnings: bool = False,
-            **kwargs
-    ) -> t.Tuple[t.List[str], t.List[t.Union[float, t.Sequence]], t.
-                 List[float]]:
+        self,
+        feature_values: t.Sequence[_internal.TypeNumeric],
+        feature_name: str,
+        verbose: int = 0,
+        suppress_warnings: bool = False,
+        **kwargs,
+    ) -> t.Tuple[
+        t.List[str], t.List[t.Union[float, t.Sequence]], t.List[float]
+    ]:
         """Invoke summary functions loaded in the model on given feature
         values.
 
@@ -379,8 +390,10 @@ class TSMFE:
                     "function...".format(
                         _internal.VERBOSE_BLOCK_MID_SYMBOL,
                         feature_name,
-                        sm_mtd_name),
-                    end=" ")
+                        sm_mtd_name,
+                    ),
+                    end=" ",
+                )
 
             sm_mtd_args_pack = _internal.build_mtd_kwargs(
                 mtd_name=sm_mtd_name,
@@ -388,30 +401,37 @@ class TSMFE:
                 mtd_mandatory=set(),
                 user_custom_args=kwargs.get(sm_mtd_name),
                 inner_custom_args=self._custom_args_sum,
-                suppress_warnings=suppress_warnings)
+                suppress_warnings=suppress_warnings,
+            )
 
             summarized_val, time_sm = _internal.timeit(
-                _internal.summarize, feature_values, sm_mtd_callable,
-                sm_mtd_args_pack)
+                _internal.summarize,
+                feature_values,
+                sm_mtd_callable,
+                sm_mtd_args_pack,
+            )
 
             if not suppress_warnings:
                 _internal.check_summary_warnings(
                     value=summarized_val,
                     name_feature=feature_name,
-                    name_summary=sm_mtd_name)
+                    name_summary=sm_mtd_name,
+                )
 
             if isinstance(summarized_val, np.ndarray):
                 summarized_val = summarized_val.flatten().tolist()
 
-            if (isinstance(summarized_val, collections.Sequence)
-                    and not isinstance(summarized_val, str)):
+            if isinstance(
+                summarized_val, collections.Sequence
+            ) and not isinstance(summarized_val, str):
                 metafeat_vals += summarized_val
                 metafeat_names += [
                     ".".join((feature_name, sm_mtd_name, str(i)))
                     for i in range(len(summarized_val))
                 ]
-                metafeat_times += ([time_sm] + (
-                    (len(summarized_val) - 1) * [0.0]))
+                metafeat_times += [time_sm] + (
+                    (len(summarized_val) - 1) * [0.0]
+                )
 
             else:
                 metafeat_vals.append(summarized_val)
@@ -422,20 +442,23 @@ class TSMFE:
                 print("Done.")
 
         if verbose >= 2:
-            print(" {} Done summarizing '{}' feature.".format(
-                _internal.VERBOSE_BLOCK_END_SYMBOL,
-                feature_name))
+            print(
+                " {} Done summarizing '{}' feature.".format(
+                    _internal.VERBOSE_BLOCK_END_SYMBOL, feature_name
+                )
+            )
 
         return metafeat_names, metafeat_vals, metafeat_times
 
     def _call_feature_methods(
-            self,
-            verbose: int = 0,
-            # enable_parallel: bool = False,
-            suppress_warnings: bool = False,
-            **kwargs) -> t.Tuple[t.List[str],
-                                 t.List[t.Union[int, float, t.Sequence]],
-                                 t.List[float]]:
+        self,
+        verbose: int = 0,
+        # enable_parallel: bool = False,
+        suppress_warnings: bool = False,
+        **kwargs,
+    ) -> t.Tuple[
+        t.List[str], t.List[t.Union[int, float, t.Sequence]], t.List[float]
+    ]:
         """Invoke feature methods loaded in the model and gather results.
 
         The returned values are already summarized if needed.
@@ -449,11 +472,16 @@ class TSMFE:
 
         skipped_count = 0
         for ind, cur_metadata in enumerate(self._metadata_mtd_ft, 1):
-            (ft_mtd_name, ft_mtd_callable,
-             ft_mtd_args, ft_mandatory) = cur_metadata
+            (
+                ft_mtd_name,
+                ft_mtd_callable,
+                ft_mtd_args,
+                ft_mandatory,
+            ) = cur_metadata
 
             ft_name_without_prefix = _internal.remove_prefix(
-                value=ft_mtd_name, prefix=_internal.MTF_PREFIX)
+                value=ft_mtd_name, prefix=_internal.MTF_PREFIX
+            )
 
             try:
                 ft_mtd_args_pack = _internal.build_mtd_kwargs(
@@ -463,28 +491,40 @@ class TSMFE:
                     user_custom_args=kwargs.get(ft_name_without_prefix),
                     inner_custom_args=self._custom_args_ft,
                     precomp_args=self._precomp_args_ft,
-                    suppress_warnings=suppress_warnings)
+                    suppress_warnings=suppress_warnings,
+                )
 
             except RuntimeError:
                 # Not all method's mandatory arguments were satisfied.
                 # Skip the current method.
                 if verbose >= 2:
-                    print("\nSkipped '{}' ({} of {}).".format(
-                        ft_mtd_name, ind, len(self._metadata_mtd_ft)))
+                    print(
+                        "\nSkipped '{}' ({} of {}).".format(
+                            ft_mtd_name, ind, len(self._metadata_mtd_ft)
+                        )
+                    )
 
                 skipped_count += 1
                 continue
 
             if verbose >= 2:
-                print("\nExtracting '{}' feature ({} of {})..."
-                      .format(ft_mtd_name, ind, len(self._metadata_mtd_ft)))
+                print(
+                    "\nExtracting '{}' feature ({} of {})...".format(
+                        ft_mtd_name, ind, len(self._metadata_mtd_ft)
+                    )
+                )
 
             features, time_ft = _internal.timeit(
-                _internal.get_feat_value, ft_mtd_name, ft_mtd_args_pack,
-                ft_mtd_callable, suppress_warnings)
+                _internal.get_feat_value,
+                ft_mtd_name,
+                ft_mtd_args_pack,
+                ft_mtd_callable,
+                suppress_warnings,
+            )
 
-            ft_has_length = isinstance(features,
-                                       (np.ndarray, collections.Sequence))
+            ft_has_length = isinstance(
+                features, (np.ndarray, collections.Sequence)
+            )
 
             if ft_has_length and self._timeopt_type_is_avg():
                 time_ft /= len(features)
@@ -495,7 +535,8 @@ class TSMFE:
                     feature_name=ft_name_without_prefix,
                     verbose=verbose,
                     suppress_warnings=suppress_warnings,
-                    **kwargs)
+                    **kwargs,
+                )
 
                 summarized_names, summarized_vals, times_sm = sm_ret
 
@@ -513,35 +554,45 @@ class TSMFE:
                     cur_progress=100 * ind / len(self._metadata_mtd_ft),
                     cur_mtf_name=ft_mtd_name,
                     item_type="feature",
-                    verbose=verbose)
+                    verbose=verbose,
+                )
 
         if verbose == 1:
             _t_num_cols, _ = shutil.get_terminal_size()
-            print("\r{:<{fill}}".format(
-                "Process of metafeature extraction finished.",
-                fill=_t_num_cols))
+            print(
+                "\r{:<{fill}}".format(
+                    "Process of metafeature extraction finished.",
+                    fill=_t_num_cols,
+                )
+            )
 
         if verbose >= 2 and skipped_count > 0:
-            print("\nNote: skipped a total of {} metafeatures, "
-                  "out of {} ({:.2f}%).".format(
-                      skipped_count,
-                      len(self._metadata_mtd_ft),
-                      100 * skipped_count / len(self._metadata_mtd_ft)))
+            print(
+                "\nNote: skipped a total of {} metafeatures, "
+                "out of {} ({:.2f}%).".format(
+                    skipped_count,
+                    len(self._metadata_mtd_ft),
+                    100 * skipped_count / len(self._metadata_mtd_ft),
+                )
+            )
 
         return metafeat_names, metafeat_vals, metafeat_times
 
     def _timeopt_type_is_avg(self) -> bool:
         """Checks if user selected time option is an ``average`` type."""
-        return (isinstance(self.timeopt, str)
-                and self.timeopt.startswith(_internal.TIMEOPT_AVG_PREFIX))
+        return isinstance(self.timeopt, str) and self.timeopt.startswith(
+            _internal.TIMEOPT_AVG_PREFIX
+        )
 
     def _timeopt_include_summary(self) -> bool:
         """Checks if user selected time option includes ``summary`` time."""
-        return (isinstance(self.timeopt, str)
-                and self.timeopt.endswith(_internal.TIMEOPT_SUMMARY_SUFFIX))
+        return isinstance(self.timeopt, str) and self.timeopt.endswith(
+            _internal.TIMEOPT_SUMMARY_SUFFIX
+        )
 
-    def _combine_time(self, time_ft: float,
-                      times_sm: t.List[float]) -> t.List[float]:
+    def _combine_time(
+        self, time_ft: float, times_sm: t.List[float]
+    ) -> t.List[float]:
         """Treat time from feature extraction and summarization based in
         ``timeopt``.
 
@@ -578,17 +629,18 @@ class TSMFE:
 
         return total_time.tolist()
 
-    def fit(self,
-            ts: t.Sequence[int],
-            ts_period: t.Optional[int] = None,
-            rescale: t.Optional[str] = None,
-            rescale_args: t.Optional[t.Dict[str, t.Any]] = None,
-            precomp_groups: t.Optional[str] = "all",
-            wildcard: str = "all",
-            suppress_warnings: bool = False,
-            verbose: int = 0,
-            **kwargs,
-            ) -> "TSMFE":
+    def fit(
+        self,
+        ts: t.Sequence[int],
+        ts_period: t.Optional[int] = None,
+        rescale: t.Optional[str] = None,
+        rescale_args: t.Optional[t.Dict[str, t.Any]] = None,
+        precomp_groups: t.Optional[str] = "all",
+        wildcard: str = "all",
+        suppress_warnings: bool = False,
+        verbose: int = 0,
+        **kwargs,
+    ) -> "TSMFE":
         """Fits dataset into an TSMFE model.
 
         Parameters
@@ -669,7 +721,8 @@ class TSMFE:
 
         """
         rescale = _internal.process_generic_option(
-            value=rescale, group_name="rescale", allow_none=True)
+            value=rescale, group_name="rescale", allow_none=True
+        )
 
         if verbose >= 2:
             print("Fitting data into model... ", end="")
@@ -678,9 +731,8 @@ class TSMFE:
 
         if rescale is not None:
             self.ts = _internal.rescale_data(
-                data=self.ts.reshape(-1, 1),
-                option=rescale,
-                args=rescale_args).ravel()
+                data=self.ts.reshape(-1, 1), option=rescale, args=rescale_args
+            ).ravel()
 
         if verbose >= 2:
             print("Done.")
@@ -729,19 +781,23 @@ class TSMFE:
             wildcard=wildcard,
             suppress_warnings=suppress_warnings,
             verbose=verbose,
-            **{**self._custom_args_ft, **kwargs})
+            **{**self._custom_args_ft, **kwargs},
+        )
 
         self.time_precomp = time.time() - _time_start
 
         if verbose >= 2:
-            print("\nFinished precomputation process.",
-                  " {} Total time elapsed: {:.8f} seconds".format(
-                      _internal.VERBOSE_BLOCK_MID_SYMBOL,
-                      self.time_precomp),
-                  " {} Got a total of {} precomputed values.".format(
-                      _internal.VERBOSE_BLOCK_END_SYMBOL,
-                      len(self._precomp_args_ft)),
-                  sep="\n")
+            print(
+                "\nFinished precomputation process.",
+                " {} Total time elapsed: {:.8f} seconds".format(
+                    _internal.VERBOSE_BLOCK_MID_SYMBOL, self.time_precomp
+                ),
+                " {} Got a total of {} precomputed values.".format(
+                    _internal.VERBOSE_BLOCK_END_SYMBOL,
+                    len(self._precomp_args_ft),
+                ),
+                sep="\n",
+            )
 
         # Custom arguments for postprocessing methods
         self._postprocess_args_ft = {
@@ -756,11 +812,12 @@ class TSMFE:
         return self
 
     def extract(
-            self,
-            verbose: int = 0,
-            enable_parallel: bool = False,
-            suppress_warnings: bool = False,
-            **kwargs) -> t.Tuple[t.Sequence, ...]:
+        self,
+        verbose: int = 0,
+        enable_parallel: bool = False,
+        suppress_warnings: bool = False,
+        **kwargs,
+    ) -> t.Tuple[t.Sequence, ...]:
         """Extracts metafeatures from the previously fitted dataset.
 
         Parameters
@@ -851,8 +908,9 @@ class TSMFE:
 
         """
         if self.ts is None:
-            raise TypeError("Fitted data not found. Call "
-                            '"fit" method before "extract".')
+            raise TypeError(
+                "Fitted data not found. Call " '"fit" method before "extract".'
+            )
 
         if not isinstance(self.ts, np.ndarray):
             self.ts = _internal.check_data(self.ts)
@@ -866,14 +924,16 @@ class TSMFE:
             verbose=verbose,
             enable_parallel=enable_parallel,
             suppress_warnings=suppress_warnings,
-            **kwargs)  # type: t.Tuple[t.List, ...]
+            **kwargs,
+        )  # type: t.Tuple[t.List, ...]
 
         _internal.post_processing(
             results=results,
             groups=self.groups,
             suppress_warnings=suppress_warnings,
             **self._postprocess_args_ft,
-            **kwargs)
+            **kwargs,
+        )
 
         self.time_extract = time.time() - _time_start
         self.time_total = self.time_extract + self.time_precomp
@@ -881,8 +941,10 @@ class TSMFE:
         if results and results[0]:
             # Sort results by metafeature name
             results = tuple(
-                map(list, zip(*sorted(zip(*results),
-                                      key=lambda item: item[0]))))
+                map(
+                    list, zip(*sorted(zip(*results), key=lambda item: item[0]))
+                )
+            )
 
         res_names, res_vals, res_times = results
 
@@ -892,40 +954,50 @@ class TSMFE:
                 "\nMetafeature extraction process done.",
                 " {} Time elapsed in total (precomputations + extraction): "
                 "{:.8f} seconds.".format(
-                    _internal.VERBOSE_BLOCK_MID_SYMBOL, self.time_total),
+                    _internal.VERBOSE_BLOCK_MID_SYMBOL, self.time_total
+                ),
                 " {} Time elapsed for extractions: {:.8f} seconds ({:.2f}% "
                 "from the total).".format(
                     _internal.VERBOSE_BLOCK_MID_SYMBOL,
                     self.time_extract,
-                    _ext_t_pct),
+                    _ext_t_pct,
+                ),
                 " {} Time elapsed for precomputations: {:.8f} seconds "
                 "({:.2f}% from the total).".format(
                     _internal.VERBOSE_BLOCK_MID_SYMBOL,
-                    self.time_precomp, 100 - _ext_t_pct),
+                    self.time_precomp,
+                    100 - _ext_t_pct,
+                ),
                 " {} Total of {} values obtained.".format(
-                    _internal.VERBOSE_BLOCK_END_SYMBOL, len(res_vals)),
-                sep="\n")
+                    _internal.VERBOSE_BLOCK_END_SYMBOL, len(res_vals)
+                ),
+                sep="\n",
+            )
 
         if self.timeopt:
             return res_names, res_vals, res_times
 
         return res_names, res_vals
 
-    def _extract_with_bootstrap(self,
-                                extractor: "TSMFE",
-                                sample_num: int,
-                                arguments_fit: t.Dict[str, t.Any],
-                                arguments_extract: t.Dict[str, t.Any],
-                                verbose: int = 0) -> t.Tuple[np.ndarray, ...]:
+    def _extract_with_bootstrap(
+        self,
+        extractor: "TSMFE",
+        sample_num: int,
+        arguments_fit: t.Dict[str, t.Any],
+        arguments_extract: t.Dict[str, t.Any],
+        verbose: int = 0,
+    ) -> t.Tuple[np.ndarray, ...]:
         """Extract metafeatures using bootstrapping."""
         if self.ts is None:
-            raise TypeError("Fitted data not found. Please call 'fit' "
-                            "method first.")
+            raise TypeError(
+                "Fitted data not found. Please call 'fit' " "method first."
+            )
 
         def _handle_extract_ret(
-                res: t.Tuple[np.ndarray, ...],
-                args: t.Tuple[t.Sequence, ...],
-                it_num: int) -> t.Tuple[np.ndarray, ...]:
+            res: t.Tuple[np.ndarray, ...],
+            args: t.Tuple[t.Sequence, ...],
+            it_num: int,
+        ) -> t.Tuple[np.ndarray, ...]:
             """Handle each .extraction method return value."""
             mtf_names, mtf_vals, mtf_time = res
 
@@ -944,7 +1016,8 @@ class TSMFE:
             else:
                 mtf_names = np.asarray(cur_mtf_names, dtype=str)
                 mtf_vals = np.zeros(
-                    (len(cur_mtf_vals), sample_num), dtype=float)
+                    (len(cur_mtf_vals), sample_num), dtype=float
+                )
                 mtf_vals[:, 0] = cur_mtf_vals
 
                 if self.timeopt:
@@ -962,14 +1035,18 @@ class TSMFE:
         bootstrap_random_state = (
             self.random_state
             if self.random_state is not None
-            else np.random.randint(2 ** 20 - 1))
+            else np.random.randint(2 ** 20 - 1)
+        )
 
         for it_num in np.arange(sample_num):
             if verbose > 0:
-                print("Extracting from sample dataset {} of {} ({:.2f}%)..."
-                      .format(1 + it_num,
-                              sample_num,
-                              100.0 * (1 + it_num) / sample_num))
+                print(
+                    "Extracting from sample dataset {} of {} ({:.2f}%)...".format(
+                        1 + it_num,
+                        sample_num,
+                        100.0 * (1 + it_num) / sample_num,
+                    )
+                )
 
             # Note: setting random state to prevent same sample indices due
             # to random states set during fit/extraction
@@ -977,8 +1054,8 @@ class TSMFE:
             bootstrap_random_state += 1
 
             sample_inds = np.random.randint(
-                self.ts.shape[0],
-                size=self.ts.shape[0])
+                self.ts.shape[0], size=self.ts.shape[0]
+            )
 
             ts_sample = self.ts[sample_inds, :]
 
@@ -987,22 +1064,26 @@ class TSMFE:
             res = _handle_extract_ret(
                 res=res,
                 args=extractor.extract(**arguments_extract),
-                it_num=it_num)
+                it_num=it_num,
+            )
 
             if verbose > 0:
-                print("Done extracting from sample dataset {}.\n"
-                      .format(1 + it_num))
+                print(
+                    "Done extracting from sample dataset {}.\n".format(
+                        1 + it_num
+                    )
+                )
 
         return res
 
     def extract_with_confidence(
-            self,
-            sample_num: int = 128,
-            confidence: t.Union[float, t.Sequence[float]] = 0.95,
-            return_avg_val: bool = True,
-            arguments_fit: t.Optional[t.Dict[str, t.Any]] = None,
-            arguments_extract: t.Optional[t.Dict[str, t.Any]] = None,
-            verbose: int = 0,
+        self,
+        sample_num: int = 128,
+        confidence: t.Union[float, t.Sequence[float]] = 0.95,
+        return_avg_val: bool = True,
+        arguments_fit: t.Optional[t.Dict[str, t.Any]] = None,
+        arguments_extract: t.Optional[t.Dict[str, t.Any]] = None,
+        verbose: int = 0,
     ) -> t.Tuple[t.List, ...]:
         """Extract metafeatures with confidence intervals.
 
@@ -1093,8 +1174,10 @@ class TSMFE:
         _confidence = np.asarray(confidence, dtype=float)
 
         if np.any(np.logical_or(_confidence <= 0.0, _confidence >= 1.0)):
-            raise ValueError("'_confidence' must be in (0.0, 1.0) range (got "
-                             "{}.)".format(_confidence))
+            raise ValueError(
+                "'_confidence' must be in (0.0, 1.0) range (got "
+                "{}.)".format(_confidence)
+            )
 
         if self.random_state is not None:
             np.random.seed(self.random_state)
@@ -1112,27 +1195,35 @@ class TSMFE:
         if verbose > 0:
             print("Started metafeature extract with _confidence interval.")
             print("Random seed:")
-            print(" {} For extractor model: {}{}".format(
-                _internal.VERBOSE_BLOCK_END_SYMBOL,
-                _random_state,
-                "" if self.random_state else " (chosen by default)"))
+            print(
+                " {} For extractor model: {}{}".format(
+                    _internal.VERBOSE_BLOCK_END_SYMBOL,
+                    _random_state,
+                    "" if self.random_state else " (chosen by default)",
+                )
+            )
 
-            print(" {} For bootstrapping: {}".format(
-                _internal.VERBOSE_BLOCK_END_SYMBOL, self.random_state))
+            print(
+                " {} For bootstrapping: {}".format(
+                    _internal.VERBOSE_BLOCK_END_SYMBOL, self.random_state
+                )
+            )
 
         extractor = TSMFE(
             features=self.features,
             groups=self.groups,
             summary=self.summary,
             measure_time=self.timeopt,
-            random_state=_random_state)
+            random_state=_random_state,
+        )
 
         mtf_names, mtf_vals, mtf_time = self._extract_with_bootstrap(
             extractor=extractor,
             sample_num=sample_num,
             verbose=verbose,
             arguments_fit=arguments_fit,
-            arguments_extract=arguments_extract)
+            arguments_extract=arguments_extract,
+        )
 
         if verbose > 0:
             print("Finished metafeature extract with _confidence interval.")
@@ -1183,9 +1274,9 @@ class TSMFE:
         return _internal.VALID_SUMMARY
 
     @classmethod
-    def _check_groups_type(cls,
-                           groups: t.Optional[t.Union[str, t.Iterable[str]]]
-                           ) -> t.Set[str]:
+    def _check_groups_type(
+        cls, groups: t.Optional[t.Union[str, t.Iterable[str]]]
+    ) -> t.Set[str]:
         """Cast ``groups`` to a tuple of valid metafeature group names."""
         if groups is None:
             return set(_internal.VALID_GROUPS)
@@ -1195,20 +1286,17 @@ class TSMFE:
         return set(groups)
 
     @classmethod
-    def _filter_groups(cls,
-                       groups: t.Set[str]
-                       ) -> t.Set[str]:
+    def _filter_groups(cls, groups: t.Set[str]) -> t.Set[str]:
         """Filter given groups by the available metafeature group names."""
         filtered_group_set = {
-            group for group in groups
-            if group in _internal.VALID_GROUPS
+            group for group in groups if group in _internal.VALID_GROUPS
         }
         return filtered_group_set
 
     @classmethod
     def valid_metafeatures(
-            cls,
-            groups: t.Optional[t.Union[str, t.Iterable[str]]] = None,
+        cls,
+        groups: t.Optional[t.Union[str, t.Iterable[str]]] = None,
     ) -> t.Tuple[str, ...]:
         """Return a tuple with all metafeatures related to given ``groups``.
 
@@ -1241,20 +1329,20 @@ class TSMFE:
         for group in groups.union(deps):
             class_ind = _internal.VALID_GROUPS.index(group)
 
-            mtf_names += (
-                _internal.get_prefixed_mtds_from_class(
-                    class_obj=_internal.VALID_MFECLASSES[class_ind],
-                    prefix=_internal.MTF_PREFIX,
-                    only_name=True,
-                    prefix_removal=True))
+            mtf_names += _internal.get_prefixed_mtds_from_class(
+                class_obj=_internal.VALID_MFECLASSES[class_ind],
+                prefix=_internal.MTF_PREFIX,
+                only_name=True,
+                prefix_removal=True,
+            )
 
         return tuple(mtf_names)
 
     @classmethod
     def parse_by_group(
-            cls,
-            groups: t.Union[t.Sequence[str], str],
-            extracted_results: t.Tuple[t.Sequence, ...],
+        cls,
+        groups: t.Union[t.Sequence[str], str],
+        extracted_results: t.Tuple[t.Sequence, ...],
     ) -> t.Tuple[t.List, ...]:
         """Parse the result of ``extract`` for given metafeature ``groups``.
 
@@ -1290,19 +1378,19 @@ class TSMFE:
         selected_indexes = _internal.select_results_by_classes(
             mtf_names=extracted_results[0],
             class_names=groups,
-            include_dependencies=True)
+            include_dependencies=True,
+        )
 
         filtered_res = (
-            [seq[ind] for ind in selected_indexes]
-            for seq in extracted_results
+            [seq[ind] for ind in selected_indexes] for seq in extracted_results
         )
 
         return tuple(filtered_res)
 
     @staticmethod
-    def _parse_description(docstring: str,
-                           include_references: bool = False
-                           ) -> t.Tuple[str, str]:
+    def _parse_description(
+        docstring: str, include_references: bool = False
+    ) -> t.Tuple[str, str]:
         """Parse the docstring to get initial description and reference.
 
         Parameters
@@ -1336,19 +1424,20 @@ class TSMFE:
                 if len(split) >= 2:
                     del split[0]
                     for spl in split:
-                        reference_description += "[" + " ".join(
-                            spl.split()) + "\n"
+                        reference_description += (
+                            "[" + " ".join(spl.split()) + "\n"
+                        )
 
         return (initial_description, reference_description)
 
     @classmethod
     def metafeature_description(
-            cls,
-            groups: t.Optional[t.Union[str, t.Iterable[str]]] = None,
-            sort_by_group: bool = False,
-            sort_by_mtf: bool = False,
-            print_table: bool = True,
-            include_references: bool = False
+        cls,
+        groups: t.Optional[t.Union[str, t.Iterable[str]]] = None,
+        sort_by_group: bool = False,
+        sort_by_mtf: bool = False,
+        print_table: bool = True,
+        include_references: bool = False,
     ) -> t.Optional[t.Tuple[t.List[t.List[str]], str]]:
         """Print a table with groups, metafeatures and description.
 
@@ -1410,16 +1499,17 @@ class TSMFE:
         for group in groups.union(deps):
             class_ind = _internal.VALID_GROUPS.index(group)
 
-            mtf_names = (  # type: ignore
-                _internal.get_prefixed_mtds_from_class(  # type: ignore
-                    class_obj=_internal.VALID_MFECLASSES[class_ind],
-                    prefix=_internal.MTF_PREFIX,
-                    only_name=False,
-                    prefix_removal=True))
+            mtf_names = _internal.get_prefixed_mtds_from_class(  # type: ignore  # type: ignore
+                class_obj=_internal.VALID_MFECLASSES[class_ind],
+                prefix=_internal.MTF_PREFIX,
+                only_name=False,
+                prefix_removal=True,
+            )
 
             for name, method in mtf_names:  # type: ignore
                 ini_desc, ref_desc = TSMFE._parse_description(
-                    str(method.__doc__), include_references)
+                    str(method.__doc__), include_references
+                )
                 mtf_desc_line = [group, name, ini_desc]
                 mtf_desc.append(mtf_desc_line)
 

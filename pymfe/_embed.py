@@ -23,10 +23,9 @@ except ImportError:
     pass
 
 
-def embed_ts(ts: np.ndarray,
-             dim: int,
-             lag: int = 1,
-             include_val: bool = True) -> np.ndarray:
+def embed_ts(
+    ts: np.ndarray, dim: int, lag: int = 1, include_val: bool = True
+) -> np.ndarray:
     """Embbed a time-series in dimension ``dim``.
 
     Arguments
@@ -55,14 +54,17 @@ def embed_ts(ts: np.ndarray,
         raise ValueError("'lag' must be positive (got {}).".format(lag))
 
     if dim * lag > ts.size:
-        raise ValueError("'dim * lag' ({}) can't be larger than the "
-                         "time-series length ({}).".format(dim * lag, ts.size))
+        raise ValueError(
+            "'dim * lag' ({}) can't be larger than the "
+            "time-series length ({}).".format(dim * lag, ts.size)
+        )
 
     if include_val:
         dim -= 1
 
-    ts_emb = np.zeros((ts.size - dim * lag, dim + int(include_val)),
-                      dtype=ts.dtype)
+    ts_emb = np.zeros(
+        (ts.size - dim * lag, dim + int(include_val)), dtype=ts.dtype
+    )
 
     shift_inds = lag * (dim - 1 - np.arange(-int(include_val), dim))
 
@@ -72,9 +74,9 @@ def embed_ts(ts: np.ndarray,
     return ts_emb
 
 
-def nn(embed: np.ndarray,
-       metric: str = "chebyshev",
-       p: t.Union[int, float] = 2) -> np.ndarray:
+def nn(
+    embed: np.ndarray, metric: str = "chebyshev", p: t.Union[int, float] = 2
+) -> np.ndarray:
     """Return the Nearest neighbor of each embedded time-series observation."""
     dist_mat = scipy.spatial.distance.cdist(embed, embed, metric=metric, p=p)
 
@@ -88,12 +90,14 @@ def nn(embed: np.ndarray,
     return nn_inds, dist_mat[nn_inds, np.arange(nn_inds.size)]
 
 
-def embed_dim_fnn(ts: np.ndarray,
-                  lag: int,
-                  dims: t.Union[int, t.Sequence[int]] = 16,
-                  rtol: t.Union[int, float] = 10,
-                  atol: t.Union[int, float] = 2,
-                  ts_scaled: t.Optional[np.ndarray] = None) -> int:
+def embed_dim_fnn(
+    ts: np.ndarray,
+    lag: int,
+    dims: t.Union[int, t.Sequence[int]] = 16,
+    rtol: t.Union[int, float] = 10,
+    atol: t.Union[int, float] = 2,
+    ts_scaled: t.Optional[np.ndarray] = None,
+) -> int:
     """Estimation of the False Nearest Neighbors proportion for each dimension.
 
     The False Nearest Neighbors calculates the average number of false nearest
@@ -223,10 +227,10 @@ def embed_dim_fnn(ts: np.ndarray,
 
 
 def embed_dim_cao(
-        ts: np.ndarray,
-        lag: int,
-        dims: t.Union[int, t.Sequence[int]] = 16,
-        ts_scaled: t.Optional[np.ndarray] = None,
+    ts: np.ndarray,
+    lag: int,
+    dims: t.Union[int, t.Sequence[int]] = 16,
+    ts_scaled: t.Optional[np.ndarray] = None,
 ) -> t.Tuple[np.ndarray, np.ndarray]:
     """Estimate Cao's metrics to estimate time-series embedding dimension.
 
@@ -339,13 +343,15 @@ def embed_dim_cao(
     return e1, e2
 
 
-def embed_lag(ts: np.ndarray,
-              lag: t.Optional[t.Union[str, int]] = None,
-              default_lag: int = 1,
-              max_nlags: t.Optional[int] = None,
-              detrended_acfs: t.Optional[np.ndarray] = None,
-              detrended_ami: t.Optional[np.ndarray] = None,
-              **kwargs) -> int:
+def embed_lag(
+    ts: np.ndarray,
+    lag: t.Optional[t.Union[str, int]] = None,
+    default_lag: int = 1,
+    max_nlags: t.Optional[int] = None,
+    detrended_acfs: t.Optional[np.ndarray] = None,
+    detrended_ami: t.Optional[np.ndarray] = None,
+    **kwargs
+) -> int:
     """Find the appropriate embedding lag using a given criteria.
 
     Parameters
@@ -415,8 +421,10 @@ def embed_lag(ts: np.ndarray,
 
     if isinstance(lag, str):
         if lag not in VALID_OPTIONS:
-            raise ValueError("'lag' must be in {} (got '{}')."
-                             "".format(VALID_OPTIONS.keys(), lag))
+            raise ValueError(
+                "'lag' must be in {} (got '{}')."
+                "".format(VALID_OPTIONS.keys(), lag)
+            )
 
         if max_nlags is None:
             max_nlags = ts.size // 2
@@ -441,5 +449,7 @@ def embed_lag(ts: np.ndarray,
 
         return lag
 
-    raise TypeError("'lag' type must be a scalar, a string or None (got {})."
-                    "".format(type(lag)))
+    raise TypeError(
+        "'lag' type must be a scalar, a string or None (got {})."
+        "".format(type(lag))
+    )

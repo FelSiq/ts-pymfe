@@ -8,6 +8,7 @@ import scipy.optimize
 
 class BaseModel(metaclass=abc.ABCMeta):
     """Base model for the custom models of this module."""
+
     @abc.abstractmethod
     def fit(self, X: np.ndarray, y: np.ndarray, **kwargs) -> "BaseModel":
         """Generic fit method."""
@@ -23,6 +24,7 @@ class TSNaive(BaseModel):
     In the Naive model, all forecasted values are equal to the last known
     observation.
     """
+
     def __init__(self):
         """Init a Naive model."""
         self.last_obs = -1.0
@@ -51,9 +53,11 @@ class TSNaive(BaseModel):
             raise ValueError("Model is not fitted.")
 
         if np.any(X < self.last_timestamp):
-            raise ValueError("Prediction timestamps 'X' must be all larger "
-                             "or equal than the last fitted observation "
-                             "timestamp ({}).".format(self.last_timestamp))
+            raise ValueError(
+                "Prediction timestamps 'X' must be all larger "
+                "or equal than the last fitted observation "
+                "timestamp ({}).".format(self.last_timestamp)
+            )
 
         return np.full(fill_value=self.last_obs, shape=X.shape)
 
@@ -66,6 +70,7 @@ class TSNaiveDrift(BaseModel):
     forecasted timestamp. The attributed to the timestamp is estimated from the
     first and last observation of the given time-series.
     """
+
     def __init__(self):
         """Init a Naive model with drift."""
         self.slope = -1.0
@@ -111,8 +116,10 @@ class TSNaiveDrift(BaseModel):
         diff_timestamps = X - self.last_obs_ind
 
         if np.any(diff_timestamps < 0):
-            raise ValueError("Timestamps must be higher than the last fitted "
-                             "timestamp ({}).".format(self.last_obs_ind))
+            raise ValueError(
+                "Timestamps must be higher than the last fitted "
+                "timestamp ({}).".format(self.last_obs_ind)
+            )
 
         return self.last_obs + diff_timestamps * self.slope
 
@@ -125,6 +132,7 @@ class TSNaiveSeasonal(BaseModel):
     past period. Then, each prediction is equal to the value in the
     corresponding timestamp of the previous period.
     """
+
     def __init__(self, ts_period: int, copy: bool = False):
         """Init a Seasonal Naive Model."""
         self.y = np.empty(0)
@@ -149,8 +157,9 @@ class TSNaiveSeasonal(BaseModel):
             self.y = y
 
         if X.size < self.ts_period:
-            raise ValueError("Fitted time-series can't be smaller than its "
-                             "period.")
+            raise ValueError(
+                "Fitted time-series can't be smaller than its " "period."
+            )
 
         self.timestamp_interval = X[1] - X[0]
         self.last_timestamp = X[-1]
@@ -169,8 +178,10 @@ class TSNaiveSeasonal(BaseModel):
         inds = X - self.ts_period * (1 + shift)
 
         if np.any(inds < 0):
-            raise ValueError("Timestamps to predict can't be smaller than "
-                             "the last fitted timestamp.")
+            raise ValueError(
+                "Timestamps to predict can't be smaller than "
+                "the last fitted timestamp."
+            )
 
         return self.y[inds]
 
@@ -182,12 +193,16 @@ class _TSLocalStat(BaseModel):
     observations, tipically the mean or median, and use the obtained
     value as the forecasted value for future timestamps.
     """
-    def __init__(self, stat_func: t.Callable[[np.ndarray], float],
-                 train_prop: float):
+
+    def __init__(
+        self, stat_func: t.Callable[[np.ndarray], float], train_prop: float
+    ):
         """Init a Local statistical forecasting model."""
         if not 0 < train_prop <= 1:
-            raise ValueError("'train_prop' must be in (0, 1] (got {})."
-                             "".format(train_prop))
+            raise ValueError(
+                "'train_prop' must be in (0, 1] (got {})."
+                "".format(train_prop)
+            )
 
         self.train_prop = train_prop
         self._stat_func = stat_func
@@ -202,8 +217,10 @@ class _TSLocalStat(BaseModel):
         self.loc_mean_fit = self._stat_func(y[-last_ind:])
 
         if not np.isscalar(self.loc_mean_fit):
-            raise ValueError("Local statistical model demands a function "
-                             "that return a single scalar value.")
+            raise ValueError(
+                "Local statistical model demands a function "
+                "that return a single scalar value."
+            )
 
         self._fitted = True
 
@@ -215,8 +232,10 @@ class _TSLocalStat(BaseModel):
             raise ValueError("Model is not fitted.")
 
         if np.any(X < self.last_timestamp):
-            raise ValueError("Timestamps to predict can't be smaller than "
-                             "the last fitted timestamp.")
+            raise ValueError(
+                "Timestamps to predict can't be smaller than "
+                "the last fitted timestamp."
+            )
 
         return np.full(fill_value=self.loc_mean_fit, shape=X.shape)
 
@@ -228,6 +247,7 @@ class TSLocalMean(_TSLocalStat):
     observations, and use the obtained value as the forecasted value
     for future timestamps.
     """
+
     def __init__(self, train_prop: float = 0.25):
         super().__init__(stat_func=np.mean, train_prop=train_prop)
 
@@ -239,6 +259,7 @@ class TSLocalMedian(_TSLocalStat):
     observations, and use the obtained value as the forecasted value
     for future timestamps.
     """
+
     def __init__(self, train_prop: float = 0.25):
         super().__init__(stat_func=np.median, train_prop=train_prop)
 
@@ -250,9 +271,12 @@ class TSSine(BaseModel):
     `A`, `w`, `p` and `c` are parameters to be optimized from the fitted
     data.
     """
-    def __init__(self,
-                 random_state: t.Optional[int] = None,
-                 opt_initial_guess: bool = True):
+
+    def __init__(
+        self,
+        random_state: t.Optional[int] = None,
+        opt_initial_guess: bool = True,
+    ):
         """Init the sine forecasting model.
 
         Parameters
@@ -268,8 +292,9 @@ class TSSine(BaseModel):
         self.A, self.w, self.p, self.c = 4 * [-1.0]
 
         self._func = lambda t, A, w, p, c: A * np.sin(w * t + p) + c
-        self._fit_func = lambda t: self.A * np.sin(self.w * t + self.p
-                                                   ) + self.c
+        self._fit_func = (
+            lambda t: self.A * np.sin(self.w * t + self.p) + self.c
+        )
 
         self.random_state = random_state
         self.opt_initial_guess = opt_initial_guess
@@ -299,11 +324,9 @@ class TSSine(BaseModel):
         guess = self._make_initial_guess(X=X, y=y)
 
         try:
-            popt = scipy.optimize.curve_fit(self._func,
-                                            X.ravel(),
-                                            y,
-                                            p0=guess,
-                                            check_finite=False)[0]
+            popt = scipy.optimize.curve_fit(
+                self._func, X.ravel(), y, p0=guess, check_finite=False
+            )[0]
 
             self.A, self.w, self.p, self.c = popt
 
@@ -328,6 +351,7 @@ class TSExp(BaseModel):
     The exponential model is in the form by y(t) = a * exp(b * t) + c, where
     `a`, `b`, and `c` are parameters to be optimized from the fitted data.
     """
+
     def __init__(self):
         """Init an exponential forecasting model."""
         # pylint: disable=C0103
@@ -346,11 +370,9 @@ class TSExp(BaseModel):
         guess = np.asarray([a_0, b_0, c_0], dtype=float)
 
         try:
-            popt = scipy.optimize.curve_fit(self._func,
-                                            X.ravel(),
-                                            y,
-                                            p0=guess,
-                                            check_finite=False)[0]
+            popt = scipy.optimize.curve_fit(
+                self._func, X.ravel(), y, p0=guess, check_finite=False
+            )[0]
 
             self.a, self.b, self.c = popt
 

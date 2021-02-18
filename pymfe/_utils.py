@@ -8,27 +8,34 @@ import numpy as np
 import pandas as pd
 
 
-def apply_on_tiles(ts: np.ndarray, num_tiles: int,
-                   func: t.Callable[[np.ndarray],
-                                    t.Any], *args, **kwargs) -> np.ndarray:
+def apply_on_tiles(
+    ts: np.ndarray,
+    num_tiles: int,
+    func: t.Callable[[np.ndarray], t.Any],
+    *args,
+    **kwargs
+) -> np.ndarray:
     """Apply a function on time-series tiles (non-overlapping windows)."""
     if num_tiles > 0.5 * ts.size:
-        raise ValueError("'num_tiles' ({}) larger than half the "
-                         "time-series size ({}).".format(
-                             num_tiles, 0.5 * ts.size))
+        raise ValueError(
+            "'num_tiles' ({}) larger than half the "
+            "time-series size ({}).".format(num_tiles, 0.5 * ts.size)
+        )
 
     res = np.array(
         [
             func(split, *args, **kwargs)  # type: ignore
             for split in np.array_split(ts, num_tiles)
         ],
-        dtype=float)
+        dtype=float,
+    )
 
     return res
 
 
-def process_window_size(ts: np.ndarray, window_size: t.Union[float,
-                                                             int]) -> int:
+def process_window_size(
+    ts: np.ndarray, window_size: t.Union[float, int]
+) -> int:
     """Standardize rolling window sizes.
 
     The following steps are made in this method:
@@ -41,8 +48,9 @@ def process_window_size(ts: np.ndarray, window_size: t.Union[float,
             value at the center of the window.
     """
     if window_size <= 0:
-        raise ValueError("'window_size' must be positive (got {})."
-                         "".format(window_size))
+        raise ValueError(
+            "'window_size' must be positive (got {})." "".format(window_size)
+        )
 
     if 0 < window_size < 1:
         window_size = max(1, int(np.ceil(window_size * ts.size)))
@@ -59,8 +67,9 @@ def process_window_size(ts: np.ndarray, window_size: t.Union[float,
     return int(window_size)
 
 
-def standardize_ts(ts: np.ndarray,
-                   ts_scaled: t.Optional[np.ndarray] = None) -> np.ndarray:
+def standardize_ts(
+    ts: np.ndarray, ts_scaled: t.Optional[np.ndarray] = None
+) -> np.ndarray:
     """Standardize (z-score normalization) time-series."""
     if ts_scaled is None:
         if not isinstance(ts, np.ndarray):
@@ -75,12 +84,12 @@ def standardize_ts(ts: np.ndarray,
 
 
 def get_rolling_window(
-        ts: np.ndarray,
-        window_size: t.Union[float, int],
-        center: bool = True,
-        scale: bool = True,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
+    ts: np.ndarray,
+    window_size: t.Union[float, int],
+    center: bool = True,
+    scale: bool = True,
+    ts_scaled: t.Optional[np.ndarray] = None,
+    ts_rol_win: t.Optional[pd.core.window.rolling.Rolling] = None,
 ) -> pd.core.window.rolling.Rolling:
     """Apply a function on time-series rolling (overlapping) windows.
 
@@ -102,9 +111,9 @@ def get_rolling_window(
 
 
 def sample_data(
-        ts: np.ndarray,
-        lm_sample_frac: float,
-        X: t.Optional[np.ndarray] = None,
+    ts: np.ndarray,
+    lm_sample_frac: float,
+    X: t.Optional[np.ndarray] = None,
 ) -> t.Union[np.ndarray, t.Tuple[np.ndarray, np.ndarray]]:
     """Select ``lm_sample_frac`` percent of data from ``ts``.
 
@@ -118,8 +127,10 @@ def sample_data(
     given. Tipically, ``X`` is the timestamps of each ``ts`` observation.
     """
     if not 0.0 < lm_sample_frac <= 1.0:
-        raise ValueError("'lm_sample_frac' must be in (0, 1] range (got {})."
-                         "".format(lm_sample_frac))
+        raise ValueError(
+            "'lm_sample_frac' must be in (0, 1] range (got {})."
+            "".format(lm_sample_frac)
+        )
 
     threshold = int(np.ceil(ts.size * lm_sample_frac))
 
@@ -135,8 +146,9 @@ def sample_data(
     return ts[-threshold:]
 
 
-def find_plateau_pt(arr: np.ndarray,
-                    arr_diff: t.Optional[np.ndarray] = None) -> np.ndarray:
+def find_plateau_pt(
+    arr: np.ndarray, arr_diff: t.Optional[np.ndarray] = None
+) -> np.ndarray:
     """Find plateau points in array.
 
     ``arr_diff`` is the first-order differenced ``arr``, which can be
@@ -148,8 +160,9 @@ def find_plateau_pt(arr: np.ndarray,
 
     arr_diff_2 = np.diff(arr_diff)
 
-    res = np.logical_and(np.isclose(arr_diff_2, 0),
-                         np.isclose(arr_diff[:-1], 0))
+    res = np.logical_and(
+        np.isclose(arr_diff_2, 0), np.isclose(arr_diff[:-1], 0)
+    )
 
     return np.hstack((False, res, False))
 
@@ -160,14 +173,17 @@ def find_crit_pt(arr: np.ndarray, type_: str) -> np.ndarray:
     ``type`` must be in {"min", "max", "plateau", "non-plateau", "any"}.
     """
     if arr.size <= 2:
-        raise ValueError("Array too small (size {}). Need at least "
-                         "3 elements.".format(arr.size))
+        raise ValueError(
+            "Array too small (size {}). Need at least "
+            "3 elements.".format(arr.size)
+        )
 
     VALID_TYPES = {"min", "max", "plateau", "non-plateau", "any"}
 
     if type_ not in VALID_TYPES:
-        raise ValueError("'type_' must be in {} (got '{}')."
-                         "".format(type_, VALID_TYPES))
+        raise ValueError(
+            "'type_' must be in {} (got '{}')." "".format(type_, VALID_TYPES)
+        )
 
     # Note: first discrete derivative
     arr_diff_1 = np.diff(arr)
@@ -198,12 +214,13 @@ def find_crit_pt(arr: np.ndarray, type_: str) -> np.ndarray:
 
 
 def fit_gaussian_process(
-        ts: np.ndarray,
-        random_state: t.Optional[int] = None,
-        return_residuals: bool = False,
-        ts_scaled: t.Optional[np.ndarray] = None,
-        gaussian_model: t.Optional[
-            sklearn.gaussian_process.GaussianProcessRegressor] = None,
+    ts: np.ndarray,
+    random_state: t.Optional[int] = None,
+    return_residuals: bool = False,
+    ts_scaled: t.Optional[np.ndarray] = None,
+    gaussian_model: t.Optional[
+        sklearn.gaussian_process.GaussianProcessRegressor
+    ] = None,
 ) -> t.Union[np.ndarray, sklearn.gaussian_process.GaussianProcessRegressor]:
     """Fit a Gaussian Process model to the time-series data.
 
@@ -217,7 +234,8 @@ def fit_gaussian_process(
 
     if gaussian_model is None:
         gaussian_model = sklearn.gaussian_process.GaussianProcessRegressor(
-            copy_X_train=False, random_state=random_state)
+            copy_X_train=False, random_state=random_state
+        )
 
         gaussian_model.fit(X=timestamps, y=ts_scaled)
 
@@ -227,12 +245,14 @@ def fit_gaussian_process(
     return gaussian_model
 
 
-def calc_ioe_stats(ts: np.ndarray,
-                   funcs: t.Collection[t.Callable[[np.ndarray], float]],
-                   ts_scaled: t.Optional[np.ndarray] = None,
-                   step_size: float = 0.05,
-                   max_it: int = 1024,
-                   differentiate: bool = False) -> np.ndarray:
+def calc_ioe_stats(
+    ts: np.ndarray,
+    funcs: t.Collection[t.Callable[[np.ndarray], float]],
+    ts_scaled: t.Optional[np.ndarray] = None,
+    step_size: float = 0.05,
+    max_it: int = 1024,
+    differentiate: bool = False,
+) -> np.ndarray:
     """Get statistics using the iterative outlier exclusion strategy.
 
     In the iterative outlier exclusion, a uniformly spaced set of thresholds
@@ -286,8 +306,9 @@ def calc_ioe_stats(ts: np.ndarray,
         DOI: 10.1098/rsif.2013.0048
     """
     if step_size <= 0:
-        raise ValueError("'step_size' must be positive (got {})."
-                         "".format(step_size))
+        raise ValueError(
+            "'step_size' must be positive (got {})." "".format(step_size)
+        )
     try:
         if len(funcs) == 0:
             raise ValueError("'funcs' is empty.")
@@ -310,8 +331,10 @@ def calc_ioe_stats(ts: np.ndarray,
         threshold += step_size
         outlier_tsteps = np.flatnonzero(ts_abs >= threshold)
 
-        if (outlier_tsteps.size < 0.02 * ts_scaled.size
-                or outlier_tsteps.size <= 1):
+        if (
+            outlier_tsteps.size < 0.02 * ts_scaled.size
+            or outlier_tsteps.size <= 1
+        ):
             break
 
         diff_tsteps = np.diff(outlier_tsteps, int(differentiate))
@@ -327,12 +350,14 @@ def calc_ioe_stats(ts: np.ndarray,
     return ioe_stats.T
 
 
-def apply_on_samples(ts: np.ndarray,
-                     func: t.Callable[..., float],
-                     num_samples: int = 128,
-                     sample_size_frac: float = 0.2,
-                     random_state: t.Optional[int] = None,
-                     **kwargs) -> np.ndarray:
+def apply_on_samples(
+    ts: np.ndarray,
+    func: t.Callable[..., float],
+    num_samples: int = 128,
+    sample_size_frac: float = 0.2,
+    random_state: t.Optional[int] = None,
+    **kwargs
+) -> np.ndarray:
     """Apply ``func`` on time-series random samples.
 
     The samples are ``num_samples`` consecutive observations from the
@@ -369,8 +394,10 @@ def apply_on_samples(ts: np.ndarray,
         return np.empty(0)
 
     if not 0 < sample_size_frac < 1:
-        raise ValueError("'sample_size_frac' must be in (0, 1) "
-                         "range (got {}).".format(sample_size_frac))
+        raise ValueError(
+            "'sample_size_frac' must be in (0, 1) "
+            "range (got {}).".format(sample_size_frac)
+        )
 
     if random_state is not None:
         np.random.seed(random_state)
@@ -378,17 +405,22 @@ def apply_on_samples(ts: np.ndarray,
     sample_size = int(np.ceil(ts.size * sample_size_frac))
     start_inds = np.random.randint(ts.size - sample_size + 1, size=num_samples)
 
-    res = np.array([
-        func(ts[s_ind:s_ind + sample_size], **kwargs) for s_ind in start_inds
-    ])
+    res = np.array(
+        [
+            func(ts[s_ind : s_ind + sample_size], **kwargs)
+            for s_ind in start_inds
+        ]
+    )
 
     return res
 
 
-def discretize(ts: np.ndarray,
-               num_bins: int,
-               strategy: str = "equal-width",
-               dtype: t.Type = int) -> np.ndarray:
+def discretize(
+    ts: np.ndarray,
+    num_bins: int,
+    strategy: str = "equal-width",
+    dtype: t.Type = int,
+) -> np.ndarray:
     """Discretize a time-series using a histogram.
 
     Parameters
@@ -415,8 +447,10 @@ def discretize(ts: np.ndarray,
     VALID_METHODS = {"equal-width", "equiprobable"}
 
     if strategy not in VALID_METHODS:
-        raise ValueError("'strategy' must be in {} (got {})."
-                         "".format(VALID_METHODS, strategy))
+        raise ValueError(
+            "'strategy' must be in {} (got {})."
+            "".format(VALID_METHODS, strategy)
+        )
 
     if strategy == "equal-width":
         bins = np.histogram(ts, num_bins)[1][:-1]

@@ -144,7 +144,7 @@ VALID_MFECLASSES = (
     info_theory.MFETSInfoTheory,
 )  # type: t.Tuple
 
-VALID_SUMMARY = (*_summary.SUMMARY_METHODS, )  # type: t.Tuple[str, ...]
+VALID_SUMMARY = (*_summary.SUMMARY_METHODS,)  # type: t.Tuple[str, ...]
 
 VALID_TIMEOPT = (
     "avg",
@@ -159,7 +159,7 @@ _RESCALE_SCALERS = {
     "robust": sklearn.preprocessing.RobustScaler,
 }
 
-VALID_RESCALE = (*_RESCALE_SCALERS, )
+VALID_RESCALE = (*_RESCALE_SCALERS,)
 
 TIMEOPT_AVG_PREFIX = "avg"
 
@@ -174,8 +174,9 @@ POSTPROCESS_PREFIX = "postprocess_"
 TypeMtdTuple = t.Tuple[str, t.Callable[[], t.Any]]
 """Type annotation which describes the a metafeature method tuple."""
 
-TypeExtMtdTuple = t.Tuple[str, t.Callable[[], t.Any],
-                          t.Tuple[str, ...], t.Tuple[str, ...]]
+TypeExtMtdTuple = t.Tuple[
+    str, t.Callable[[], t.Any], t.Tuple[str, ...], t.Tuple[str, ...]
+]
 """Type annotation which extends TypeMtdTuple with extra fields."""
 
 _TYPE_NUMERIC = (
@@ -212,11 +213,13 @@ _EXCEPTIONS = (
 """Common exceptions of metafeature extraction."""
 
 
-def warning_format(message: str,
-                   category: t.Type[Warning],
-                   filename: str,
-                   lineno: int,
-                   line: str = None) -> str:
+def warning_format(
+    message: str,
+    category: t.Type[Warning],
+    filename: str,
+    lineno: int,
+    line: str = None,
+) -> str:
     """Change warnings format to a simpler one.
 
     Args:
@@ -240,10 +243,11 @@ def warning_format(message: str,
 warnings.formatwarning = warning_format
 
 
-def _check_values_in_group(value: t.Union[str, t.Iterable[str]],
-                           valid_group: t.Iterable[str],
-                           wildcard: t.Optional[str] = "all"
-                           ) -> t.Tuple[t.Tuple[str, ...], t.Tuple[str, ...]]:
+def _check_values_in_group(
+    value: t.Union[str, t.Iterable[str]],
+    valid_group: t.Iterable[str],
+    wildcard: t.Optional[str] = "all",
+) -> t.Tuple[t.Tuple[str, ...], t.Tuple[str, ...]]:
     """Checks if a value is in a set or a set of values is a subset of a set.
 
     Args:
@@ -269,8 +273,9 @@ def _check_values_in_group(value: t.Union[str, t.Iterable[str]],
     """
 
     if not isinstance(value, collections.Iterable):
-        raise TypeError("Parameter type is not "
-                        "consistent ({0}).".format(type(value)))
+        raise TypeError(
+            "Parameter type is not " "consistent ({0}).".format(type(value))
+        )
 
     in_group = tuple()  # type: t.Tuple[str, ...]
     not_in_group = tuple()  # type: t.Tuple[str, ...]
@@ -281,10 +286,10 @@ def _check_values_in_group(value: t.Union[str, t.Iterable[str]],
             in_group = tuple(valid_group)
 
         elif value in valid_group:
-            in_group = (value, )
+            in_group = (value,)
 
         else:
-            not_in_group = (value, )
+            not_in_group = (value,)
 
     else:
         value_set = set(map(str.lower, value))
@@ -298,11 +303,11 @@ def _check_values_in_group(value: t.Union[str, t.Iterable[str]],
 
 
 def get_prefixed_mtds_from_class(
-        class_obj: t.Any,
-        prefix: str,
-        only_name: bool = False,
-        prefix_removal: bool = False,
-        ) -> t.Union[t.List[str], t.List[TypeMtdTuple]]:
+    class_obj: t.Any,
+    prefix: str,
+    only_name: bool = False,
+    prefix_removal: bool = False,
+) -> t.Union[t.List[str], t.List[TypeMtdTuple]]:
     """Get all class methods from ``class_obj`` prefixed with ``prefix``.
 
     Args:
@@ -326,7 +331,8 @@ def get_prefixed_mtds_from_class(
             method names.
     """
     class_methods = inspect.getmembers(
-        class_obj, predicate=inspect.ismethod)  # type: t.List[TypeMtdTuple]
+        class_obj, predicate=inspect.ismethod
+    )  # type: t.List[TypeMtdTuple]
 
     # It is assumed that all feature-extraction related methods
     # name are all prefixed with "MTF_PREFIX" and all precomputa-
@@ -353,13 +359,12 @@ def get_prefixed_mtds_from_class(
 
 
 def _get_all_prefixed_mtds(
-        prefix: str,
-        groups: t.Tuple[str, ...],
-        update_groups_by: t.Optional[t.Union[t.FrozenSet[str],
-                                             t.Set[str]]] = None,
-        prefix_removal: bool = False,
-        custom_class_: t.Any = None,
-        ) -> t.Dict[str, t.Tuple]:
+    prefix: str,
+    groups: t.Tuple[str, ...],
+    update_groups_by: t.Optional[t.Union[t.FrozenSet[str], t.Set[str]]] = None,
+    prefix_removal: bool = False,
+    custom_class_: t.Any = None,
+) -> t.Dict[str, t.Tuple]:
     """Get all methods prefixed with ``prefix`` in predefined feature ``groups``.
 
     The predefined metafeature groups are inside ``VALID_GROUPS`` attribute.
@@ -411,14 +416,13 @@ def _get_all_prefixed_mtds(
         verify_classes = tuple(VALID_MFECLASSES)
 
     else:
-        verify_groups = ("test_methods", )
-        verify_classes = (custom_class_, )
+        verify_groups = ("test_methods",)
+        verify_classes = (custom_class_,)
 
     methods_by_group = {
         ft_type_id: get_prefixed_mtds_from_class(
-            class_obj=mfe_class,
-            prefix=prefix,
-            prefix_removal=prefix_removal)
+            class_obj=mfe_class, prefix=prefix, prefix_removal=prefix_removal
+        )
         for ft_type_id, mfe_class in zip(verify_groups, verify_classes)
         if ft_type_id in groups or custom_class_ is not None
     }
@@ -452,7 +456,8 @@ def _get_all_prefixed_mtds(
 
 
 def _preprocess_iterable_arg(
-        values: t.Union[str, t.Iterable[str]]) -> t.List[str]:
+    values: t.Union[str, t.Iterable[str]]
+) -> t.List[str]:
     """Process ``values`` to a canonical form.
 
     This canonical form consists in removing repeated elements from ``values``,
@@ -472,8 +477,9 @@ def _preprocess_iterable_arg(
     return list(map(str.lower, set(values)))
 
 
-def _extract_mtd_args(ft_mtd_callable: t.Callable,
-                      ) -> t.Tuple[t.Tuple[str, ...], t.Tuple[str, ...]]:
+def _extract_mtd_args(
+    ft_mtd_callable: t.Callable,
+) -> t.Tuple[t.Tuple[str, ...], t.Tuple[str, ...]]:
     """Extracts arguments from given method.
 
     Args:
@@ -507,10 +513,10 @@ def _extract_mtd_args(ft_mtd_callable: t.Callable,
 
 
 def summarize(
-        features: t.Union[np.ndarray, t.Sequence],
-        callable_sum: t.Callable,
-        callable_args: t.Optional[t.Dict[str, t.Any]] = None,
-        ) -> t.Union[t.Sequence, TypeNumeric]:
+    features: t.Union[np.ndarray, t.Sequence],
+    callable_sum: t.Callable,
+    callable_args: t.Optional[t.Dict[str, t.Any]] = None,
+) -> t.Union[t.Sequence, TypeNumeric]:
     """Returns ``feature`` values summarized by ``callable_sum``.
 
     Args:
@@ -554,10 +560,11 @@ def array_is_returned(mtd_callable: t.Callable) -> bool:
 
 
 def get_feat_value(
-        mtd_name: str,
-        mtd_args: t.Dict[str, t.Any],
-        mtd_callable: t.Callable,
-        suppress_warnings: bool = False) -> t.Union[TypeNumeric, np.ndarray]:
+    mtd_name: str,
+    mtd_args: t.Dict[str, t.Any],
+    mtd_callable: t.Callable,
+    suppress_warnings: bool = False,
+) -> t.Union[TypeNumeric, np.ndarray]:
     """Extract features from ``mtd_callable`` with ``mtd_args`` as args.
 
     Args:
@@ -592,23 +599,30 @@ def get_feat_value(
 
         if not suppress_warnings:
             warnings.warn(
-                "Can't extract feature '{0}'.\n Exception message: {1}.{2}"
-                .format(mtd_name, repr(type_e), "\n Will set it as 'np.nan' "
-                        "for all summary functions." if is_array else ""),
-                RuntimeWarning)
+                "Can't extract feature '{0}'.\n Exception message: {1}.{2}".format(
+                    mtd_name,
+                    repr(type_e),
+                    "\n Will set it as 'np.nan' " "for all summary functions."
+                    if is_array
+                    else "",
+                ),
+                RuntimeWarning,
+            )
 
         features = np.empty(0) if is_array else np.nan
 
     return features
 
 
-def build_mtd_kwargs(mtd_name: str,
-                     mtd_args: t.Iterable[str],
-                     mtd_mandatory: t.Iterable[str],
-                     inner_custom_args: t.Optional[t.Dict[str, t.Any]] = None,
-                     user_custom_args: t.Optional[t.Dict[str, t.Any]] = None,
-                     precomp_args: t.Optional[t.Dict[str, t.Any]] = None,
-                     suppress_warnings: bool = False) -> t.Dict[str, t.Any]:
+def build_mtd_kwargs(
+    mtd_name: str,
+    mtd_args: t.Iterable[str],
+    mtd_mandatory: t.Iterable[str],
+    inner_custom_args: t.Optional[t.Dict[str, t.Any]] = None,
+    user_custom_args: t.Optional[t.Dict[str, t.Any]] = None,
+    precomp_args: t.Optional[t.Dict[str, t.Any]] = None,
+    suppress_warnings: bool = False,
+) -> t.Dict[str, t.Any]:
     """Build a ``kwargs`` (:obj:`dict`) for a feature-extraction :obj:`callable`.
 
     Args:
@@ -662,28 +676,36 @@ def build_mtd_kwargs(mtd_name: str,
 
     callable_args = {
         custom_arg: combined_args[custom_arg]
-        for custom_arg in combined_args if custom_arg in mtd_args
+        for custom_arg in combined_args
+        if custom_arg in mtd_args
     }
 
     if not set(mtd_mandatory).issubset(callable_args):
         raise RuntimeError("Method mandatory arguments not satisfied.")
 
     if not suppress_warnings:
-        unknown_arg_set = (unknown_arg
-                           for unknown_arg in user_custom_args.keys()
-                           if unknown_arg not in mtd_args
-                           )  # type: t.Generator[str, None, None]
+        unknown_arg_set = (
+            unknown_arg
+            for unknown_arg in user_custom_args.keys()
+            if unknown_arg not in mtd_args
+        )  # type: t.Generator[str, None, None]
 
         for unknown_arg in unknown_arg_set:
             warnings.warn(
                 "Unknown argument '{0}' for method '{1}'.".format(
-                    unknown_arg, mtd_name), UserWarning)
+                    unknown_arg, mtd_name
+                ),
+                UserWarning,
+            )
 
     return callable_args
 
 
-def check_summary_warnings(value: t.Union[TypeNumeric, t.Sequence, np.ndarray],
-                           name_feature: str, name_summary: str) -> None:
+def check_summary_warnings(
+    value: t.Union[TypeNumeric, t.Sequence, np.ndarray],
+    name_feature: str,
+    name_summary: str,
+) -> None:
     """Check if there is :obj:`np.nan` within summarized values.
 
     Args:
@@ -703,12 +725,14 @@ def check_summary_warnings(value: t.Union[TypeNumeric, t.Sequence, np.ndarray],
         warnings.warn(
             "Can't summarize feature '{0}' with summary '{1}'. "
             "Will set it as 'np.nan'.".format(name_feature, name_summary),
-            RuntimeWarning)
+            RuntimeWarning,
+        )
 
 
-def convert_alias(groups_alias: t.Iterable[t.Iterable],
-                  values: t.Optional[t.Union[t.Iterable[str], str]] = None
-                  ) -> t.List[str]:
+def convert_alias(
+    groups_alias: t.Iterable[t.Iterable],
+    values: t.Optional[t.Union[t.Iterable[str], str]] = None,
+) -> t.List[str]:
     """Change the values of the alias to the groups."""
     if not values:
         values = []
@@ -729,13 +753,13 @@ def convert_alias(groups_alias: t.Iterable[t.Iterable],
 
 
 def process_generic_set(
-        values: t.Optional[t.Union[t.Iterable[str], str]],
-        group_name: str,
-        wildcard: t.Optional[str] = "all",
-        groups_alias: t.Iterable[t.Iterable] = None,
-        allow_none: bool = False,
-        allow_empty: bool = False,
-        ) -> t.Tuple[str, ...]:
+    values: t.Optional[t.Union[t.Iterable[str], str]],
+    group_name: str,
+    wildcard: t.Optional[str] = "all",
+    groups_alias: t.Iterable[t.Iterable] = None,
+    allow_none: bool = False,
+    allow_empty: bool = False,
+) -> t.Tuple[str, ...]:
     """Check if given ``values`` are in an internal valid set named ``group_name``.
 
     Args:
@@ -791,50 +815,61 @@ def process_generic_set(
         if allow_none:
             return tuple()
 
-        raise ValueError('"Values" can not be None. (while checking '
-                         'group "{}").'.format(group_name))
+        raise ValueError(
+            '"Values" can not be None. (while checking '
+            'group "{}").'.format(group_name)
+        )
 
     if values is not None and not values:
         if allow_empty:
             return tuple()
 
-        raise ValueError('"Values" can not be empty. (while checking '
-                         'group "{}")'.format(group_name))
+        raise ValueError(
+            '"Values" can not be empty. (while checking '
+            'group "{}")'.format(group_name)
+        )
 
     if group_name.upper() in ("SUMMARY", "FEATURES"):
-        raise ValueError('Forbidden "group_name" option ({}). There is a '
-                         "specify processing method for it".format(group_name))
+        raise ValueError(
+            'Forbidden "group_name" option ({}). There is a '
+            "specify processing method for it".format(group_name)
+        )
 
     _module_name = sys.modules[__name__]
 
     try:
         valid_values = inspect.getattr_static(
-            _module_name, "{0}{1}".format(VALID_VALUE_PREFIX,
-                                          group_name.upper()))
+            _module_name,
+            "{0}{1}".format(VALID_VALUE_PREFIX, group_name.upper()),
+        )
     except AttributeError:
-        raise ValueError('Invalid "group_name" "{}". Check _internal '
-                         "module documentation to verify which ones "
-                         "are available for use.".format(group_name))
+        raise ValueError(
+            'Invalid "group_name" "{}". Check _internal '
+            "module documentation to verify which ones "
+            "are available for use.".format(group_name)
+        )
 
     if groups_alias:
         values = convert_alias(groups_alias, values)
 
     in_valid_set, not_in_valid_set = _check_values_in_group(
-        value=values,
-        valid_group=valid_values,
-        wildcard=wildcard)
+        value=values, valid_group=valid_values, wildcard=wildcard
+    )
 
     if not_in_valid_set:
-        raise ValueError("Unknown values: {0}. "
-                         "Please select values in {1}.".format(
-                             not_in_valid_set, valid_values))
+        raise ValueError(
+            "Unknown values: {0}. "
+            "Please select values in {1}.".format(
+                not_in_valid_set, valid_values
+            )
+        )
 
     return in_valid_set
 
 
 def solve_group_dependencies(
-        groups: t.Tuple[str, ...],
-        ) -> t.Tuple[t.Tuple[str, ...], t.FrozenSet[str]]:
+    groups: t.Tuple[str, ...],
+) -> t.Tuple[t.Tuple[str, ...], t.FrozenSet[str]]:
     """Solve dependencies between groups.
 
     Those dependencies must be registered in ``GROUP_PREREQUISITES`` tuple.
@@ -851,7 +886,8 @@ def solve_group_dependencies(
                     cur_dependencies = {cur_dependencies}
 
                 inserted_dependencies.update(
-                    set(cur_dependencies).difference(groups))
+                    set(cur_dependencies).difference(groups)
+                )
 
     groups = tuple(set(groups).union(inserted_dependencies))
 
@@ -859,11 +895,11 @@ def solve_group_dependencies(
 
 
 def process_generic_option(
-        value: t.Optional[str],
-        group_name: str,
-        allow_none: bool = False,
-        allow_empty: bool = False,
-        ) -> t.Optional[str]:
+    value: t.Optional[str],
+    group_name: str,
+    allow_none: bool = False,
+    allow_empty: bool = False,
+) -> t.Optional[str]:
     """Check if given ``value`` is in an internal reference group of values.
 
     This function is essentially a wrapper for the ``process_generic_set``
@@ -890,16 +926,18 @@ def process_generic_option(
     """
 
     if value is not None and not isinstance(value, str):
-        raise TypeError('"value" (group name {}) must be a string-'
-                        "type object (got {}).".format(group_name,
-                                                       type(value)))
+        raise TypeError(
+            '"value" (group name {}) must be a string-'
+            "type object (got {}).".format(group_name, type(value))
+        )
 
     processed_value = process_generic_set(
         values=value,
         group_name=group_name,
         wildcard=None,
         allow_none=allow_none,
-        allow_empty=allow_empty)
+        allow_empty=allow_empty,
+    )
 
     canonical_value = None
 
@@ -913,9 +951,8 @@ def process_generic_option(
 
 
 def process_summary(
-        summary: t.Union[str, t.Iterable[str]],
-        wildcard: str = "all"
-        ) -> t.Tuple[t.Tuple[str, ...], t.Tuple[TypeExtMtdTuple, ...]]:
+    summary: t.Union[str, t.Iterable[str]], wildcard: str = "all"
+) -> t.Tuple[t.Tuple[str, ...], t.Tuple[TypeExtMtdTuple, ...]]:
     """Generate metadata from ``summary`` MFE instantiation argument.
 
     Args:
@@ -947,14 +984,14 @@ def process_summary(
         return tuple(), tuple()
 
     in_group, not_in_group = _check_values_in_group(
-        value=summary,
-        valid_group=VALID_SUMMARY,
-        wildcard=wildcard)
+        value=summary, valid_group=VALID_SUMMARY, wildcard=wildcard
+    )
 
     if not_in_group:
-        raise ValueError("Unknown summary function '{0}'. "
-                         "Please select values in {1}.".format(
-                             not_in_group, VALID_SUMMARY))
+        raise ValueError(
+            "Unknown summary function '{0}'. "
+            "Please select values in {1}.".format(not_in_group, VALID_SUMMARY)
+        )
 
     summary_methods = []  # type: t.List[TypeExtMtdTuple]
     available_sum_methods = []  # type: t.List[str]
@@ -963,13 +1000,15 @@ def process_summary(
         summary_mtd_callable = _summary.SUMMARY_METHODS.get(summary_func)
 
         if not summary_mtd_callable:
-            warnings.warn("Missing summary function "
-                          "'{0}' at _summary module.".format(
-                              summary_func),
-                          RuntimeWarning)
+            warnings.warn(
+                "Missing summary function "
+                "'{0}' at _summary module.".format(summary_func),
+                RuntimeWarning,
+            )
         else:
             summary_mtd_args, mandatory = _extract_mtd_args(
-                summary_mtd_callable)
+                summary_mtd_callable
+            )
 
             summary_mtd_pack = (
                 summary_func,
@@ -985,14 +1024,14 @@ def process_summary(
 
 
 def process_features(
-        features: t.Union[str, t.Iterable[str]],
-        groups: t.Tuple[str, ...],
-        wildcard: str = "all",
-        suppress_warnings: bool = False,
-        custom_class_: t.Any = None,
-        ) -> t.Tuple[t.Tuple[str, ...],
-                     t.Tuple[TypeExtMtdTuple, ...],
-                     t.Tuple[str, ...]]:
+    features: t.Union[str, t.Iterable[str]],
+    groups: t.Tuple[str, ...],
+    wildcard: str = "all",
+    suppress_warnings: bool = False,
+    custom_class_: t.Any = None,
+) -> t.Tuple[
+    t.Tuple[str, ...], t.Tuple[TypeExtMtdTuple, ...], t.Tuple[str, ...]
+]:
     """Generate metadata from ``features`` MFE instantiation argument.
 
     The use of this function to happen after ``process_groups`` function, as
@@ -1041,7 +1080,7 @@ def process_features(
             groups = tuple()
 
         else:
-            groups = ("custom", )
+            groups = ("custom",)
 
     processed_ft = _preprocess_iterable_arg(features)  # type: t.List[str]
 
@@ -1058,7 +1097,8 @@ def process_features(
     )  # type: t.Dict[str, t.Tuple]
 
     ft_mtds_filtered = mtds_metadata.get(
-        "methods", tuple())  # type: t.Tuple[TypeMtdTuple, ...]
+        "methods", tuple()
+    )  # type: t.Tuple[TypeMtdTuple, ...]
 
     groups = mtds_metadata.get("groups", groups)
 
@@ -1076,9 +1116,11 @@ def process_features(
         if ft_mtd_name in processed_ft:
             mtd_callable_args, mandatory = _extract_mtd_args(ft_mtd_callable)
 
-            extended_item = (*ft_mtd_tuple,
-                             mtd_callable_args,
-                             mandatory)  # type: TypeExtMtdTuple
+            extended_item = (
+                *ft_mtd_tuple,
+                mtd_callable_args,
+                mandatory,
+            )  # type: TypeExtMtdTuple
 
             ft_mtd_processed.append(extended_item)
             available_feat_names.append(ft_mtd_name)
@@ -1086,18 +1128,20 @@ def process_features(
 
     if not suppress_warnings:
         for unknown_ft in processed_ft:
-            warnings.warn("Unknown feature '{}'. You can check available "
-                          "feature names with either 'valid_metafeatures()'"
-                          " or 'metafeature_description()' methods."
-                          .format(unknown_ft), UserWarning)
+            warnings.warn(
+                "Unknown feature '{}'. You can check available "
+                "feature names with either 'valid_metafeatures()'"
+                " or 'metafeature_description()' methods.".format(unknown_ft),
+                UserWarning,
+            )
 
     return tuple(available_feat_names), tuple(ft_mtd_processed), groups
 
 
 def _patch_precomp_groups(
-        precomp_groups: t.Optional[t.Union[str, t.Iterable[str]]],
-        groups: t.Optional[t.Tuple[str, ...]] = None,
-        ) -> t.Union[str, t.Iterable[str]]:
+    precomp_groups: t.Optional[t.Union[str, t.Iterable[str]]],
+    groups: t.Optional[t.Tuple[str, ...]] = None,
+) -> t.Union[str, t.Iterable[str]]:
     """Enforce precomputation in model-based metafeatures."""
     if not precomp_groups:
         precomp_groups = set()
@@ -1112,13 +1156,14 @@ def _patch_precomp_groups(
 
 
 def process_precomp_groups(
-        precomp_groups: t.Optional[t.Union[str, t.Iterable[str]]],
-        groups: t.Optional[t.Tuple[str, ...]] = None,
-        wildcard: str = "all",
-        suppress_warnings: bool = False,
-        verbose: int = 0,
-        custom_class_: t.Any = None,
-        **kwargs) -> t.Dict[str, t.Any]:
+    precomp_groups: t.Optional[t.Union[str, t.Iterable[str]]],
+    groups: t.Optional[t.Tuple[str, ...]] = None,
+    wildcard: str = "all",
+    suppress_warnings: bool = False,
+    verbose: int = 0,
+    custom_class_: t.Any = None,
+    **kwargs
+) -> t.Dict[str, t.Any]:
     """Process ``precomp_groups`` argument while fitting into a MFE model.
 
     This function is expected to be used after ``process_groups`` function,
@@ -1169,7 +1214,8 @@ def process_precomp_groups(
         return {}
 
     processed_precomp_groups = _preprocess_iterable_arg(
-        precomp_groups)  # type: t.Sequence[str]
+        precomp_groups
+    )  # type: t.Sequence[str]
 
     if wildcard in processed_precomp_groups:
         processed_precomp_groups = groups
@@ -1182,10 +1228,14 @@ def process_precomp_groups(
                 warnings.warn(
                     " {} Unknown precomp_groups '{}'. You can check available "
                     "metafeature groups using 'valid_groups()' method.".format(
-                        VERBOSE_WARNING_SYMBOL, unknown_precomp), UserWarning)
+                        VERBOSE_WARNING_SYMBOL, unknown_precomp
+                    ),
+                    UserWarning,
+                )
 
         processed_precomp_groups = tuple(
-            set(processed_precomp_groups).intersection(groups))
+            set(processed_precomp_groups).intersection(groups)
+        )
 
     mtds_metadata = _get_all_prefixed_mtds(
         prefix=PRECOMPUTE_PREFIX,
@@ -1194,7 +1244,8 @@ def process_precomp_groups(
     )  # type: t.Dict[str, t.Tuple]
 
     precomp_mtds_filtered = mtds_metadata.get(
-        "methods", tuple())  # type: t.Tuple[TypeMtdTuple, ...]
+        "methods", tuple()
+    )  # type: t.Tuple[TypeMtdTuple, ...]
 
     del mtds_metadata
 
@@ -1216,12 +1267,16 @@ def process_precomp_groups(
             new_precomp_vals = {}
 
             if not suppress_warnings:
-                warnings.warn(" {} Something went wrong while "
-                              "precomputing '{}'. Will ignore "
-                              "this method. Error message:\n"
-                              "{}.".format(VERBOSE_WARNING_SYMBOL,
-                                           precomp_mtd_name,
-                                           repr(type_err)))
+                warnings.warn(
+                    " {} Something went wrong while "
+                    "precomputing '{}'. Will ignore "
+                    "this method. Error message:\n"
+                    "{}.".format(
+                        VERBOSE_WARNING_SYMBOL,
+                        precomp_mtd_name,
+                        repr(type_err),
+                    )
+                )
 
                 error_count += 1
 
@@ -1235,8 +1290,11 @@ def process_precomp_groups(
             _prev_precomp_len = len(precomp_items)
 
             if verbose >= 2 and new_item_count > 0:
-                print(" {} Got {} new precomputed values.".format(
-                    VERBOSE_BLOCK_END_SYMBOL, new_item_count))
+                print(
+                    " {} Got {} new precomputed values.".format(
+                        VERBOSE_BLOCK_END_SYMBOL, new_item_count
+                    )
+                )
 
             # Update kwargs to avoid recalculations iteratively
             kwargs = {
@@ -1249,19 +1307,26 @@ def process_precomp_groups(
                 cur_progress=100 * ind / len(precomp_mtds_filtered),
                 cur_mtf_name=precomp_mtd_name,
                 item_type="precomputation",
-                verbose=verbose)
+                verbose=verbose,
+            )
 
     if verbose == 1:
         _t_num_cols, _ = shutil.get_terminal_size()
-        print("\r{:<{fill}}".format(
-            "Process of precomputation finished.", fill=_t_num_cols))
+        print(
+            "\r{:<{fill}}".format(
+                "Process of precomputation finished.", fill=_t_num_cols
+            )
+        )
 
     if verbose >= 2 and error_count > 0:
-        print("\nNote: can't precompute a total of {} metafeatures, "
-              "out of {} ({:.2f}%).".format(
-                  error_count,
-                  len(precomp_mtds_filtered),
-                  100 * error_count / len(precomp_mtds_filtered)))
+        print(
+            "\nNote: can't precompute a total of {} metafeatures, "
+            "out of {} ({:.2f}%).".format(
+                error_count,
+                len(precomp_mtds_filtered),
+                100 * error_count / len(precomp_mtds_filtered),
+            )
+        )
 
     return precomp_items
 
@@ -1299,9 +1364,7 @@ def check_data(ts: t.Union[np.ndarray, list]) -> np.ndarray:
     return ts
 
 
-def isnumeric(
-        value: t.Any,
-        check_subtype: bool = True) -> bool:
+def isnumeric(value: t.Any, check_subtype: bool = True) -> bool:
     """Checks if ``value`` is a numeric type or a collection of numerics.
 
     The ``Numeric Type`` is assumed to be one of the following:
@@ -1321,9 +1384,11 @@ def isnumeric(
         bool: True if `value` is a numeric type object or a collection of
             numeric-only elements. False otherwise.
     """
-    if (check_subtype
-            and isinstance(value, (collections.Iterable, np.ndarray))
-            and not isinstance(value, str)):
+    if (
+        check_subtype
+        and isinstance(value, (collections.Iterable, np.ndarray))
+        and not isinstance(value, str)
+    ):
 
         value = np.array(value)
 
@@ -1349,7 +1414,7 @@ def remove_prefix(value: str, prefix: str) -> str:
         TypeError: if ``value`` is not a string.
     """
     if value.startswith(prefix):
-        return value[len(prefix):]
+        return value[len(prefix) :]
 
     return value
 
@@ -1390,15 +1455,13 @@ def transform_cat_gray(data_categoric: np.ndarray) -> t.Optional[np.ndarray]:
 
     _, num_col = data_categoric.shape
 
-    dummy_attr_names = [
-        "C{}".format(i) for i in range(num_col)
-    ]
+    dummy_attr_names = ["C{}".format(i) for i in range(num_col)]
 
     named_data = {
         # attr_name: data_categoric[:, attr_index]
         # We need to cast to 'str' because sometimes categorical can be set as
         # 'string'.
-        attr_name: data_categoric[:, attr_index].astype('str')
+        attr_name: data_categoric[:, attr_index].astype("str")
         for attr_index, attr_name in enumerate(dummy_attr_names)
     }
 
@@ -1416,17 +1479,19 @@ def transform_cat_onehot(data_categoric: np.ndarray) -> t.Optional[np.ndarray]:
 
     ohe = sklearn.preprocessing.OneHotEncoder(sparse=False)
 
-    one_cat_attrs = np.hstack([
-        ohe.fit_transform(data_categoric[:, attr_ind, np.newaxis])
-        for attr_ind in np.arange(num_col)
-    ])
+    one_cat_attrs = np.hstack(
+        [
+            ohe.fit_transform(data_categoric[:, attr_ind, np.newaxis])
+            for attr_ind in np.arange(num_col)
+        ]
+    )
 
     return one_cat_attrs
 
 
-def _equal_freq_discretization(data: np.ndarray,
-                               num_bins: int,
-                               tol: float = 1e-8) -> np.ndarray:
+def _equal_freq_discretization(
+    data: np.ndarray, num_bins: int, tol: float = 1e-8
+) -> np.ndarray:
     """Discretize a 1-D numeric array into an equal-frequency histogram."""
     perc_interval = 100.0 / num_bins
     perc_range = np.arange(perc_interval, 100, perc_interval)
@@ -1448,8 +1513,9 @@ def _equal_freq_discretization(data: np.ndarray,
     return np.digitize(x=data, bins=hist_divs, right=True)
 
 
-def transform_num(data_numeric: np.ndarray,
-                  num_bins: t.Optional[int] = None) -> t.Optional[np.ndarray]:
+def transform_num(
+    data_numeric: np.ndarray, num_bins: t.Optional[int] = None
+) -> t.Optional[np.ndarray]:
     """Discretize numeric data with an equal-frequency histogram.
 
     The index of the histogram bin overwrites its correspondent numeric
@@ -1479,13 +1545,14 @@ def transform_num(data_numeric: np.ndarray,
             raise TypeError('"num_bins" must be integer or NoneType.')
 
         if num_bins <= 0:
-            raise ValueError('"num_bins" must be a positive'
-                             "integer or NoneType.")
+            raise ValueError(
+                '"num_bins" must be a positive' "integer or NoneType."
+            )
 
     num_inst, _ = data_numeric.shape
 
     if not num_bins:
-        num_bins = int(num_inst**(1/3))
+        num_bins = int(num_inst ** (1 / 3))
 
     data_numeric = data_numeric.astype(float)
 
@@ -1493,14 +1560,15 @@ def transform_num(data_numeric: np.ndarray,
         func1d=_equal_freq_discretization,
         axis=0,
         arr=data_numeric,
-        num_bins=num_bins)
+        num_bins=num_bins,
+    )
 
     return digitalized_data
 
 
-def rescale_data(data: np.ndarray,
-                 option: str,
-                 args: t.Optional[t.Dict[str, t.Any]] = None) -> np.ndarray:
+def rescale_data(
+    data: np.ndarray, option: str, args: t.Optional[t.Dict[str, t.Any]] = None
+) -> np.ndarray:
     """Rescale numeric fitted data accordingly to user select option.
 
     Args:
@@ -1528,8 +1596,10 @@ def rescale_data(data: np.ndarray,
         scaler model is also raised by this function.
     """
     if option not in VALID_RESCALE:
-        raise ValueError("Unknown data rescaling option '{0}'. Please choose "
-                         "one value among {1}".format(option, VALID_RESCALE))
+        raise ValueError(
+            "Unknown data rescaling option '{0}'. Please choose "
+            "one value among {1}".format(option, VALID_RESCALE)
+        )
 
     if not args:
         args = {}
@@ -1558,20 +1628,25 @@ def check_score(score: str, groups: t.Tuple[str, ...]):
     valid_scoring = scoring.VALID_SCORING
 
     if score is not None and not isinstance(score, str):
-        raise ValueError('"score" is not None or str but "{0}" was passed.'
-                         'The valid values are {1}'.format(
-                             score, list(valid_scoring.keys())))
+        raise ValueError(
+            '"score" is not None or str but "{0}" was passed.'
+            "The valid values are {1}".format(
+                score, list(valid_scoring.keys())
+            )
+        )
 
     if "landmarking" in groups:
         if score is None:
             raise ValueError(
-                'Landmarking metafeatures need a score metric.'
+                "Landmarking metafeatures need a score metric."
                 'One of the following "score" values is required:'
-                '{0}'.format(list(valid_scoring.keys())))
+                "{0}".format(list(valid_scoring.keys()))
+            )
         if score not in valid_scoring:
             raise ValueError(
                 'One of the following "score" values is required:'
-                '{0}'.format(list(valid_scoring.keys())))
+                "{0}".format(list(valid_scoring.keys()))
+            )
         return valid_scoring[score]
 
     return None
@@ -1593,9 +1668,10 @@ def check_group_dependencies(groups: t.Iterable[str]) -> t.Set[str]:
 
 
 def select_results_by_classes(
-        mtf_names: t.Sequence[str],
-        class_names: t.Union[str, t.Iterable[str]],
-        include_dependencies: bool = False) -> t.List[int]:
+    mtf_names: t.Sequence[str],
+    class_names: t.Union[str, t.Iterable[str]],
+    include_dependencies: bool = False,
+) -> t.List[int]:
     """Get indexes of metafeatures related to given ``class_names``."""
     if isinstance(class_names, str):
         class_names = {class_names}
@@ -1614,7 +1690,8 @@ def select_results_by_classes(
                 class_obj=VALID_MFECLASSES[VALID_GROUPS.index(class_name)],
                 prefix=MTF_PREFIX,
                 only_name=True,
-                prefix_removal=True)
+                prefix_removal=True,
+            )
 
             classes_mtd_names.update(_aux)  # type: ignore
 
@@ -1632,11 +1709,12 @@ def select_results_by_classes(
 
 
 def post_processing(
-        results: t.Tuple[t.List, ...],
-        groups: t.Tuple[str, ...],
-        suppress_warnings: bool = False,
-        custom_class_: t.Any = None,
-        **kwargs) -> None:
+    results: t.Tuple[t.List, ...],
+    groups: t.Tuple[str, ...],
+    suppress_warnings: bool = False,
+    custom_class_: t.Any = None,
+    **kwargs
+) -> None:
     """Detect and apply post-processing methods in metafeatures.
 
     This function should be used after the metafeature extraction.
@@ -1669,7 +1747,8 @@ def post_processing(
     )  # type: t.Dict[str, t.Tuple]
 
     postprocess_mtds = mtds_metadata.get(
-        "methods", tuple())  # type: t.Tuple[TypeMtdTuple, ...]
+        "methods", tuple()
+    )  # type: t.Tuple[TypeMtdTuple, ...]
 
     del mtds_metadata
 
@@ -1691,47 +1770,54 @@ def post_processing(
     for postprocess_mtd_name, postprocess_mtd_callable in postprocess_mtds:
         extra_inner_args["class_indexes"] = select_results_by_classes(
             mtf_names=mtf_names,
-            class_names=remove_prefix(value=postprocess_mtd_name,
-                                      prefix=POSTPROCESS_PREFIX).split("_"))
+            class_names=remove_prefix(
+                value=postprocess_mtd_name, prefix=POSTPROCESS_PREFIX
+            ).split("_"),
+        )
 
         try:
             new_results = postprocess_mtd_callable(  # type: ignore
-                **extra_inner_args,
-                **kwargs)
+                **extra_inner_args, **kwargs
+            )
 
             if new_results:
                 if len(new_results) != len(results):
-                    raise ValueError("Postprocessing result has length '{}'. "
-                                     "Expecting '{}'.".format(len(new_results),
-                                                              len(results)))
+                    raise ValueError(
+                        "Postprocessing result has length '{}'. "
+                        "Expecting '{}'.".format(
+                            len(new_results), len(results)
+                        )
+                    )
 
                 for res_list_old, res_list_new in zip(results, new_results):
                     res_list_old += res_list_new
 
         except _EXCEPTIONS as type_err:
             if not suppress_warnings:
-                warnings.warn("Something went wrong while "
-                              "postprocessing '{0}'. Will ignore "
-                              "this method. Error message:\n"
-                              "{1}.".format(postprocess_mtd_name,
-                                            repr(type_err)))
+                warnings.warn(
+                    "Something went wrong while "
+                    "postprocessing '{0}'. Will ignore "
+                    "this method. Error message:\n"
+                    "{1}.".format(postprocess_mtd_name, repr(type_err))
+                )
 
     if remove_groups:
         kwargs.pop("groups")
 
 
 def print_verbose_progress(
-        cur_progress: float,
-        cur_mtf_name: str,
-        item_type: str,
-        verbose: int = 0) -> None:
+    cur_progress: float, cur_mtf_name: str, item_type: str, verbose: int = 0
+) -> None:
     """Print messages about extraction progress based on ``verbose``."""
     if verbose <= 0:
         return
 
     if verbose >= 2:
-        print("Done with '{}' {} (progress of {:.2f}%)."
-              .format(cur_mtf_name, item_type, cur_progress))
+        print(
+            "Done with '{}' {} (progress of {:.2f}%).".format(
+                cur_mtf_name, item_type, cur_progress
+            )
+        )
         return
 
     _t_num_cols, _ = shutil.get_terminal_size()
@@ -1742,8 +1828,14 @@ def print_verbose_progress(
 
     _total_prog_symb = int(cur_progress * _t_num_cols / 100)
 
-    print("".join([
-        "\r[",
-        _total_prog_symb * "#",
-        (_t_num_cols - _total_prog_symb) * ".",
-        "]{:.2f}%".format(cur_progress)]), end="")
+    print(
+        "".join(
+            [
+                "\r[",
+                _total_prog_symb * "#",
+                (_t_num_cols - _total_prog_symb) * ".",
+                "]{:.2f}%".format(cur_progress),
+            ]
+        ),
+        end="",
+    )

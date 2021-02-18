@@ -18,12 +18,15 @@ except ImportError:
 
 class MFETSAutocorr:
     """Extract time-series meta-features from Autocorr group."""
+
     @classmethod
-    def precompute_detrended_acf(cls,
-                                 ts: np.ndarray,
-                                 nlags: t.Optional[int] = None,
-                                 adjusted: bool = True,
-                                 **kwargs) -> t.Dict[str, np.ndarray]:
+    def precompute_detrended_acf(
+        cls,
+        ts: np.ndarray,
+        nlags: t.Optional[int] = None,
+        adjusted: bool = True,
+        **kwargs
+    ) -> t.Dict[str, np.ndarray]:
         """Precompute the detrended autocorrelation function.
 
         Parameters
@@ -53,15 +56,15 @@ class MFETSAutocorr:
 
         if "detrended_acfs" not in kwargs:
             precomp_vals["detrended_acfs"] = cls.ft_acf_detrended(
-                ts=ts, nlags=nlags, adjusted=adjusted)
+                ts=ts, nlags=nlags, adjusted=adjusted
+            )
 
         return precomp_vals
 
     @classmethod
-    def precompute_gaussian_model(cls,
-                                  ts: np.ndarray,
-                                  random_state: t.Optional[int] = None,
-                                  **kwargs) -> t.Dict[str, t.Any]:
+    def precompute_gaussian_model(
+        cls, ts: np.ndarray, random_state: t.Optional[int] = None, **kwargs
+    ) -> t.Dict[str, t.Any]:
         """Precompute a gaussian process model.
 
         Parameters
@@ -101,31 +104,36 @@ class MFETSAutocorr:
 
         if "gaussian_model" not in kwargs:
             gaussian_model = _utils.fit_gaussian_process(
-                ts=ts, ts_scaled=ts_scaled, random_state=random_state)
+                ts=ts, ts_scaled=ts_scaled, random_state=random_state
+            )
             precomp_vals["gaussian_model"] = gaussian_model
 
-        gaussian_model = kwargs.get("gaussian_model",
-                                    precomp_vals["gaussian_model"])
+        gaussian_model = kwargs.get(
+            "gaussian_model", precomp_vals["gaussian_model"]
+        )
 
         if "gaussian_resid" not in kwargs:
             gaussian_resid = _utils.fit_gaussian_process(
                 ts=ts,
                 ts_scaled=ts_scaled,
                 gaussian_model=gaussian_model,
-                return_residuals=True)
+                return_residuals=True,
+            )
 
             precomp_vals["gaussian_resid"] = gaussian_resid
 
         return precomp_vals
 
     @classmethod
-    def _calc_acf(cls,
-                  ts: np.ndarray,
-                  nlags: t.Optional[int] = None,
-                  adjusted: bool = True,
-                  detrend: bool = True,
-                  detrended_acfs: t.Optional[np.ndarray] = None,
-                  ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
+    def _calc_acf(
+        cls,
+        ts: np.ndarray,
+        nlags: t.Optional[int] = None,
+        adjusted: bool = True,
+        detrend: bool = True,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        ts_detrended: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Precompute the autocorrelation function.
 
         Parameters
@@ -159,8 +167,9 @@ class MFETSAutocorr:
             lags of the detrended time-series. If `detrend` is False, the
             autocorrelation function up to `nlags` lags of the time-series.
         """
-        if detrended_acfs is not None and (nlags is None
-                                           or detrended_acfs.size == nlags):
+        if detrended_acfs is not None and (
+            nlags is None or detrended_acfs.size == nlags
+        ):
             return detrended_acfs
 
         if detrend and ts_detrended is None:
@@ -176,19 +185,20 @@ class MFETSAutocorr:
         if nlags is None:
             nlags = ts.size // 2
 
-        acf = statsmodels.tsa.stattools.acf(ts_detrended,
-                                            nlags=nlags,
-                                            adjusted=adjusted,
-                                            fft=True)
+        acf = statsmodels.tsa.stattools.acf(
+            ts_detrended, nlags=nlags, adjusted=adjusted, fft=True
+        )
         return acf[1:]
 
     @classmethod
-    def _calc_pacf(cls,
-                   ts: np.ndarray,
-                   nlags: t.Optional[int] = None,
-                   method: str = "ols-adjusted",
-                   detrend: bool = True,
-                   ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
+    def _calc_pacf(
+        cls,
+        ts: np.ndarray,
+        nlags: t.Optional[int] = None,
+        method: str = "ols-adjusted",
+        detrend: bool = True,
+        ts_detrended: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Precompute the partial autocorrelation function.
 
         Parameters
@@ -234,20 +244,20 @@ class MFETSAutocorr:
         if ts_detrended is None:
             ts_detrended = ts
 
-        pacf = statsmodels.tsa.stattools.pacf(ts_detrended,
-                                              nlags=nlags,
-                                              method=method)
+        pacf = statsmodels.tsa.stattools.pacf(
+            ts_detrended, nlags=nlags, method=method
+        )
         return pacf[1:]
 
     @classmethod
     def _first_acf_below_threshold(
-            cls,
-            ts: np.ndarray,
-            threshold: float,
-            abs_acf_vals: bool = False,
-            max_nlags: t.Optional[int] = None,
-            adjusted: bool = True,
-            detrended_acfs: t.Optional[np.ndarray] = None,
+        cls,
+        ts: np.ndarray,
+        threshold: float,
+        abs_acf_vals: bool = False,
+        max_nlags: t.Optional[int] = None,
+        adjusted: bool = True,
+        detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> t.Union[int, float]:
         """First autocorrelation lag below a given threshold.
 
@@ -281,10 +291,12 @@ class MFETSAutocorr:
             given ``threshold``, if any. Return `np.nan` if no such index is
             found.
         """
-        detrended_acfs = cls._calc_acf(ts=ts,
-                                       nlags=max_nlags,
-                                       adjusted=adjusted,
-                                       detrended_acfs=detrended_acfs)
+        detrended_acfs = cls._calc_acf(
+            ts=ts,
+            nlags=max_nlags,
+            adjusted=adjusted,
+            detrended_acfs=detrended_acfs,
+        )
 
         if abs_acf_vals:
             # Note: in this case, we are testing if
@@ -300,10 +312,12 @@ class MFETSAutocorr:
             return np.nan
 
     @classmethod
-    def ft_acf(cls,
-               ts: np.ndarray,
-               nlags: t.Optional[int] = None,
-               adjusted: bool = True) -> np.ndarray:
+    def ft_acf(
+        cls,
+        ts: np.ndarray,
+        nlags: t.Optional[int] = None,
+        adjusted: bool = True,
+    ) -> np.ndarray:
         """Autocorrelation function of the time-series.
 
         Parameters
@@ -323,19 +337,19 @@ class MFETSAutocorr:
         :obj:`np.ndarray`
             The autocorrelation function up to `nlags` lags of the time-series.
         """
-        return cls._calc_acf(ts=ts,
-                             nlags=nlags,
-                             adjusted=adjusted,
-                             detrend=False)
+        return cls._calc_acf(
+            ts=ts, nlags=nlags, adjusted=adjusted, detrend=False
+        )
 
     @classmethod
     def ft_acf_detrended(
-            cls,
-            ts: np.ndarray,
-            nlags: t.Optional[int] = None,
-            adjusted: bool = True,
-            ts_detrended: t.Optional[np.ndarray] = None,
-            detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        nlags: t.Optional[int] = None,
+        adjusted: bool = True,
+        ts_detrended: t.Optional[np.ndarray] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Autocorrelation function of the detrended time-series.
 
         Parameters
@@ -364,21 +378,25 @@ class MFETSAutocorr:
             The autocorrelation function up to `nlags` lags of the detrended
             time-series.
         """
-        return cls._calc_acf(ts=ts,
-                             nlags=nlags,
-                             adjusted=adjusted,
-                             detrend=True,
-                             detrended_acfs=detrended_acfs,
-                             ts_detrended=ts_detrended)
+        return cls._calc_acf(
+            ts=ts,
+            nlags=nlags,
+            adjusted=adjusted,
+            detrend=True,
+            detrended_acfs=detrended_acfs,
+            ts_detrended=ts_detrended,
+        )
 
     @classmethod
-    def ft_acf_diff(cls,
-                    ts: np.ndarray,
-                    num_diff: int = 1,
-                    nlags: t.Optional[int] = None,
-                    detrend: bool = True,
-                    ts_detrended: t.Optional[np.ndarray] = None,
-                    adjusted: bool = True) -> np.ndarray:
+    def ft_acf_diff(
+        cls,
+        ts: np.ndarray,
+        num_diff: int = 1,
+        nlags: t.Optional[int] = None,
+        detrend: bool = True,
+        ts_detrended: t.Optional[np.ndarray] = None,
+        adjusted: bool = True,
+    ) -> np.ndarray:
         """Autocorrelation function of the differenced time-series.
 
         Parameters
@@ -412,17 +430,21 @@ class MFETSAutocorr:
             The autocorrelation function up to `nlags` lags of the differenced
             time-series.
         """
-        return cls._calc_acf(ts=np.diff(ts, n=num_diff),
-                             detrend=detrend,
-                             nlags=nlags,
-                             adjusted=adjusted,
-                             ts_detrended=ts_detrended)
+        return cls._calc_acf(
+            ts=np.diff(ts, n=num_diff),
+            detrend=detrend,
+            nlags=nlags,
+            adjusted=adjusted,
+            ts_detrended=ts_detrended,
+        )
 
     @classmethod
-    def ft_pacf(cls,
-                ts: np.ndarray,
-                nlags: t.Optional[int] = None,
-                method: str = "ols-adjusted") -> np.ndarray:
+    def ft_pacf(
+        cls,
+        ts: np.ndarray,
+        nlags: t.Optional[int] = None,
+        method: str = "ols-adjusted",
+    ) -> np.ndarray:
         """Partial autocorrelation function of the time-series.
 
         Parameters
@@ -447,11 +469,12 @@ class MFETSAutocorr:
 
     @classmethod
     def ft_pacf_detrended(
-            cls,
-            ts: np.ndarray,
-            nlags: t.Optional[int] = None,
-            method: str = "ols-adjusted",
-            ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        nlags: t.Optional[int] = None,
+        method: str = "ols-adjusted",
+        ts_detrended: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Partial autocorrelation function of the detrended time-series.
 
         Parameters
@@ -477,21 +500,24 @@ class MFETSAutocorr:
             The partial autocorrelation function up to `nlags` lags of the
             detrended time-series.
         """
-        return cls._calc_pacf(ts=ts,
-                              nlags=nlags,
-                              method=method,
-                              detrend=True,
-                              ts_detrended=ts_detrended)
+        return cls._calc_pacf(
+            ts=ts,
+            nlags=nlags,
+            method=method,
+            detrend=True,
+            ts_detrended=ts_detrended,
+        )
 
     @classmethod
     def ft_pacf_diff(
-            cls,
-            ts: np.ndarray,
-            num_diff: int = 1,
-            nlags: t.Optional[int] = None,
-            method: str = "ols-adjusted",
-            detrend: bool = True,
-            ts_detrended: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        num_diff: int = 1,
+        nlags: t.Optional[int] = None,
+        method: str = "ols-adjusted",
+        detrend: bool = True,
+        ts_detrended: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Partial autocorrelation function of the differenced time-series.
 
         Parameters
@@ -524,20 +550,22 @@ class MFETSAutocorr:
             `nlags` lags of the detrended time-series. If `detrend` is False,
             the autocorrelation function up to `nlags` lags of the time-series.
         """
-        return cls._calc_pacf(ts=np.diff(ts, n=num_diff),
-                              nlags=nlags,
-                              method=method,
-                              detrend=detrend,
-                              ts_detrended=ts_detrended)
+        return cls._calc_pacf(
+            ts=np.diff(ts, n=num_diff),
+            nlags=nlags,
+            method=method,
+            detrend=detrend,
+            ts_detrended=ts_detrended,
+        )
 
     @classmethod
     def ft_acf_first_nonsig(
-            cls,
-            ts: np.ndarray,
-            max_nlags: t.Optional[int] = None,
-            adjusted: bool = True,
-            threshold: t.Optional[t.Union[int, float]] = None,
-            detrended_acfs: t.Optional[np.ndarray] = None,
+        cls,
+        ts: np.ndarray,
+        max_nlags: t.Optional[int] = None,
+        adjusted: bool = True,
+        threshold: t.Optional[t.Union[int, float]] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> t.Union[int, float]:
         """First non-significative detrended autocorrelation lag.
 
@@ -578,21 +606,23 @@ class MFETSAutocorr:
         if threshold is None:
             threshold = 1.96 / np.sqrt(ts.size)
 
-        res = cls._first_acf_below_threshold(ts=ts,
-                                             threshold=threshold,
-                                             abs_acf_vals=True,
-                                             max_nlags=max_nlags,
-                                             adjusted=adjusted,
-                                             detrended_acfs=detrended_acfs)
+        res = cls._first_acf_below_threshold(
+            ts=ts,
+            threshold=threshold,
+            abs_acf_vals=True,
+            max_nlags=max_nlags,
+            adjusted=adjusted,
+            detrended_acfs=detrended_acfs,
+        )
         return res
 
     @classmethod
     def ft_acf_first_nonpos(
-            cls,
-            ts: np.ndarray,
-            max_nlags: t.Optional[int] = None,
-            adjusted: bool = True,
-            detrended_acfs: t.Optional[np.ndarray] = None,
+        cls,
+        ts: np.ndarray,
+        max_nlags: t.Optional[int] = None,
+        adjusted: bool = True,
+        detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> t.Union[int, float]:
         """First non-positive detrended autocorrelation lag.
 
@@ -618,21 +648,23 @@ class MFETSAutocorr:
             Lag corresponding to the first autocorrelation below or equal
             zero, if any. Return `np.nan` if no such index is found.
         """
-        res = cls._first_acf_below_threshold(ts=ts,
-                                             threshold=0,
-                                             abs_acf_vals=False,
-                                             max_nlags=max_nlags,
-                                             adjusted=adjusted,
-                                             detrended_acfs=detrended_acfs)
+        res = cls._first_acf_below_threshold(
+            ts=ts,
+            threshold=0,
+            abs_acf_vals=False,
+            max_nlags=max_nlags,
+            adjusted=adjusted,
+            detrended_acfs=detrended_acfs,
+        )
         return res
 
     @classmethod
     def ft_first_acf_locmin(
-            cls,
-            ts: np.ndarray,
-            max_nlags: t.Optional[int] = None,
-            adjusted: bool = True,
-            detrended_acfs: t.Optional[np.ndarray] = None,
+        cls,
+        ts: np.ndarray,
+        max_nlags: t.Optional[int] = None,
+        adjusted: bool = True,
+        detrended_acfs: t.Optional[np.ndarray] = None,
     ) -> t.Union[int, float]:
         """First local minima detrended autocorrelation lag.
 
@@ -658,13 +690,16 @@ class MFETSAutocorr:
             Lag corresponding to the first autocorrelation below or equal
             zero, if any. Return `np.nan` if no such index is found.
         """
-        detrended_acfs = cls._calc_acf(ts=ts,
-                                       nlags=max_nlags,
-                                       adjusted=adjusted,
-                                       detrended_acfs=detrended_acfs)
+        detrended_acfs = cls._calc_acf(
+            ts=ts,
+            nlags=max_nlags,
+            adjusted=adjusted,
+            detrended_acfs=detrended_acfs,
+        )
 
         acfs_locmin = np.flatnonzero(
-            _utils.find_crit_pt(detrended_acfs, type_="min"))
+            _utils.find_crit_pt(detrended_acfs, type_="min")
+        )
 
         try:
             return acfs_locmin[0] + 1
@@ -673,13 +708,15 @@ class MFETSAutocorr:
             return np.nan
 
     @classmethod
-    def ft_trev(cls,
-                ts: np.ndarray,
-                lag: t.Optional[t.Union[str, int]] = None,
-                only_numerator: bool = False,
-                max_nlags: t.Optional[int] = None,
-                detrended_acfs: t.Optional[np.ndarray] = None,
-                detrended_ami: t.Optional[np.ndarray] = None) -> float:
+    def ft_trev(
+        cls,
+        ts: np.ndarray,
+        lag: t.Optional[t.Union[str, int]] = None,
+        only_numerator: bool = False,
+        max_nlags: t.Optional[int] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+    ) -> float:
         """Normalized nonlinear autocorrelation Trev statistic.
 
         Parameters
@@ -739,11 +776,13 @@ class MFETSAutocorr:
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
         """
-        _lag = _embed.embed_lag(ts=ts,
-                                lag=lag,
-                                max_nlags=max_nlags,
-                                detrended_acfs=detrended_acfs,
-                                detrended_ami=detrended_ami)
+        _lag = _embed.embed_lag(
+            ts=ts,
+            lag=lag,
+            max_nlags=max_nlags,
+            detrended_acfs=detrended_acfs,
+            detrended_ami=detrended_ami,
+        )
 
         diff = ts[_lag:] - ts[:-_lag]
 
@@ -758,13 +797,15 @@ class MFETSAutocorr:
         return trev
 
     @classmethod
-    def ft_tc3(cls,
-               ts: np.ndarray,
-               lag: t.Optional[t.Union[str, int]] = None,
-               only_numerator: bool = False,
-               max_nlags: t.Optional[int] = None,
-               detrended_acfs: t.Optional[np.ndarray] = None,
-               detrended_ami: t.Optional[np.ndarray] = None) -> float:
+    def ft_tc3(
+        cls,
+        ts: np.ndarray,
+        lag: t.Optional[t.Union[str, int]] = None,
+        only_numerator: bool = False,
+        max_nlags: t.Optional[int] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+    ) -> float:
         """Normalized nonlinear autocorrelation Tc3 statistic.
 
         Parameters
@@ -824,15 +865,17 @@ class MFETSAutocorr:
             time-series analysis: the empirical structure of time series and
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
         """
-        _lag = _embed.embed_lag(ts=ts,
-                                lag=lag,
-                                max_nlags=max_nlags,
-                                detrended_acfs=detrended_acfs,
-                                detrended_ami=detrended_ami)
+        _lag = _embed.embed_lag(
+            ts=ts,
+            lag=lag,
+            max_nlags=max_nlags,
+            detrended_acfs=detrended_acfs,
+            detrended_ami=detrended_ami,
+        )
 
-        ts_shift_1 = ts[:-2 * _lag]
+        ts_shift_1 = ts[: -2 * _lag]
         ts_shift_2 = ts[_lag:-_lag]
-        ts_shift_3 = ts[2 * _lag:]
+        ts_shift_3 = ts[2 * _lag :]
 
         _aux = ts_shift_1 * ts_shift_2
         numen = np.mean(_aux * ts_shift_3)
@@ -840,21 +883,23 @@ class MFETSAutocorr:
         if only_numerator:
             return numen
 
-        denom = np.abs(np.mean(_aux))**1.5
+        denom = np.abs(np.mean(_aux)) ** 1.5
 
         tc3 = numen / denom
 
         return tc3
 
     @classmethod
-    def ft_gen_autocorr(cls,
-                        ts: np.ndarray,
-                        alpha: float = 1,
-                        beta: float = 1,
-                        lag: t.Optional[t.Union[str, int]] = None,
-                        max_nlags: t.Optional[int] = None,
-                        detrended_acfs: t.Optional[np.ndarray] = None,
-                        detrended_ami: t.Optional[np.ndarray] = None) -> float:
+    def ft_gen_autocorr(
+        cls,
+        ts: np.ndarray,
+        alpha: float = 1,
+        beta: float = 1,
+        lag: t.Optional[t.Union[str, int]] = None,
+        max_nlags: t.Optional[int] = None,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+        detrended_ami: t.Optional[np.ndarray] = None,
+    ) -> float:
         """Generalized autocorrelation of the time-series.
 
         If alpha = beta, estimates how values of the same order of magnitude
@@ -926,46 +971,52 @@ class MFETSAutocorr:
             DOI: 10.1098/rsif.2013.0048
         """
         if np.isclose(alpha, 0.0):
-            raise ValueError("'alpha' parameter must be nonzero (got {})."
-                             "".format(alpha))
+            raise ValueError(
+                "'alpha' parameter must be nonzero (got {})." "".format(alpha)
+            )
 
         if np.isclose(beta, 0.0):
-            raise ValueError("'beta' parameter must be nonzero (got {})."
-                             "".format(beta))
+            raise ValueError(
+                "'beta' parameter must be nonzero (got {})." "".format(beta)
+            )
 
-        _lag = _embed.embed_lag(ts=ts,
-                                lag=lag,
-                                max_nlags=max_nlags,
-                                detrended_acfs=detrended_acfs,
-                                detrended_ami=detrended_ami)
+        _lag = _embed.embed_lag(
+            ts=ts,
+            lag=lag,
+            max_nlags=max_nlags,
+            detrended_acfs=detrended_acfs,
+            detrended_ami=detrended_ami,
+        )
 
         ts_abs = np.abs(ts)
         ts_sft_1 = ts_abs[:-_lag]
         ts_sft_2 = ts_abs[_lag:]
 
-        ts_sft_1_a = ts_sft_1**alpha
-        ts_sft_2_b = ts_sft_2**beta
+        ts_sft_1_a = ts_sft_1 ** alpha
+        ts_sft_2_b = ts_sft_2 ** beta
 
         ts_sft_1_a_mean = np.mean(ts_sft_1_a)
         ts_sft_2_b_mean = np.mean(ts_sft_2_b)
 
-        gen_autocorr = (
-            np.mean(ts_sft_1_a * ts_sft_2_b) -
-            ts_sft_1_a_mean * ts_sft_2_b_mean /
-            (np.sqrt(np.mean(ts_sft_1**(2 * alpha)) - ts_sft_1_a_mean**2) *
-             np.sqrt(np.mean(ts_sft_2**(2 * beta)) - ts_sft_2_b_mean**2)))
+        gen_autocorr = np.mean(
+            ts_sft_1_a * ts_sft_2_b
+        ) - ts_sft_1_a_mean * ts_sft_2_b_mean / (
+            np.sqrt(np.mean(ts_sft_1 ** (2 * alpha)) - ts_sft_1_a_mean ** 2)
+            * np.sqrt(np.mean(ts_sft_2 ** (2 * beta)) - ts_sft_2_b_mean ** 2)
+        )
 
         return gen_autocorr
 
     @classmethod
     def ft_autocorr_crit_pt(
-            cls,
-            ts: np.ndarray,
-            crit_point_type: str = "non-plateau",
-            return_lags: bool = True,
-            max_nlags: t.Optional[int] = None,
-            adjusted: bool = True,
-            detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        crit_point_type: str = "non-plateau",
+        return_lags: bool = True,
+        max_nlags: t.Optional[int] = None,
+        adjusted: bool = True,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Lags corresponding to minima or maxima of autocorrelation function.
 
         Parameters
@@ -1014,13 +1065,16 @@ class MFETSAutocorr:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
-        detrended_acfs = cls._calc_acf(ts=ts,
-                                       nlags=max_nlags,
-                                       adjusted=adjusted,
-                                       detrended_acfs=detrended_acfs)
+        detrended_acfs = cls._calc_acf(
+            ts=ts,
+            nlags=max_nlags,
+            adjusted=adjusted,
+            detrended_acfs=detrended_acfs,
+        )
 
-        ac_shape = _utils.find_crit_pt(arr=detrended_acfs,
-                                       type_=crit_point_type)
+        ac_shape = _utils.find_crit_pt(
+            arr=detrended_acfs, type_=crit_point_type
+        )
 
         # Note: in 'hctsa', either the sum or the mean is returned.
         # However, to enable summarization, here we return the whole
@@ -1033,15 +1087,16 @@ class MFETSAutocorr:
 
     @classmethod
     def ft_gresid_autocorr(
-            cls,
-            ts: np.ndarray,
-            nlags: int = 8,
-            adjusted: bool = True,
-            random_state: t.Optional[int] = None,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            gaussian_resid: t.Optional[np.ndarray] = None,
-            gaussian_model: t.Optional[
-                sklearn.gaussian_process.GaussianProcessRegressor] = None,
+        cls,
+        ts: np.ndarray,
+        nlags: int = 8,
+        adjusted: bool = True,
+        random_state: t.Optional[int] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        gaussian_resid: t.Optional[np.ndarray] = None,
+        gaussian_model: t.Optional[
+            sklearn.gaussian_process.GaussianProcessRegressor
+        ] = None,
     ) -> np.ndarray:
         """Autocorrelation function of the gaussian process model residuals.
 
@@ -1096,25 +1151,27 @@ class MFETSAutocorr:
                 ts_scaled=ts_scaled,
                 random_state=random_state,
                 gaussian_model=gaussian_model,
-                return_residuals=True)
+                return_residuals=True,
+            )
 
-        gaussian_resid_acf = cls._calc_acf(ts=gaussian_resid,
-                                           nlags=nlags,
-                                           adjusted=adjusted)
+        gaussian_resid_acf = cls._calc_acf(
+            ts=gaussian_resid, nlags=nlags, adjusted=adjusted
+        )
 
         return gaussian_resid_acf
 
     @classmethod
     def ft_gresid_lbtest(
-            cls,
-            ts: np.ndarray,
-            nlags: int = 8,
-            return_pval: bool = True,
-            random_state: t.Optional[int] = None,
-            ts_scaled: t.Optional[np.ndarray] = None,
-            gaussian_resid: t.Optional[np.ndarray] = None,
-            gaussian_model: t.Optional[
-                sklearn.gaussian_process.GaussianProcessRegressor] = None,
+        cls,
+        ts: np.ndarray,
+        nlags: int = 8,
+        return_pval: bool = True,
+        random_state: t.Optional[int] = None,
+        ts_scaled: t.Optional[np.ndarray] = None,
+        gaussian_resid: t.Optional[np.ndarray] = None,
+        gaussian_model: t.Optional[
+            sklearn.gaussian_process.GaussianProcessRegressor
+        ] = None,
     ) -> np.ndarray:
         """Ljung–Box test in the residuals of a gaussian process model.
 
@@ -1171,23 +1228,26 @@ class MFETSAutocorr:
                 ts_scaled=ts_scaled,
                 random_state=random_state,
                 gaussian_model=gaussian_model,
-                return_residuals=True)
+                return_residuals=True,
+            )
 
         gaussian_lb_test = stat_tests.MFETSStatTests.ft_test_lb(
             ts_residuals=gaussian_resid,
             max_nlags=nlags,
-            return_pval=return_pval)
+            return_pval=return_pval,
+        )
 
         return gaussian_lb_test
 
     @classmethod
     def ft_autocorr_out_dist(
-            cls,
-            ts: np.ndarray,
-            p: float = 0.8,
-            max_nlags: t.Optional[int] = None,
-            adjusted: bool = True,
-            detrended_acfs: t.Optional[np.ndarray] = None) -> np.ndarray:
+        cls,
+        ts: np.ndarray,
+        p: float = 0.8,
+        max_nlags: t.Optional[int] = None,
+        adjusted: bool = True,
+        detrended_acfs: t.Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """Distance between the autocorrelation with and without outliers.
 
         This method calculates the time-series autocorrelation function
@@ -1233,19 +1293,22 @@ class MFETSAutocorr:
             their methods", J. Roy. Soc. Interface 10(83) 20130048 (2013).
             DOI: 10.1098/rsif.2013.0048
         """
-        detrended_acfs = cls._calc_acf(ts=ts,
-                                       nlags=max_nlags,
-                                       adjusted=adjusted,
-                                       detrended_acfs=detrended_acfs)
+        detrended_acfs = cls._calc_acf(
+            ts=ts,
+            nlags=max_nlags,
+            adjusted=adjusted,
+            detrended_acfs=detrended_acfs,
+        )
 
         ts_abs = np.abs(ts)
         ts_inliners = ts[ts_abs <= np.quantile(ts_abs, p)]
 
-        ts_inliners_acfs = cls._calc_acf(ts=ts_inliners,
-                                         nlags=max_nlags,
-                                         adjusted=adjusted)
+        ts_inliners_acfs = cls._calc_acf(
+            ts=ts_inliners, nlags=max_nlags, adjusted=adjusted
+        )
 
-        dist_acfs = np.abs(detrended_acfs[:ts_inliners_acfs.size] -
-                           ts_inliners_acfs)
+        dist_acfs = np.abs(
+            detrended_acfs[: ts_inliners_acfs.size] - ts_inliners_acfs
+        )
 
         return dist_acfs

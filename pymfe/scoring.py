@@ -20,10 +20,12 @@ def mae(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return sklearn.metrics.mean_absolute_error(y_true, y_pred)
 
 
-def smape(arr_a: np.ndarray,
-          arr_b: np.ndarray,
-          percentage: bool = False,
-          half_denom: bool = True) -> float:
+def smape(
+    arr_a: np.ndarray,
+    arr_b: np.ndarray,
+    percentage: bool = False,
+    half_denom: bool = True,
+) -> float:
     """Calculate SMAPE (Symmetric Mean Absolute Percentage Error).
 
     Parameters
@@ -49,7 +51,8 @@ def smape(arr_a: np.ndarray,
         error in fraction form (in [0, 1] range) otherwise.
     """
     res = np.mean(
-        np.abs(arr_a - arr_b) / (1e-9 + np.abs(arr_a) + np.abs(arr_b)))
+        np.abs(arr_a - arr_b) / (1e-9 + np.abs(arr_a) + np.abs(arr_b))
+    )
 
     if percentage:
         res *= 100
@@ -60,9 +63,11 @@ def smape(arr_a: np.ndarray,
     return res
 
 
-VALID_SCORING = collections.OrderedDict((
-    ("mse", mse),
-    ("rmse", rmse),
-    ("mae", mae),
-    ("smape", smape),
-))
+VALID_SCORING = collections.OrderedDict(
+    (
+        ("mse", mse),
+        ("rmse", rmse),
+        ("mae", mae),
+        ("smape", smape),
+    )
+)
