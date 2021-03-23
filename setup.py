@@ -14,9 +14,9 @@ with open("requirements.txt", "r") as req:
 
 setuptools.setup(
     name="tspymfe",
-    version="0.0.4",
+    version="0.0.5",
     author="Felipe Siqueira",
-    author_email="felipe.siqueira@usp.br",
+    author_email="fel.siqr@gmail.com",
     description="Univariate time-series expansion for Pymfe package",
     long_description=long_description,
     long_description_content_type="text/markdown",
