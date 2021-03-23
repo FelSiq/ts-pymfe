@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-import pymfe.tsmfe
+import tspymfe.tsmfe
 
 
 def load_data(data_id: int, max_obs_num: int = 512) -> np.ndarray:
@@ -39,7 +39,7 @@ def _test() -> None:
 
     ts = load_data(data_id)
 
-    extractor = pymfe.tsmfe.TSMFE(random_state=random_state)
+    extractor = tspymfe.tsmfe.TSMFE(random_state=random_state)
     extractor.fit(ts=ts, precomp_groups="all" if precomp else None)
     res = extractor.extract()
 

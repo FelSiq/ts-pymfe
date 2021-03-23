@@ -9,19 +9,19 @@ import numpy as np
 import pandas as pd
 import sklearn.metrics
 
-from pymfe import _period
-from pymfe import _detrend
+from tspymfe import _period
+from tspymfe import _detrend
 
-from pymfe.general import MFETSGeneral
-from pymfe.info_theory import MFETSInfoTheory
-from pymfe.local_stats import MFETSLocalStats
-from pymfe.global_stats import MFETSGlobalStats
-from pymfe.autocorr import MFETSAutocorr
-from pymfe.freq_domain import MFETSFreqDomain
-from pymfe.landmarking import MFETSLandmarking
-from pymfe.model_based import MFETSModelBased
-from pymfe.stat_tests import MFETSStatTests
-from pymfe.randomize import MFETSRandomize
+from tspymfe.general import MFETSGeneral
+from tspymfe.info_theory import MFETSInfoTheory
+from tspymfe.local_stats import MFETSLocalStats
+from tspymfe.global_stats import MFETSGlobalStats
+from tspymfe.autocorr import MFETSAutocorr
+from tspymfe.freq_domain import MFETSFreqDomain
+from tspymfe.landmarking import MFETSLandmarking
+from tspymfe.model_based import MFETSModelBased
+from tspymfe.stat_tests import MFETSStatTests
+from tspymfe.randomize import MFETSRandomize
 
 
 def load_data(data_id: int, max_obs_num: int = 512) -> np.ndarray:
