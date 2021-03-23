@@ -10,9 +10,9 @@ import statsmodels.regression
 import statsmodels.tools
 import numpy as np
 
-import pymfe._utils as _utils
-import pymfe._orthopoly as _orthopoly
-import pymfe._period as _period
+import tspymfe._utils as _utils
+import tspymfe._orthopoly as _orthopoly
+import tspymfe._period as _period
 
 
 class MFETSModelBased:

@@ -5,7 +5,7 @@ import numpy as np
 import statsmodels.tsa.stattools
 
 try:
-    import pymfe._detrend as _detrend
+    import tspymfe._detrend as _detrend
 
 except ImportError:
     pass

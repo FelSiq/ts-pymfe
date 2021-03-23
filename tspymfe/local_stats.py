@@ -5,23 +5,23 @@ import pandas as pd
 import scipy.stats
 import numpy as np
 
-import pymfe._utils as _utils
-import pymfe._summary as _summary
+import tspymfe._utils as _utils
+import tspymfe._summary as _summary
 
 try:
-    import pymfe.stat_tests as stat_tests
+    import tspymfe.stat_tests as stat_tests
 
 except ImportError:
     pass
 
 try:
-    import pymfe.autocorr as autocorr
+    import tspymfe.autocorr as autocorr
 
 except ImportError:
     pass
 
 try:
-    import pymfe.info_theory as info_theory
+    import tspymfe.info_theory as info_theory
 
 except ImportError:
     pass

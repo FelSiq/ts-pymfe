@@ -5,19 +5,19 @@ import numpy as np
 import scipy.spatial
 
 try:
-    import pymfe._utils as _utils
+    import tspymfe._utils as _utils
 
 except ImportError:
     pass
 
 try:
-    import pymfe.autocorr as autocorr
+    import tspymfe.autocorr as autocorr
 
 except ImportError:
     pass
 
 try:
-    import pymfe.info_theory as info_theory
+    import tspymfe.info_theory as info_theory
 
 except ImportError:
     pass

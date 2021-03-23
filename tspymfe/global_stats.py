@@ -6,9 +6,9 @@ import numpy as np
 import nolds
 import scipy.stats
 
-import pymfe._period as _period
-import pymfe._utils as _utils
-import pymfe._summary as _summary
+import tspymfe._period as _period
+import tspymfe._utils as _utils
+import tspymfe._summary as _summary
 
 
 class MFETSGlobalStats:

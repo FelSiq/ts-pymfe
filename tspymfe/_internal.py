@@ -76,19 +76,19 @@ import sklearn.preprocessing
 import sklearn.tree
 import patsy
 
-import pymfe._summary as _summary
-import pymfe.scoring as scoring
+import tspymfe._summary as _summary
+import tspymfe.scoring as scoring
 
-import pymfe.landmarking as landmarking
-import pymfe.general as general
-import pymfe.global_stats as global_stats
-import pymfe.local_stats as local_stats
-import pymfe.model_based as model_based
-import pymfe.freq_domain as freq_domain
-import pymfe.stat_tests as stat_tests
-import pymfe.autocorr as autocorr
-import pymfe.randomize as randomize
-import pymfe.info_theory as info_theory
+import tspymfe.landmarking as landmarking
+import tspymfe.general as general
+import tspymfe.global_stats as global_stats
+import tspymfe.local_stats as local_stats
+import tspymfe.model_based as model_based
+import tspymfe.freq_domain as freq_domain
+import tspymfe.stat_tests as stat_tests
+import tspymfe.autocorr as autocorr
+import tspymfe.randomize as randomize
+import tspymfe.info_theory as info_theory
 
 VALID_VALUE_PREFIX = "VALID_"
 

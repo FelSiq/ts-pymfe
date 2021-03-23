@@ -7,9 +7,9 @@ import time
 import texttable
 import numpy as np
 
-import pymfe._internal as _internal
-import pymfe._period as _period
-import pymfe._detrend as _detrend
+import tspymfe._internal as _internal
+import tspymfe._period as _period
+import tspymfe._detrend as _detrend
 
 _TypeSeqExt = t.Sequence[
     t.Tuple[str, t.Callable, t.Tuple[str, ...], t.Tuple[str, ...]]
