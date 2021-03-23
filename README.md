@@ -35,7 +35,7 @@ import numpy as np
 # random time-series
 ts = 0.3 * np.arange(100) + np.random.randn(100)
 
-extractor = pymfe.tsmfe.TSMFE()
+extractor = tspymfe.tsmfe.TSMFE()
 extractor.fit(ts)
 res = extractor.extract()
 
@@ -72,13 +72,13 @@ Below I present the full list of available meta-features in this package separat
 ```python
 import tspymfe.tsmfe
 
-groups = pymfe.tsmfe.TSMFE.valid_groups()
+groups = tspymfe.tsmfe.TSMFE.valid_groups()
 print(groups)
 
-metafeatures = pymfe.tsmfe.TSMFE.valid_metafeatures()
+metafeatures = tspymfe.tsmfe.TSMFE.valid_metafeatures()
 print(metafeatures)
 
-summaries = pymfe.tsmfe.TSMFE.valid_summary()
+summaries = tspymfe.tsmfe.TSMFE.valid_summary()
 print(summaries)
 ```
 
