@@ -29,7 +29,7 @@ python3 -m pip install -U tspymfe
 ## Usage
 To extract the meta-features, the API behaves pretty much like the original Pymfe API:
 ```python
-import pymfe.tsmfe
+import tspymfe.tsmfe
 import numpy as np
 
 # random time-series
@@ -70,7 +70,7 @@ make code-check
 # Available meta-features by group
 Below I present the full list of available meta-features in this package separated by meta-feature group. Also note that you can use the following methods to recover the available meta-feature, groups, and summary functions:
 ```python
-import pymfe.tsmfe
+import tspymfe.tsmfe
 
 groups = pymfe.tsmfe.TSMFE.valid_groups()
 print(groups)
