@@ -3,6 +3,7 @@ import typing as t
 
 import numpy as np
 import arch.unitroot
+import arch.utility.exceptions
 import statsmodels.stats.stattools
 import statsmodels.stats.diagnostic
 
@@ -16,14 +17,16 @@ class MFETSStatTests:
         try:
             return arch_result.pvalue
 
-        except (IndexError, AssertionError):
+        except (
+            IndexError,
+            AssertionError,
+            arch.utility.exceptions.InfeasibleTestException,
+        ):
             # Note: catching a weird exceptions from arch module.
             return np.nan
 
     @classmethod
-    def ft_test_dw(
-        cls, ts_residuals: np.ndarray, normalize: bool = True
-    ) -> float:
+    def ft_test_dw(cls, ts_residuals: np.ndarray, normalize: bool = True) -> float:
         """Durbin-Watson test statistic value.
 
         This tests tries to detect autocorrelation of lag 1 in the given
@@ -212,9 +215,7 @@ class MFETSStatTests:
             of the American Statistical Association, 74:366a, 427-431,
             DOI: 10.1080/01621459.1979.10482531
         """
-        stat, pvalue = statsmodels.tsa.stattools.adfuller(
-            ts, maxlag=max_nlags
-        )[:2]
+        stat, pvalue = statsmodels.tsa.stattools.adfuller(ts, maxlag=max_nlags)[:2]
 
         if return_pval:
             return pvalue
