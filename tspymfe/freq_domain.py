@@ -71,6 +71,8 @@ class MFETSFreqDomain:
             return_onesided=True,
         )
 
+        ps = np.asfarray(ps)
+
         if return_freqs:
             return freqs, ps
 
