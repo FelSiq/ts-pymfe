@@ -67,7 +67,7 @@ def iaaft(
     ts_sur = ts
 
     for _ in np.arange(max_iter):
-        s = np.fft.irfft(ampl * ts_fft / np.abs(ts_fft), n=ts.size).real
+        s = np.fft.irfft(ampl * ts_fft / (1e-8 + np.abs(ts_fft)), n=ts.size).real
         ts_sur = sort[np.argsort(np.argsort(s))]
         ts_fft = np.fft.rfft(ts_sur)
         err_cur = sklearn.metrics.mean_squared_error(
